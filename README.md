@@ -7,7 +7,7 @@ Species detection and classification software designed to handle efficiently cam
 
 Declas is an advanced software tool designed for detecting and recognizing species in camera trap data. Whether you are a wildlife researcher, a conservationist, or an enthusiast, Declas provides an intuitive interface and powerful algorithms to help you analyze and interpret the data captured by camera traps. The software leverages computer vision techniques to identify different species automatically, saving you time and improving the accuracy of your data analysis.
 
-[Declas Interface](https://raw.githubusercontent.com/stangandaho/declas/main/declas.jpg)
+![Declas Interface](https://raw.githubusercontent.com/stangandaho/declas/main/declas.jpg?raw=true)
 
 ### Features
 
