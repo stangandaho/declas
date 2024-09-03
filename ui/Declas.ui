@@ -1,0 +1,379 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>961</width>
+    <height>655</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>500</width>
+    <height>400</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayout_2">
+    <item row="0" column="0">
+     <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="2,6,4">
+      <item>
+       <widget class="QTreeView" name="dir_tree_view">
+        <property name="maximumSize">
+         <size>
+          <width>400</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="frameShape">
+         <enum>QFrame::NoFrame</enum>
+        </property>
+        <property name="lineWidth">
+         <number>1</number>
+        </property>
+        <attribute name="headerVisible">
+         <bool>false</bool>
+        </attribute>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="image_display">
+        <property name="minimumSize">
+         <size>
+          <width>480</width>
+          <height>370</height>
+         </size>
+        </property>
+        <property name="autoFillBackground">
+         <bool>false</bool>
+        </property>
+        <property name="frameShape">
+         <enum>QFrame::NoFrame</enum>
+        </property>
+        <property name="lineWidth">
+         <number>1</number>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+        <property name="wordWrap">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" name="verticalLayout_2" stretch="8,2">
+        <item>
+         <widget class="QTabWidget" name="tabWidget">
+          <property name="minimumSize">
+           <size>
+            <width>200</width>
+            <height>400</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true"/>
+          </property>
+          <property name="tabPosition">
+           <enum>QTabWidget::North</enum>
+          </property>
+          <property name="tabShape">
+           <enum>QTabWidget::Rounded</enum>
+          </property>
+          <property name="currentIndex">
+           <number>1</number>
+          </property>
+          <property name="movable">
+           <bool>true</bool>
+          </property>
+          <widget class="QWidget" name="metadata">
+           <attribute name="title">
+            <string>Metadata</string>
+           </attribute>
+           <layout class="QGridLayout" name="gridLayout_3">
+            <item row="0" column="0">
+             <widget class="QTextEdit" name="metadata_text">
+              <property name="minimumSize">
+               <size>
+                <width>400</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="font">
+               <font>
+                <pointsize>11</pointsize>
+               </font>
+              </property>
+              <property name="styleSheet">
+               <string notr="true"/>
+              </property>
+              <property name="frameShape">
+               <enum>QFrame::NoFrame</enum>
+              </property>
+              <property name="documentTitle">
+               <string>Metadata</string>
+              </property>
+              <property name="readOnly">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="map">
+           <attribute name="title">
+            <string>Map</string>
+           </attribute>
+           <layout class="QGridLayout" name="gridLayout_4">
+            <item row="0" column="0">
+             <widget class="QTextBrowser" name="display_map"/>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="inference">
+           <attribute name="title">
+            <string>Inference</string>
+           </attribute>
+           <layout class="QGridLayout" name="gridLayout">
+            <item row="0" column="0" colspan="4">
+             <widget class="QTextEdit" name="inference_result">
+              <property name="font">
+               <font>
+                <pointsize>11</pointsize>
+               </font>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">background-color: white;</string>
+              </property>
+              <property name="frameShape">
+               <enum>QFrame::NoFrame</enum>
+              </property>
+              <property name="documentTitle">
+               <string>Metadata</string>
+              </property>
+              <property name="readOnly">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="3">
+             <widget class="QPushButton" name="apply_inference_edit">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
+              <property name="text">
+               <string>Apply</string>
+              </property>
+              <property name="icon">
+               <iconset>
+                <normaloff>../icons/apply.png</normaloff>../icons/apply.png</iconset>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QPushButton" name="view_detection">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
+              <property name="text">
+               <string>View</string>
+              </property>
+              <property name="icon">
+               <iconset>
+                <normaloff>../icons/view.png</normaloff>../icons/view.png</iconset>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="2">
+             <widget class="QPushButton" name="edit_inference">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
+              <property name="styleSheet">
+               <string notr="true"/>
+              </property>
+              <property name="text">
+               <string>Edit</string>
+              </property>
+              <property name="icon">
+               <iconset>
+                <normaloff>../icons/edit.png</normaloff>../icons/edit.png</iconset>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+        <item>
+         <widget class="QTextEdit" name="batch_detection_log">
+          <property name="styleSheet">
+           <string notr="true"/>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::NoFrame</enum>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </item>
+   </layout>
+   <zorder></zorder>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>961</width>
+     <height>26</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuSetting">
+    <property name="title">
+     <string>Setting</string>
+    </property>
+    <widget class="QMenu" name="menuAppearance">
+     <property name="title">
+      <string>Appearance</string>
+     </property>
+     <property name="icon">
+      <iconset>
+       <normaloff>C:/Users/ganda/.designer/icons/appearance.png</normaloff>C:/Users/ganda/.designer/icons/appearance.png</iconset>
+     </property>
+     <addaction name="action_light"/>
+    </widget>
+    <addaction name="action_models_parameter"/>
+    <addaction name="menuAppearance"/>
+   </widget>
+   <widget class="QMenu" name="menuModels">
+    <property name="title">
+     <string>Models</string>
+    </property>
+    <addaction name="action_add_models"/>
+    <addaction name="action_show_models"/>
+   </widget>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="action_import_dc_file"/>
+    <addaction name="separator"/>
+    <addaction name="action_quit"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuSetting"/>
+   <addaction name="menuModels"/>
+  </widget>
+  <widget class="QToolBar" name="tool_bar1">
+   <property name="acceptDrops">
+    <bool>false</bool>
+   </property>
+   <property name="windowTitle">
+    <string>Tool Bar</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+  </widget>
+  <widget class="QStatusBar" name="statusBar"/>
+  <action name="action_models_parameter">
+   <property name="icon">
+    <iconset>
+     <normaloff>C:/Users/ganda/.designer/icons/inference.png</normaloff>C:/Users/ganda/.designer/icons/inference.png</iconset>
+   </property>
+   <property name="text">
+    <string>Inference parameters</string>
+   </property>
+  </action>
+  <action name="action_language">
+   <property name="icon">
+    <iconset>
+     <normaloff>C:/Users/ganda/.designer/icons/language.png</normaloff>C:/Users/ganda/.designer/icons/language.png</iconset>
+   </property>
+   <property name="text">
+    <string>Language</string>
+   </property>
+  </action>
+  <action name="action_add_models">
+   <property name="icon">
+    <iconset>
+     <normaloff>C:/Users/ganda/.designer/icons/add.png</normaloff>C:/Users/ganda/.designer/icons/add.png</iconset>
+   </property>
+   <property name="text">
+    <string>Add model</string>
+   </property>
+  </action>
+  <action name="action_remove_model">
+   <property name="icon">
+    <iconset>
+     <normaloff>C:/Users/ganda/.designer/icons/remove.png</normaloff>C:/Users/ganda/.designer/icons/remove.png</iconset>
+   </property>
+   <property name="text">
+    <string>Revoke model</string>
+   </property>
+  </action>
+  <action name="action_show_models">
+   <property name="icon">
+    <iconset>
+     <normaloff>C:/Users/ganda/.designer/icons/view.png</normaloff>C:/Users/ganda/.designer/icons/view.png</iconset>
+   </property>
+   <property name="text">
+    <string>Show models</string>
+   </property>
+  </action>
+  <action name="action_import_dc_file">
+   <property name="icon">
+    <iconset>
+     <normaloff>C:/Users/ganda/.designer/icons/upload.png</normaloff>C:/Users/ganda/.designer/icons/upload.png</iconset>
+   </property>
+   <property name="text">
+    <string>Import</string>
+   </property>
+  </action>
+  <action name="action_quit">
+   <property name="icon">
+    <iconset>
+     <normaloff>C:/Users/ganda/.designer/icons/quit.png</normaloff>C:/Users/ganda/.designer/icons/quit.png</iconset>
+   </property>
+   <property name="text">
+    <string>Quit</string>
+   </property>
+  </action>
+  <action name="action_build_table">
+   <property name="icon">
+    <iconset>
+     <normaloff>C:/Users/ganda/.designer/icons/table.png</normaloff>C:/Users/ganda/.designer/icons/table.png</iconset>
+   </property>
+   <property name="text">
+    <string>Build table</string>
+   </property>
+  </action>
+  <action name="action_dark">
+   <property name="text">
+    <string>Dark</string>
+   </property>
+  </action>
+  <action name="action_light">
+   <property name="text">
+    <string>Light</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
