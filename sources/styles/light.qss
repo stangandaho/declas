@@ -1,0 +1,19 @@
+QWidget {
+    background-color: #ffffff;
+    color: #000000;
+}
+QMenuBar, QMenu {
+    background-color: #ffffff;
+    color: #000000;
+}
+QLineEdit, QTextEdit, QPlainTextEdit, QAbstractItemView {
+    background-color: #f0f0f0;
+    color: #000000;
+}
+QPushButton {
+    background-color: #e0e0e0;
+    color: #000000;
+}
+QPushButton:hover {
+    background-color: #d0d0d0;
+}
