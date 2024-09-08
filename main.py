@@ -1,7 +1,6 @@
 from PyQt5.QtWidgets import QApplication
 import sys, os
 from PyQt5.QtGui import QFont
-from pathlib import Path
 
 
 # Add the directory containing 'sources' to sys.path

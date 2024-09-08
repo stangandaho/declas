@@ -1,9 +1,9 @@
 import json
-from PyQt5.QtWidgets import QWidget, QTableWidget, QTableWidgetItem, QPushButton, QApplication
+from PyQt5.QtWidgets import QWidget, QTableWidget, QTableWidgetItem, QPushButton
 from PyQt5.uic import loadUi
 from PyQt5.QtGui import QFont, QIcon
 from pathlib import Path
-import sys, os
+import os
 
 DECLAS_ROOT = Path(__file__).resolve().parent.parent
 
