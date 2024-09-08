@@ -22,53 +22,131 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout_2">
     <item row="0" column="0">
-     <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="2,6,4">
+     <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="2,5,3">
       <item>
-       <widget class="QTreeView" name="dir_tree_view">
-        <property name="maximumSize">
-         <size>
-          <width>400</width>
-          <height>16777215</height>
-         </size>
-        </property>
-        <property name="frameShape">
-         <enum>QFrame::NoFrame</enum>
-        </property>
-        <property name="lineWidth">
-         <number>1</number>
-        </property>
-        <attribute name="headerVisible">
-         <bool>false</bool>
-        </attribute>
-       </widget>
+       <layout class="QVBoxLayout" name="verticalLayout_5">
+        <item>
+         <widget class="QTreeView" name="dir_tree_view">
+          <property name="maximumSize">
+           <size>
+            <width>400</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::NoFrame</enum>
+          </property>
+          <property name="lineWidth">
+           <number>1</number>
+          </property>
+          <attribute name="headerVisible">
+           <bool>false</bool>
+          </attribute>
+         </widget>
+        </item>
+       </layout>
       </item>
       <item>
-       <widget class="QLabel" name="image_display">
-        <property name="minimumSize">
-         <size>
-          <width>480</width>
-          <height>370</height>
-         </size>
-        </property>
-        <property name="autoFillBackground">
-         <bool>false</bool>
-        </property>
-        <property name="frameShape">
-         <enum>QFrame::NoFrame</enum>
-        </property>
-        <property name="lineWidth">
+       <layout class="QVBoxLayout" name="verticalLayout_6" stretch="9,1">
+        <property name="spacing">
          <number>1</number>
         </property>
-        <property name="text">
-         <string/>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignCenter</set>
-        </property>
-        <property name="wordWrap">
-         <bool>false</bool>
-        </property>
-       </widget>
+        <item>
+         <widget class="QLabel" name="image_display">
+          <property name="minimumSize">
+           <size>
+            <width>480</width>
+            <height>370</height>
+           </size>
+          </property>
+          <property name="autoFillBackground">
+           <bool>false</bool>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::NoFrame</enum>
+          </property>
+          <property name="lineWidth">
+           <number>1</number>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+          <property name="wordWrap">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="6,2,6">
+          <item>
+           <spacer name="horizontalSpacer">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>208</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_5">
+            <item>
+             <widget class="QPushButton" name="previous_media">
+              <property name="text">
+               <string/>
+              </property>
+              <property name="icon">
+               <iconset>
+                <normaloff>../icons/previous.png</normaloff>../icons/previous.png</iconset>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="play_media">
+              <property name="text">
+               <string/>
+              </property>
+              <property name="icon">
+               <iconset>
+                <normaloff>../icons/play.png</normaloff>../icons/play.png</iconset>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="next_media">
+              <property name="text">
+               <string/>
+              </property>
+              <property name="icon">
+               <iconset>
+                <normaloff>../icons/next.png</normaloff>../icons/next.png</iconset>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_2">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>158</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+       </layout>
       </item>
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_2" stretch="8,2">
@@ -135,7 +213,7 @@
            </attribute>
            <layout class="QGridLayout" name="gridLayout_4">
             <item row="0" column="0">
-             <widget class="QTextBrowser" name="display_map"/>
+             <widget class="QWebEngineView" name="display_map" native="true"/>
             </item>
            </layout>
           </widget>
@@ -250,7 +328,7 @@
      </property>
      <property name="icon">
       <iconset>
-       <normaloff>C:/Users/ganda/.designer/icons/appearance.png</normaloff>C:/Users/ganda/.designer/icons/appearance.png</iconset>
+       <normaloff>../icons/appearance.png</normaloff>../icons/appearance.png</iconset>
      </property>
      <addaction name="action_light"/>
     </widget>
@@ -294,7 +372,7 @@
   <action name="action_models_parameter">
    <property name="icon">
     <iconset>
-     <normaloff>C:/Users/ganda/.designer/icons/inference.png</normaloff>C:/Users/ganda/.designer/icons/inference.png</iconset>
+     <normaloff>../icons/inference.png</normaloff>../icons/inference.png</iconset>
    </property>
    <property name="text">
     <string>Inference parameters</string>
@@ -312,7 +390,7 @@
   <action name="action_add_models">
    <property name="icon">
     <iconset>
-     <normaloff>C:/Users/ganda/.designer/icons/add.png</normaloff>C:/Users/ganda/.designer/icons/add.png</iconset>
+     <normaloff>../icons/add.png</normaloff>../icons/add.png</iconset>
    </property>
    <property name="text">
     <string>Add model</string>
@@ -330,7 +408,7 @@
   <action name="action_show_models">
    <property name="icon">
     <iconset>
-     <normaloff>C:/Users/ganda/.designer/icons/view.png</normaloff>C:/Users/ganda/.designer/icons/view.png</iconset>
+     <normaloff>../icons/view.png</normaloff>../icons/view.png</iconset>
    </property>
    <property name="text">
     <string>Show models</string>
@@ -339,7 +417,7 @@
   <action name="action_import_dc_file">
    <property name="icon">
     <iconset>
-     <normaloff>C:/Users/ganda/.designer/icons/upload.png</normaloff>C:/Users/ganda/.designer/icons/upload.png</iconset>
+     <normaloff>../icons/upload.png</normaloff>../icons/upload.png</iconset>
    </property>
    <property name="text">
     <string>Import</string>
@@ -348,7 +426,7 @@
   <action name="action_quit">
    <property name="icon">
     <iconset>
-     <normaloff>C:/Users/ganda/.designer/icons/quit.png</normaloff>C:/Users/ganda/.designer/icons/quit.png</iconset>
+     <normaloff>../icons/quit.png</normaloff>../icons/quit.png</iconset>
    </property>
    <property name="text">
     <string>Quit</string>
@@ -374,6 +452,14 @@
    </property>
   </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QWebEngineView</class>
+   <extends>QWidget</extends>
+   <header>PyQt5.QtWebEngineWidgets</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>
