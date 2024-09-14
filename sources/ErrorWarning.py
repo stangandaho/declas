@@ -10,7 +10,7 @@ icon_file = icon_file.replace("sources", "")
 def general_error(error):
     msgBox = QMessageBox()
     msgBox.setIcon(QMessageBox.Critical)
-    msgBox.setText(error)
+    msgBox.setText(str(error))
     msgBox.setWindowTitle("Error")
     msgBox.setWindowIcon(QIcon(icon_file))
     msgBox.setStandardButtons(QMessageBox.Ok)

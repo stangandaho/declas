@@ -10,6 +10,17 @@ import numpy as np
 
 #from PyQt5.QtWidgets import QTextEdit
 
+def class_number(results = dict, category = str):
+    l = []
+    detect_category = [x.split() for x in results.get('labels')]
+    detect_category = [x[0] for x in detect_category]
+    for x in detect_category:
+        if x == category:
+            l.append(x)
+
+    return len(l)
+
+
 def get_metadata(image_path):
     # Extract and display metadata using Pillow
     try:
@@ -240,6 +251,23 @@ def dump_json(dict_obj):
     if not fp.is_dir():
         with open(str(fp), "w") as to_dump:
             json.dump(obj=dict_obj, fp=to_dump)
+
+
+# Save detection json
+def save_detection_json(save_dir, to_save):
+    
+    save_path = Path(Path(save_dir), "detections.json")
+    if not save_path.exists():
+        save_path.touch(exist_ok=True)
+        with open(str(save_path), "w") as to_s:
+            json.dump(obj={}, fp = to_s)
+
+    # with open(str(save_path), "r") as e:
+    #     detection = json.load(e)
+    #     detection[Path(save_dir).stem] = to_save
+
+    with open(str(save_path), "w") as to_s:
+        json.dump(to_save, to_s, indent=4)
 
 def load_weight():
     DECLAS_ROOT = Path(__file__).resolve().parent.parent

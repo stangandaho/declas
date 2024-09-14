@@ -1,14 +1,15 @@
 import shutil
+from turtle import st
 from PyQt5.uic import loadUi
 from PyQt5.QtCore import Qt, QDir, QThread, pyqtSignal, QUrl
 from PyQt5.QtGui import QIcon, QPixmap, QFontDatabase
 from PyQt5.QtWidgets import QMainWindow, QAction, \
     QFileDialog, QFileSystemModel, QVBoxLayout
-from PyQt5.QtWebEngineWidgets import QWebEngineProfile, QWebEngineView
+from PyQt5.QtWebEngineWidgets import QWebEngineProfile, QWebEngineView, QWebEngineSettings, QWebEnginePage
 import folium
 import sys, torch, os, json
 from pathlib import Path
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Manager
 import pandas as pd
 os.environ['QT_API'] = 'pyqt5'
@@ -35,6 +36,8 @@ try:
     windll.shell32.SetCurrentProcessExplicitAppUserModelID(declas_id)
 except ImportError:
     pass
+
+# 
 
 # 
 
@@ -64,7 +67,9 @@ class Declas(QMainWindow):
             "vid_stride": 1,
             "class_of_interest": "animal",
             "half": False,
-            "run_on_main_dir": False
+            "run_on_main_dir": False,
+            "task": "Detection", 
+            "model_type": "MegaDetectorV6"
         }
 
         dump_json(dict_obj=self.inference_param)
@@ -137,7 +142,23 @@ class Declas(QMainWindow):
 
         # DISPLAY IMAGE METADATA
         self.metadata_text.setReadOnly(True)
+
         # # DISPLAY MAP
+        # Create an off-the-record QWebEngineProfile (no storage name provided)
+        off_record_profile = QWebEngineProfile(self)
+        # Create a QWebEnginePage with the off-the-record profile
+        off_record_page = QWebEnginePage(off_record_profile, self)
+        # Set the off-the-record page on the browser
+        self.display_map.setPage(off_record_page)
+        # Disable persistent storage and cookies for this profile
+        off_record_profile.setHttpCacheType(QWebEngineProfile.NoCache)
+        off_record_profile.setPersistentCookiesPolicy(QWebEngineProfile.NoPersistentCookies)
+
+        # Modify settings to disable local storage and file URL access
+        settings = off_record_profile.settings()
+        settings.setAttribute(QWebEngineSettings.LocalStorageEnabled, False)
+        settings.setAttribute(QWebEngineSettings.LocalContentCanAccessFileUrls, False)
+
         self.leaflet_map(11.108, 2.335, init=True)
 
         # INFERENCE
@@ -162,21 +183,15 @@ class Declas(QMainWindow):
     def leaflet_map(self, lon, lat, init = False):
         # Create a QWebEngineView to display the map
         if init:
-            web_view = self.display_map
-            with open(f"{DECLAS_ROOT}/sources/tile.html") as tile:
-                t = tile.read()
-                web_view.setHtml(t)
+            self.display_map.setUrl(QUrl.fromLocalFile(f"{DECLAS_ROOT}/sources/tile.html"))
         else:
             folium_map = folium.Map(location=[lat, lon], zoom_start=15)
             folium.Marker([lat, lon], popup=f"{lon} | {lat}").add_to(folium_map)
-
-            # Save the map to an HTML file (e.g., `updated_map.html`)
+            # Save the map to an HTML file
             map_path = os.path.abspath(f"{DECLAS_ROOT}/sources/updated_map.html")
             folium_map.save(map_path)
-
             # Load the updated map into QWebEngineView
-            web_view = self.display_map
-            web_view.setUrl(QUrl.fromLocalFile(map_path))  # Update the displayed map
+            self.display_map.setUrl(QUrl.fromLocalFile(map_path))
 
     def import_dc_file(self):
         selected_json = QFileDialog.getOpenFileName(self, "Select json file", ".", "JSON (*json)")
@@ -209,6 +224,8 @@ class Declas(QMainWindow):
         mp.yolo_classes.setItemText(0, current_set["class_of_interest"])
         mp.yolo_half.setChecked(current_set["half"]) #run_on_main_dir
         mp.run_on_main_dir.setChecked(current_set["run_on_main_dir"]) #run_on_main_dir
+        mp.task.setCurrentText(current_set["task"])
+        mp.model_type.setCurrentText(current_set["model_type"])
 
         mp.setWindowModality(Qt.ApplicationModal)
         if mp.exec_() == mp.Accepted:  # If the dialog is accepted
@@ -278,13 +295,14 @@ class Declas(QMainWindow):
         if indexes:
             index = indexes[0]  # We are interested in the first (and only) selected index
             file_path = self.file_model.filePath(index)
+
             global selected_file_path
             selected_file_path = file_path
+            
             # Show navigation button
             self.previous_media.show()
             self.next_media.show()
             self.play_media.show()
-            #self.get_next_and_previous_media(file_path = file_path)
 
             if not self.file_model.isDir(index):
                 self.display_image(file_path)
@@ -331,8 +349,13 @@ class Declas(QMainWindow):
     def get_next_and_previous_media(self):
 
         if selected_folder:
+            if selected_file_path:
+                sf = str(Path(selected_file_path).parent)
+            else:
+                sf = selected_folder
+
             global all_files
-            all_files = [str(fl) for fl in Path(selected_folder).iterdir() if not fl.is_dir() and fl.suffix in MEDIA_SUFFIX]
+            all_files = [str(fl) for fl in Path(sf).iterdir() if not fl.is_dir() and fl.suffix in MEDIA_SUFFIX]
             
             try:
                 idx = all_files.index(str(Path(selected_file_path)))# selected_file_path from on_image_selected()
@@ -396,13 +419,18 @@ class Declas(QMainWindow):
                 missed_path()
                 return
 
-            if model_weight == "":
+            if model_weight == "" or not Path(model_weight).exists():
                 no_weight()
                 return
 
-            to_save = get_results(weights=model_weight, image_path = image_path,
-                                     conf_thres = parameters["conf"], device=parameters["device"],
-                                     class_of_interest=parameters["class_of_interest"], save_json=True)
+            to_save = get_results(weights=model_weight, 
+                                  image_path = image_path, 
+                                  model_type=parameters["model_type"],
+                                  conf_thres = parameters["conf"], 
+                                  device=parameters["device"],
+                                  class_of_interest=parameters["class_of_interest"], 
+                                  save_json=True)
+            print(parameters["conf"])
 
             if to_save:
                 self.view_detection.setEnabled(True)
@@ -412,6 +440,7 @@ class Declas(QMainWindow):
 
         except Exception as e:
             general_error(e)
+
 
     def show_detection(self, image_path):
         try:
@@ -466,10 +495,16 @@ class Declas(QMainWindow):
             invalid_edit()
 
 
-
     def multiple_detection(self):
-        main_subdir = load_json()
+        try:
+            model_weight = load_weight()
+            if model_weight == "" or not Path(model_weight).exists():
+                no_weight()
+                return
+        except Exception as e:
+            f"ERROR: {e}"
 
+        main_subdir = load_json()
         try:
             folder_path = selected_folder
             if folder_path:
@@ -477,7 +512,7 @@ class Declas(QMainWindow):
                 if len(image_inside) == 0 and main_subdir["run_on_main_dir"]:
                     missed_folder()
                     return
-                self.statusbar.showMessage("Running detection ...")
+                self.statusbar.showMessage("Running detection ...", 1000)
                 # Create the worker and pass the folder path
                 self.worker = DetectionWorker(folder_path, main_subdir=main_subdir["run_on_main_dir"],
                                                  conf_thres= main_subdir["conf"])
@@ -611,31 +646,21 @@ def process_directory(dp, log_queue):
 
     model_weight = load_weight()
 
-    all_detection = {}
     if model_weight == "":
         no_weight()
         return
 
     try:
-        all_files = [fls for fls in list(dp.iterdir()) if fls.suffix in [".JPG", ".JPEG", ".jpg", ".jpeg"]]
-        pos = range(1, len(all_files) + 1)
+        detection_model = MegaDetectorV6(device=parameters["device"], 
+                                         weights=model_weight, 
+                                         pretrained=False)
 
-        log_queue.put(f"Processing dir: {dp}")
-
-        for idx, dr in enumerate(all_files):
-            progress_on_dir = f"Image number {pos[idx]} - ({round(pos[idx]*100/len(all_files), 2)}%)"
-            log_queue.put(progress_on_dir)
-
-            #to_save = get_results(image_path=dr, conf_thres=conf_thres)
-
-            to_save = get_results(weights=model_weight, image_path = str(dr),
-                                     conf_thres = parameters["conf"], device=parameters["device"],
-                                     class_of_interest=parameters["class_of_interest"], save_json=False)
-
-            all_detection[Path(dr).stem] = to_save
-
-        with open(str(Path(dp, "detections.json")), "w") as todump:
-            json.dump(obj=all_detection, fp=todump)
+        detection_model.batch_image_detection(dp,
+                                            batch_size=16, 
+                                            conf_thres=parameters["conf"],
+                                            class_of_interest=parameters["class_of_interest"],
+                                            extension="JPG",
+                                            log_queue = log_queue)
 
         return "Completed successfully ✅"
 
@@ -672,6 +697,7 @@ class DetectionWorker(QThread):
     detection_done = pyqtSignal(str)
     error_occurred = pyqtSignal(str)
     log_message = pyqtSignal(str)
+    #progress_signal = pyqtSignal(int)  # Signal to send progress updates
 
     def __init__(self, folder_path, main_subdir, conf_thres=0.55):
         super().__init__()
@@ -690,18 +716,23 @@ class DetectionWorker(QThread):
             dir_path = Path(self.folder_path)
 
             if self.main_subdir:
-                result = process_directory(dir_path, self.log_queue)
-                if "error" in result.lower():
-                    self.error_occurred.emit(result)
-                else:
-                    self.detection_done.emit(result)
+                results = process_directory(dir_path, self.log_queue)
+
+                for result in results:
+                        if "error" in result.lower():
+                            self.error_occurred.emit(result)
+                        else:
+                            self.detection_done.emit(result)
+                
+
             else:
                 all_dirs = [dir for dir in Path(dir_path).iterdir() if dir.is_dir()]
                 for sub_dir in all_dirs:
                     self.log_queue.put(f"ON DIR: {sub_dir}")
                     species_dirs = [dir for dir in Path(sub_dir).iterdir() if dir.is_dir()]
 
-                with ProcessPoolExecutor() as executor:
+                # Use ThreadPoolExecutor instead of ProcessPoolExecutor
+                with ThreadPoolExecutor() as executor:
                     args_list = [(species_dir, self.log_queue) for species_dir in species_dirs]
                     results = executor.map(process_directory_wrapper, args_list)
 
@@ -710,6 +741,7 @@ class DetectionWorker(QThread):
                             self.error_occurred.emit(result)
                         else:
                             self.detection_done.emit(result)
+                            
         finally:
             self.log_emitter.stop()
             self.log_emitter.wait()
