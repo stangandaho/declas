@@ -1,5 +1,6 @@
 from PyQt5.QtWidgets import QApplication
 import sys, os
+from pathlib import Path
 from PyQt5.QtGui import QFont
 
 
@@ -9,6 +10,8 @@ from sources.Declas import Declas
 
 
 if __name__ == "__main__":
+    from multiprocessing import freeze_support
+    freeze_support()  
 
     app = QApplication(sys.argv)
 
