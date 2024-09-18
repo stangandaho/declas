@@ -199,6 +199,7 @@ def exif_table(image_path):
     exif = piexif.load(image_path)
     gps_info = exif.get("GPS")
 
+   # try:
     north_or_south = str(gps_info[1])
     west_or_est = str(gps_info[3])
 
@@ -223,15 +224,39 @@ def exif_table(image_path):
     time_diel = round(time_diel, 3)
 
     out_table = {"Longitude": lon,
-                 "Latitude": lat,
-                 "Altitude": alti,
-                 "Make": device_make,
-                 #"Model": device_model,
-                 "Date": original_date,
-                 "Time": original_time,
-                 "Time in Radian": time_diel}
-    
+                "Latitude": lat,
+                "Altitude": alti,
+                "Make": device_make,
+                #"Model": device_model,
+                "Date": original_date,
+                "Time": original_time,
+                "Time in Radian": time_diel}
+
     return out_table
+
+
+def dect_or_clf_dict(image_path, image_id, count):
+
+    try:
+        exif_data = exif_table(image_path=image_path)
+    except:
+        exif_data = {}
+
+    to_save = {'Image path': f'{image_path}', 
+            'Image': image_id, 
+            'Count':count,
+            "Longitude": exif_data["Longitude"] if exif_data != {} else None,
+            "Latitude": exif_data["Latitude"] if exif_data != {} else None,
+            "Altitude": exif_data["Altitude"] if exif_data != {} else None,
+            "Make": exif_data["Make"] if exif_data != {} else None,
+            #"Model": device_model,
+            "Date": exif_data["Date"] if exif_data != {} else None,
+            "Time": exif_data["Time"] if exif_data != {} else None,
+            "Time in Radian": exif_data["Time in Radian"] if exif_data != {} else None}
+    
+    return to_save
+
+
 
 CONFIG_ROOT = Path(__file__).resolve().parent.parent
 def load_json(fp = Path(CONFIG_ROOT, "config/inference_param.json")):
@@ -262,9 +287,6 @@ def save_detection_json(save_dir, to_save):
         with open(str(save_path), "w") as to_s:
             json.dump(obj={}, fp = to_s)
 
-    # with open(str(save_path), "r") as e:
-    #     detection = json.load(e)
-    #     detection[Path(save_dir).stem] = to_save
 
     with open(str(save_path), "w") as to_s:
         json.dump(to_save, to_s, indent=4)
@@ -279,16 +301,12 @@ def load_weight():
 
     fp = Path(DECLAS_ROOT, "config/model_/mdls/mdl.json")
 
-    available_weight = []
     try:
         with open(str(fp), "r") as weight:
             weights = json.load(fp=weight)
-            for weight_name in weights:
-                path = weights[weight_name]["Path"]
-                available_weight.append(path)
-
     except:
-        available_weight = []
+        weights = None
+        pass
 
-    aw = "" if len(available_weight) == 0 else available_weight[-1]
+    aw = "" if not weights else weights
     return aw

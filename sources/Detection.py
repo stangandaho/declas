@@ -1,26 +1,22 @@
 from PytorchWildlife.models import detection as pw_detection
 from PytorchWildlife.data import transforms as pw_trans
 from pathlib import Path
-import json, sys
+import os, sys
 from PIL import Image
 import numpy as np
+
+sys.path.append(os.path.join(os.path.dirname(__file__)))
 from Bases import *
 from model_type.yolov8.detection.ultralytics_based import MegaDetectorV6
 
-# Set model weight (for MegaDetector6 - YOLOv9)
-# DOWNLOAD_WEIGHT = 'https://zenodo.org/records/11192829/files/MDV6b-yolov9c.pt?download=1'
-# MODEL_PATH = r'D:\Python Projects\megadetector\v6\MDV6b-yolov9c.pt'
-# "https://zenodo.org/records/10042023/files/AI4GAmazonClassification_v0.0.0.ckpt?download=1"
-
-
 
 # Function to get result
-def get_results(weights = "", image_path = "", conf_thres = 0.55, 
+def single_detections(weights = "", image_path = "", conf_thres = 0.55, 
                 model_type = 'MegaDetectorV5', imgsz = (1920, 1440),
                 device="cpu", class_of_interest = "animal", save_json = True):
     
     img = np.array(Image.open(image_path).convert("RGB"))
-    if model_type == 'MegaDetectorV5':
+    if model_type == 'YoloV5':
     
         detection_model = pw_detection.MegaDetectorV5(weights=weights, device=device, pretrained=False)
         transform = pw_trans.MegaDetector_v5_Transform(target_size=detection_model.IMAGE_SIZE,
@@ -28,7 +24,7 @@ def get_results(weights = "", image_path = "", conf_thres = 0.55,
         results = detection_model.single_image_detection(transform(img), img.shape, 
                                                     image_path, conf_thres=conf_thres)
         
-    elif model_type in ["MegaDetectorV6", "DeepFauna"]:
+    elif model_type in ["YoloV8"]:
         detection_model = MegaDetectorV6(weights=weights, device=device, pretrained=False)
         transform = pw_trans.MegaDetector_v5_Transform(target_size=detection_model.IMAGE_SIZE,
                                                 stride=detection_model.STRIDE)
@@ -36,35 +32,83 @@ def get_results(weights = "", image_path = "", conf_thres = 0.55,
                                                          conf_thres=conf_thres)
 
         
-    Path(Path(image_path).parent, "detections").mkdir(exist_ok=True)
     output_dir = Path(Path(image_path).parent, "detections")
+    output_dir.mkdir(exist_ok=True)
     
+    # Save annotated image
     save_detection_images(results=results, output_dir=str(output_dir))
-
-    try:
-        exif_data = exif_table(image_path=image_path)
-    except Exception as e:
-        print(f"ERROR ! - {e}")
-        exif_data = {}
     
     image_id = Path(results.get('img_id')).name # image name
     cn = class_number(results = results, category=class_of_interest)
 
-    to_save = {'Image path': f'{image_path}', 
-                'Image': image_id, 
-                'Count':cn,
-                "Longitude": exif_data["Longitude"] if exif_data != {} else None,
-                "Latitude": exif_data["Latitude"] if exif_data != {} else None,
-                "Altitude": exif_data["Altitude"] if exif_data != {} else None,
-                "Make": exif_data["Make"] if exif_data != {} else None,
-                #"Model": device_model,
-                "Date": exif_data["Date"] if exif_data != {} else None,
-                "Time": exif_data["Time"] if exif_data != {} else None,
-                "Time in Radian": exif_data["Time in Radian"] if exif_data != {} else None}
+    to_save = dect_or_clf_dict(image_path=results.get('img_id'), image_id=image_id, count=cn)
     
     if save_json:
         save_detection_json(save_dir=str(Path(image_path).parent), to_save=to_save)
 
+    return to_save
+
+
+
+# BATCH
+import PytorchWildlife.data as pw_data
+from torch.utils.data import DataLoader
+import PytorchWildlife.utils as pw_utils
+from model_type.bases.detection import PW_baseDetector as pw_detection
+
+def batch_detections(weights = "", data_path = "", conf_thres = 0.55, 
+                model_type = 'MegaDetectorV5', imgsz = (1920, 1440),
+                device="cpu", class_of_interest = "animal", save_json = True,
+                log_queue = None):
+    
+    if model_type == 'YoloV5':
+        detection_model = pw_detection.MegaD5(weights=weights, device=device, pretrained=False)
+        transform = pw_trans.MegaDetector_v5_Transform(target_size=detection_model.IMAGE_SIZE,
+                                                    stride=detection_model.STRIDE)
+        
+        det_dataset = pw_data.DetectionImageFolder(data_path, transform=transform)
+        det_loader = DataLoader(det_dataset, batch_size=16, shuffle=False, pin_memory=True, num_workers=0, drop_last=False)
+
+        det_results = detection_model.batch_detections(det_loader, conf_thres=conf_thres, log_queue=log_queue)
+
+        # Save
+        
+        Path(data_path, "detections").mkdir(exist_ok=True)
+        out_dir = str(Path(data_path, "detections"))
+        pw_utils.save_detection_images(results=det_results, 
+                                       output_dir=out_dir, 
+                                       input_dir=data_path,
+                                       overwrite=False)
+
+        # JSON file to save
+        to_save = {}
+        for rsl in det_results:
+            keys = Path(rsl["img_id"]).stem
+            animal_count = sum([1 for label in rsl['labels'] if class_of_interest in label])
+            det_r = dect_or_clf_dict(image_path=rsl["img_id"], 
+                             image_id=Path(rsl["img_id"]).name, 
+                             count=animal_count)
+            to_save[keys] = det_r
+
+        save_detection_json(save_dir=data_path, to_save=to_save)
+
+    elif model_type == "YoloV8":
+            print("WE ARE HERE")
+            detection_model = MegaDetectorV6(weights=weights,
+                                             device=device, 
+                                            pretrained=False)
+
+            to_save = detection_model.batch_image_detection(data_path = data_path,
+                                                batch_size=16, 
+                                                conf_thres=conf_thres,
+                                                class_of_interest=class_of_interest,
+                                                save_json=save_json,
+                                                extension="JPG",
+                                                log_queue = log_queue)
+            
+    else:
+        pass
+    
     return to_save
 
 
@@ -76,37 +120,3 @@ def get_unique(list):
             l.append(x)
     return l
 
-
-# Batch detection
-def batch_detection(dir_path, conf_thres = 0.55, has_child = True):
-    global on_dir, progress_on_dir
-    
-    all_detection = {}
-    dir_path = Path(dir_path)
-
-    all_files = [fls for fls in list(dir_path.iterdir()) if fls.suffix in [".JPG", ".JPEG", ".jpg", ".jpeg"]]
-    pos = range(1, len(all_files) + 1)
-
-    on_dir = f"\nProcessing dir: {dir_path}"
-    for idx, dr in enumerate(all_files):
-        progress_on_dir = f"Image number {pos[idx]} - ({round(pos[idx]*100/len(all_files), 2)}%)"
-
-        result = get_results(image_path = dr, conf_thres = conf_thres)
-
-        image_id = Path(result.get('img_id')).name # image name
-        cn = class_number(results = result, category='animal')
-        to_save = {'image_path': f'{dr}', 'image': image_id, 'number':cn}
-
-        all_detection[Path(image_id).stem] = to_save
-        
-        # Saving the batch detection results as annotated images
-        batc_output = Path(dr.parent, 'detections')
-        if not batc_output.exists():
-            batc_output.mkdir(exist_ok=True)
-
-        save_detection_images(result, output_dir=batc_output)
-
-        with open(Path(dir_path, "detections.json"), "w") as outfile: 
-            json.dump(all_detection, outfile)
-
-    return all_detection

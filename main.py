@@ -1,6 +1,5 @@
 from PyQt5.QtWidgets import QApplication
 import sys, os
-from pathlib import Path
 from PyQt5.QtGui import QFont
 
 
