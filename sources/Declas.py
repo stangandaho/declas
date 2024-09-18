@@ -12,7 +12,8 @@ from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Manager
 import pandas as pd
-os.environ['QT_API'] = 'pyqt5'
+
+from sources.Classification import batch_classifications, single_classifications
 
 ##
 sys.path.append(os.path.join(os.path.dirname(__file__), 'sources'))
@@ -37,16 +38,13 @@ try:
 except ImportError:
     pass
 
-# 
-
 # 
-
 class Declas(QMainWindow):
     def __init__(self) -> None:
         super(Declas, self).__init__()
         loadUi(f"{DECLAS_ROOT}/ui/Declas.ui", self)
 
-        self.icon_file = os.path.normpath( os.path.join(os.path.dirname(__file__), 'icons', 'logo.jpg') )
+        self.icon_file = os.path.normpath( os.path.join(os.path.dirname(__file__), 'icons', 'logo.png') )
         icon_file = self.icon_file.replace("sources", "")
         self.setWindowIcon(QIcon(icon_file))
         self.setWindowTitle("Declas 1.0.0")
@@ -59,18 +57,26 @@ class Declas(QMainWindow):
 
         self.action_models_parameter.triggered.connect(self.models_parameters)
         # Initialize default inference parameters
-        self.inference_param = {
-            "conf": 0.55,
-            "imgsz": (1920, 1440),
-            "device": "cuda" if torch.cuda.is_available() else "cpu",
-            "max_det": 300,
-            "vid_stride": 1,
-            "class_of_interest": "animal",
-            "half": False,
-            "run_on_main_dir": False,
-            "task": "Detection", 
-            "model_type": "MegaDetectorV6"
-        }
+        if Path(DECLAS_ROOT, "config", "inference_param.json").exists():
+            inf_p = load_json()
+            if inf_p:
+                self.inference_param = inf_p
+        else:
+            self.inference_param = {
+                "conf": 0.55,
+                "clf_conf": 0.55,
+                "imgsz": (1920, 1440),
+                "device": "cuda" if torch.cuda.is_available() else "cpu",
+                "max_det": 300,
+                "vid_stride": 1,
+                "class_of_interest": "animal",
+                "half": False,
+                "run_on_main_dir": False,
+                "task": "Detection", 
+                "model_type": "MegaDetectorV6",
+                "select_det_model": [],
+                "select_clf_model": []
+            }
 
         dump_json(dict_obj=self.inference_param)
         self.image_or_dir = None
@@ -180,18 +186,17 @@ class Declas(QMainWindow):
         ## BUILD DETECTION TABLE
         #self.action_build_table.triggered.connect(self.build_table)
 
-    def leaflet_map(self, lon, lat, init = False):
-        # Create a QWebEngineView to display the map
+    def leaflet_map(self, lon, lat, zoom_start = 12, tile ="OpenStreetMap.France", init = False):
+        
         if init:
-            self.display_map.setUrl(QUrl.fromLocalFile(f"{DECLAS_ROOT}/sources/tile.html"))
+            folium_map = folium.Map(location=[11.108, 2.335], zoom_start=zoom_start, tiles=tile)
+            map_html = folium_map._repr_html_()
+            self.display_map.setHtml(map_html)
         else:
-            folium_map = folium.Map(location=[lat, lon], zoom_start=15)
+            folium_map = folium.Map(location=[lat, lon], zoom_start=zoom_start, tiles=tile)
             folium.Marker([lat, lon], popup=f"{lon} | {lat}").add_to(folium_map)
-            # Save the map to an HTML file
-            map_path = os.path.abspath(f"{DECLAS_ROOT}/sources/updated_map.html")
-            folium_map.save(map_path)
-            # Load the updated map into QWebEngineView
-            self.display_map.setUrl(QUrl.fromLocalFile(map_path))
+            map_html = folium_map._repr_html_()
+            self.display_map.setHtml(map_html)
 
     def import_dc_file(self):
         selected_json = QFileDialog.getOpenFileName(self, "Select json file", ".", "JSON (*json)")
@@ -213,6 +218,7 @@ class Declas(QMainWindow):
 
         mp = ModelParameter()
         mp.yolo_conf.setValue(current_set["conf"]) # conf
+        mp.yolo_clf_conf.setValue(current_set["clf_conf"]) # conf
 
         imgsz = [str(i) for i in current_set["imgsz"]]
         imgsz = " ".join(imgsz) if len(imgsz) == 2 else imgsz
@@ -226,6 +232,12 @@ class Declas(QMainWindow):
         mp.run_on_main_dir.setChecked(current_set["run_on_main_dir"]) #run_on_main_dir
         mp.task.setCurrentText(current_set["task"])
         mp.model_type.setCurrentText(current_set["model_type"])
+        
+        mp.select_det_model.addItems(self.inference_param["select_det_model"])
+        mp.select_clf_model.addItems(self.inference_param["select_clf_model"])
+        if current_set["select_det_model"] != []:
+            mp.select_det_model.setCurrentText(current_set["select_det_model"][0])
+            mp.select_clf_model.setCurrentText(current_set["select_clf_model"][0])
 
         mp.setWindowModality(Qt.ApplicationModal)
         if mp.exec_() == mp.Accepted:  # If the dialog is accepted
@@ -236,6 +248,7 @@ class Declas(QMainWindow):
         global selected_folder
         selected_folder = QFileDialog.getExistingDirectory(self, "Select Folder")
         if selected_folder :
+            IMG_PATH.clear()
             self.image_or_dir = selected_folder
             self.file_model.setRootPath('.')
             self.dir_tree_view.setRootIndex(self.file_model.index(selected_folder))
@@ -272,6 +285,7 @@ class Declas(QMainWindow):
 
 
     def select_an_image(self):
+        IMG_PATH.clear()
         selected_image = QFileDialog.getOpenFileName(self, "Select an image", ".", "Images (*jpg *JPG *jpeg *JPEG)")
         selected_image = selected_image[0]
         if selected_image :
@@ -326,8 +340,15 @@ class Declas(QMainWindow):
                     try:
                         with open(json_path, "r") as det:
                             detections = json.load(fp=det)
-                            detections = detections[Path(file_path).stem]
-                            self.inference_result.setText(str(detections))
+                            # Select right key
+                            right_key = [ky for i, ky in enumerate(list(detections.keys())) if ky.startswith(Path(file_path).stem)]
+                            
+                            if len(right_key) > 1:
+                                txt = "\n\n###\n\n".join([str(detections[ky]) for ky in right_key])
+                                self.inference_result.setText(txt)
+                            else:
+                                detections = detections[right_key[0]]
+                                self.inference_result.setText(str(detections))
                             self.edit_inference.setEnabled(True)
                     except:
                         pass
@@ -349,13 +370,17 @@ class Declas(QMainWindow):
     def get_next_and_previous_media(self):
 
         if selected_folder:
-            if selected_file_path:
-                sf = str(Path(selected_file_path).parent)
-            else:
-                sf = selected_folder
+            try:
+                if selected_file_path:
+                    sf = str(Path(selected_file_path).parent)
+                    global all_files
+                    all_files = [str(fl) for fl in Path(sf).iterdir() if not fl.is_dir() and fl.suffix in MEDIA_SUFFIX]
+                    
+                else:
+                    sf = selected_folder
+            except:
+                pass
 
-            global all_files
-            all_files = [str(fl) for fl in Path(sf).iterdir() if not fl.is_dir() and fl.suffix in MEDIA_SUFFIX]
             
             try:
                 idx = all_files.index(str(Path(selected_file_path)))# selected_file_path from on_image_selected()
@@ -419,19 +444,36 @@ class Declas(QMainWindow):
                 missed_path()
                 return
 
-            if model_weight == "" or not Path(model_weight).exists():
+            if model_weight == "":
                 no_weight()
                 return
-
-            to_save = get_results(weights=model_weight, 
-                                  image_path = image_path, 
-                                  model_type=parameters["model_type"],
-                                  conf_thres = parameters["conf"], 
-                                  device=parameters["device"],
-                                  class_of_interest=parameters["class_of_interest"], 
-                                  save_json=True)
-            print(parameters["conf"])
-
+            
+            if parameters["task"] == "Detection":
+                weights = model_weight[parameters["select_det_model"][0]]["Path"]
+                if not Path(weights).exists():
+                    no_weight()
+                    return
+                to_save = single_detections(weights=weights, 
+                                    image_path = image_path, 
+                                    model_type=parameters["model_type"],
+                                    conf_thres = parameters["conf"], 
+                                    device=parameters["device"],
+                                    class_of_interest=parameters["class_of_interest"], 
+                                    save_json=True)
+            elif parameters["task"] == "Classification":
+                det_weights = model_weight[parameters["select_det_model"][0]]["Path"]
+                clf_weights = model_weight[parameters["select_clf_model"][0]]["Path"]
+                if not all([Path(det_weights).exists(), Path(clf_weights).exists()]) :
+                    no_weight()
+                    return
+                to_save = single_classifications(image_path=image_path,
+                                                 det_weight=det_weights,
+                                                 clf_weight=clf_weights,
+                                                 det_conf_thres=parameters["conf"],
+                                                 clf_conf_thres=parameters["clf_conf"],
+                                                 device=parameters["device"]
+                                                 )
+                
             if to_save:
                 self.view_detection.setEnabled(True)
                 self.edit_inference.setEnabled(True)
@@ -465,9 +507,9 @@ class Declas(QMainWindow):
             missed_path()
             return
 
-        if is_valid_dict(new_value):
+        try:#if is_valid_dict(new_value):
             fpath = [Path(Path(image_path).parent, "detections.json"),
-                         Path(Path(image_path).parent.parent, "detections.json")]
+                            Path(Path(image_path).parent.parent, "detections.json")]
                 
             fpath_exist = [Path(Path(image_path).parent, "detections.json").exists(),
                         Path(Path(image_path).parent.parent, "detections.json").exists()]
@@ -475,10 +517,19 @@ class Declas(QMainWindow):
             if any(fpath_exist):
                 json_path = str(Path(fpath[fpath_exist.index(True)].parent, "detections.json"))
 
-                json_path = str(Path(Path(image_path).parent, "detections.json"))
+                #json_path = str(Path(Path(image_path).parent, "detections.json"))
                 with open(json_path, "r") as det:
                     detections = json.load(fp=det)
-                    detections[Path(image_path).stem] = ast.literal_eval(new_value)
+                    right_key = [ky for i, ky in enumerate(list(detections.keys())) if ky.startswith(Path(image_path).stem)]
+                    
+                    if len(right_key) > 1:
+                        txt_split = new_value.split("\n\n###\n\n")
+                
+                        for ky, txt in zip(right_key, txt_split):
+                            detections[ky] = ast.literal_eval(txt)
+                    else:
+                        keys = right_key[0]
+                        detections[keys] = ast.literal_eval(new_value)
 
                 with open(json_path, "w") as out_file:
                     json.dump(obj=detections, fp=out_file, indent=4)
@@ -491,7 +542,7 @@ class Declas(QMainWindow):
                 out_file.close()
             self.statusbar.showMessage("Change applied ✅", 1000)
 
-        else:
+        except:#else:
             invalid_edit()
 
 
@@ -537,9 +588,15 @@ class Declas(QMainWindow):
         self.statusbar.showMessage(message, 5000)  # Show error message for 5 seconds
 
     def add_model(self):
-        model_path = QFileDialog.getOpenFileName(caption="Select a model", directory=".", filter="Models (*.pt *.onnx)")
+        model_path = QFileDialog.getOpenFileName(caption="Select a model", directory=".", filter="Models (*.pt *.onnx *.ckpt)")
         model_path = model_path[0]
         if model_path:
+            # ADD WEIGHT TO select_det_model and select_clf_model
+            self.inference_param["select_det_model"].append(Path(model_path).stem)
+            self.inference_param["select_clf_model"].append(Path(model_path).stem)
+            dump_json(dict_obj=self.inference_param)
+            
+
             file_path = Path(f"{DECLAS_ROOT}/config/model_/mdls/mdl.json")
             file_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -560,9 +617,11 @@ class Declas(QMainWindow):
                     "Add date": datetime.today().strftime('%Y-%m-%d %H:%M:%S')
                 }
 
+            
             with open(str(file_path), "w") as mdl:
                 json.dump(current_state, mdl)
                 self.statusbar.showMessage(f"Weight {Path(model_path).stem.lower()} added", 8*1000)
+                
 
         else:
             self.statusbar.showMessage(f"Weight cannot be added", 8*1000)
@@ -643,26 +702,43 @@ class Declas(QMainWindow):
 ## QThread
 def process_directory(dp, log_queue):
     parameters = load_json()
-
     model_weight = load_weight()
+    extension = [x.suffix for x in Path(dp).iterdir()][0]
 
     if model_weight == "":
         no_weight()
         return
-
+        
     try:
-        detection_model = MegaDetectorV6(device=parameters["device"], 
-                                         weights=model_weight, 
-                                         pretrained=False)
+        if parameters["task"] == "Detection":
+            weights = model_weight[parameters["select_det_model"][0]]["Path"]
+            if not Path(weights).exists():
+                    no_weight()
+                    return
+            
+            batch_detections(weights=weights, data_path=dp, 
+                            conf_thres=parameters["conf"],
+                            model_type=parameters["model_type"],
+                            device=parameters["device"],
+                            class_of_interest=parameters["class_of_interest"],
+                            log_queue=log_queue)
+            
+        elif parameters["task"] == "Classification":
+                det_weights = model_weight[parameters["select_det_model"][0]]["Path"]
+                clf_weights = model_weight[parameters["select_clf_model"][0]]["Path"]
+                if not all([Path(det_weights).exists(), Path(clf_weights).exists()]) :
+                    no_weight()
+                    return
+                to_save = batch_classifications(data_path=dp,
+                                                extension=extension,
+                                                 det_weight=det_weights,
+                                                 clf_weight=clf_weights,
+                                                 det_thres=parameters["conf"],
+                                                 clf_thres=parameters["clf_conf"],
+                                                 device=parameters["device"]
+                                                 )
 
-        detection_model.batch_image_detection(dp,
-                                            batch_size=16, 
-                                            conf_thres=parameters["conf"],
-                                            class_of_interest=parameters["class_of_interest"],
-                                            extension="JPG",
-                                            log_queue = log_queue)
-
-        return "Completed successfully ✅"
+        return "Completed successfully"
 
     except Exception as e:
         return f"An error occurred: {str(e)}"

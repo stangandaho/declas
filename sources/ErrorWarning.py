@@ -4,7 +4,7 @@ import os
 
 #icon_file
 # Set dialog icon
-icon_file = os.path.normpath( os.path.join(os.path.dirname(__file__), 'icons', 'logo.jpg') )
+icon_file = os.path.normpath( os.path.join(os.path.dirname(__file__), 'icons', 'png.jpg') )
 icon_file = icon_file.replace("sources", "")
 
 def general_error(error):

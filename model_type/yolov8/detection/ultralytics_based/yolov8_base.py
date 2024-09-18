@@ -4,11 +4,8 @@
 """ YoloV8 base detector class. """
 
 # Importing basic libraries
-
 import os
-from glob import glob
 from queue import Queue
-from cv2 import log
 import supervision as sv
 
 from ultralytics.models import yolo
@@ -21,7 +18,7 @@ from PytorchWildlife.data import datasets as pw_data
 
 from pathlib import Path
 from PytorchWildlife import utils as pw_utils 
-from sources.Bases import exif_table, save_detection_json
+from sources.Bases import *
 
 class YOLOV8Base(BaseDetector):
     """
@@ -187,7 +184,7 @@ class YOLOV8Base(BaseDetector):
                 pbar.update(1)
 
                 if log_queue:
-                    log_queue.put(f"Progress: {round((pbar.n/pbar.total)*100, 2)}%")
+                    log_queue.put(f"Detection progress: {round((pbar.n/pbar.total)*100, 2)}%")
                 results.extend(batch_results)
 
 
@@ -201,26 +198,11 @@ class YOLOV8Base(BaseDetector):
                 animal_count = sum([1 for label in detection['labels'] if class_of_interest in label])
                 
                 # Extract exif data
-                try:
-                    exif_data = exif_table(image_path=img_path)
-                except Exception as e:
-                    print(f"ERROR ! - {e}")
-                    exif_data = {}
-                
                 image_id = Path(img_path).name # image name
-
-                to_save = {'Image path': f'{img_path}', 
-                            'Image': image_id, 
-                            'Count':animal_count,
-                            "Longitude": exif_data["Longitude"] if exif_data != {} else None,
-                            "Latitude": exif_data["Latitude"] if exif_data != {} else None,
-                            "Altitude": exif_data["Altitude"] if exif_data != {} else None,
-                            "Make": exif_data["Make"] if exif_data != {} else None,
-                            #"Model": device_model,
-                            "Date": exif_data["Date"] if exif_data != {} else None,
-                            "Time": exif_data["Time"] if exif_data != {} else None,
-                            "Time in Radian": exif_data["Time in Radian"] if exif_data != {} else None}
-                
+                to_save = dect_or_clf_dict(image_path=img_path, 
+                                           image_id=image_id, 
+                                           count = animal_count)
+  
                 # Prepare the result dictionary
                 result[img_stem] = to_save
 
