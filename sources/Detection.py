@@ -5,7 +5,8 @@ import os, sys
 from PIL import Image
 import numpy as np
 
-sys.path.append(os.path.join(os.path.dirname(__file__)))
+parent_dir = os.path.dirname(os.path.dirname(__file__))
+sys.path.append(parent_dir)
 from Bases import *
 from model_type.yolov8.detection.ultralytics_based import MegaDetectorV6
 
@@ -82,18 +83,22 @@ def batch_detections(weights = "", data_path = "", conf_thres = 0.55,
 
         # JSON file to save
         to_save = {}
+        main_dir = load_json()
         for rsl in det_results:
             keys = Path(rsl["img_id"]).stem
             animal_count = sum([1 for label in rsl['labels'] if class_of_interest in label])
             det_r = dect_or_clf_dict(image_path=rsl["img_id"], 
                              image_id=Path(rsl["img_id"]).name, 
                              count=animal_count)
+            ## Add station and species from directory
+            if not main_dir["run_on_main_dir"]:
+                det_r["Station"] = Path(rsl["img_id"]).parent.parent.name
+                det_r["Species"] = Path(rsl["img_id"]).parent.name
             to_save[keys] = det_r
 
         save_detection_json(save_dir=data_path, to_save=to_save)
 
     elif model_type == "YoloV8":
-            print("WE ARE HERE")
             detection_model = MegaDetectorV6(weights=weights,
                                              device=device, 
                                             pretrained=False)

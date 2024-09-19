@@ -20,9 +20,9 @@ This guide will provide step-by-step instructions to install and run the Declas 
 
 ## Table of Contents
 
-1. [Windows Installation](#windows-installation-🪟)
-2. [Linux Installation](#linux-installation-🐧)
-2. [macOS Installation](#macos-installation-🍏)
+1. [Windows Installation](#windows-installation-)
+2. [Linux Installation](#linux-installation-)
+2. [macOS Installation](#macos-installation-)
 4. [Troubleshooting](#troubleshooting)
 
 ---

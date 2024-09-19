@@ -1,7 +1,10 @@
+import sys, os
+parent_dir = os.path.dirname(os.path.dirname(__file__))
+sys.path.append(parent_dir)
+
 from model_type.bases.classification.baseClassifier import baseClassifier
 
 base_clf = baseClassifier()
-
 
 def single_classifications(image_path, det_weight, clf_weight, 
                            det_conf_thres, clf_conf_thres, device):

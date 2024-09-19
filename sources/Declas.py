@@ -1,3 +1,4 @@
+from random import choice
 import shutil
 from turtle import st
 from PyQt5.uic import loadUi
@@ -7,16 +8,17 @@ from PyQt5.QtWidgets import QMainWindow, QAction, \
     QFileDialog, QFileSystemModel, QVBoxLayout
 from PyQt5.QtWebEngineWidgets import QWebEngineProfile, QWebEngineView, QWebEngineSettings, QWebEnginePage
 import folium
+from numpy import Inf
 import sys, torch, os, json
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Manager
 import pandas as pd
 
-from sources.Classification import batch_classifications, single_classifications
 
 ##
 sys.path.append(os.path.join(os.path.dirname(__file__), 'sources'))
+from Classification import batch_classifications, single_classifications
 from ModelParameter import ModelParameter
 from WeightTable import WeightTable
 from Bases import *
@@ -98,10 +100,10 @@ class Declas(QMainWindow):
         globe = QAction(QIcon(f"{DECLAS_ROOT}/icons/globe.png"), "Show on map", self)
         globe.triggered.connect(self.show_on_map)
 
-        run_inference = QAction(QIcon(f"{DECLAS_ROOT}/icons/run.png"), "Run Declas on single image", self)
+        run_inference = QAction(QIcon(f"{DECLAS_ROOT}/icons/run.png"), "Run single image", self)
         run_inference.triggered.connect(self.single_detection)
 
-        batch_inference = QAction(QIcon(f"{DECLAS_ROOT}/icons/batch.png"), "Run Declas on folder(s)", self)
+        batch_inference = QAction(QIcon(f"{DECLAS_ROOT}/icons/batch.png"), "Run folder(s)", self)
         batch_inference.triggered.connect(self.multiple_detection)
 
         buil_tables = QAction(QIcon(f"{DECLAS_ROOT}/icons/table.png"), "Construct table from detection/classification", self)
@@ -186,17 +188,22 @@ class Declas(QMainWindow):
         ## BUILD DETECTION TABLE
         #self.action_build_table.triggered.connect(self.build_table)
 
-    def leaflet_map(self, lon, lat, zoom_start = 12, tile ="OpenStreetMap.France", init = False):
+    def leaflet_map(self, lon, lat, zoom_start = 12, init = False):
         
         if init:
-            folium_map = folium.Map(location=[11.108, 2.335], zoom_start=zoom_start, tiles=tile)
-            map_html = folium_map._repr_html_()
-            self.display_map.setHtml(map_html)
+            self.display_map.setUrl(QUrl.fromLocalFile(f"{DECLAS_ROOT}/sources/tile.html"))
         else:
-            folium_map = folium.Map(location=[lat, lon], zoom_start=zoom_start, tiles=tile)
-            folium.Marker([lat, lon], popup=f"{lon} | {lat}").add_to(folium_map)
-            map_html = folium_map._repr_html_()
+            m = folium.Map(
+            location=[lat, lon],
+            zoom_start=zoom_start,
+            tiles='https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png',
+            attr='&copy; OpenStreetMap France | &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            )
+            folium.Marker([lat, lon], popup=f"{lon} | {lat}").add_to(m)
+            # Generate HTML for the map in memory (without saving)
+            map_html = m.get_root().render()
             self.display_map.setHtml(map_html)
+
 
     def import_dc_file(self):
         selected_json = QFileDialog.getOpenFileName(self, "Select json file", ".", "JSON (*json)")
@@ -392,14 +399,13 @@ class Declas(QMainWindow):
 
             
     def show_previous_media(self):
-        if self.current_selected_media > 0:
-            self.current_selected_media -= 1 
-
-            try:
+        try:
+            if self.current_selected_media > 0:
+                self.current_selected_media -= 1 
                 previous_med = all_files[self.current_selected_media]
                 self.display_image(previous_med)
-            except Exception as e:
-                pass
+        except:
+            pass
         
     
     def show_next_media(self):
@@ -448,11 +454,13 @@ class Declas(QMainWindow):
                 no_weight()
                 return
             
+            self.statusbar.showMessage("Running...")
             if parameters["task"] == "Detection":
                 weights = model_weight[parameters["select_det_model"][0]]["Path"]
                 if not Path(weights).exists():
                     no_weight()
                     return
+                
                 to_save = single_detections(weights=weights, 
                                     image_path = image_path, 
                                     model_type=parameters["model_type"],
@@ -473,7 +481,7 @@ class Declas(QMainWindow):
                                                  clf_conf_thres=parameters["clf_conf"],
                                                  device=parameters["device"]
                                                  )
-                
+            self.statusbar.showMessage("Running...", 1000)  
             if to_save:
                 self.view_detection.setEnabled(True)
                 self.edit_inference.setEnabled(True)
@@ -555,19 +563,19 @@ class Declas(QMainWindow):
         except Exception as e:
             f"ERROR: {e}"
 
-        main_subdir = load_json()
         try:
+            main_subdir = load_json()
             folder_path = selected_folder
             if folder_path:
                 image_inside = [fls for fls in list(Path(folder_path).iterdir()) if fls.suffix in [".JPG", ".JPEG", ".jpg", ".jpeg"]]
                 if len(image_inside) == 0 and main_subdir["run_on_main_dir"]:
                     missed_folder()
                     return
-                self.statusbar.showMessage("Running detection ...", 1000)
                 # Create the worker and pass the folder path
                 self.worker = DetectionWorker(folder_path, main_subdir=main_subdir["run_on_main_dir"],
                                                  conf_thres= main_subdir["conf"])
                 # Connect the signals to the appropriate slots
+                self.worker.status_update.connect(self.on_status_update)
                 self.worker.detection_done.connect(self.on_detection_done)
                 self.worker.error_occurred.connect(self.on_detection_error)
                 self.worker.log_message.connect(self.update_log)
@@ -575,17 +583,20 @@ class Declas(QMainWindow):
                 self.worker.start()
             else:
                 missed_folder()
-        except Exception as e:
+        except:
             missed_folder()
 
     def update_log(self, message):
         self.batch_detection_log.append(message)
 
+    def on_status_update(self, message):
+        self.statusbar.showMessage(message)
+
     def on_detection_done(self, message):
-        self.statusbar.showMessage(message, 5000)  # Show message for 5 seconds
+        self.statusbar.showMessage(message, 5000)
 
     def on_detection_error(self, message):
-        self.statusbar.showMessage(message, 5000)  # Show error message for 5 seconds
+        self.statusbar.showMessage(message, 5000)
 
     def add_model(self):
         model_path = QFileDialog.getOpenFileName(caption="Select a model", directory=".", filter="Models (*.pt *.onnx *.ckpt)")
@@ -737,8 +748,8 @@ def process_directory(dp, log_queue):
                                                  clf_thres=parameters["clf_conf"],
                                                  device=parameters["device"]
                                                  )
-
-        return "Completed successfully"
+        emoji = ['\U0001F38A', '\U0001F389', '\u2705', '\U0001F917']
+        return f"Completed successfully {choice(emoji)}"
 
     except Exception as e:
         return f"An error occurred: {str(e)}"
@@ -773,7 +784,7 @@ class DetectionWorker(QThread):
     detection_done = pyqtSignal(str)
     error_occurred = pyqtSignal(str)
     log_message = pyqtSignal(str)
-    #progress_signal = pyqtSignal(int)  # Signal to send progress updates
+    status_update = pyqtSignal(str)
 
     def __init__(self, folder_path, main_subdir, conf_thres=0.55):
         super().__init__()
@@ -789,16 +800,16 @@ class DetectionWorker(QThread):
         self.log_emitter.start()
 
         try:
+            self.status_update.emit("Running ...")
             dir_path = Path(self.folder_path)
 
             if self.main_subdir:
                 results = process_directory(dir_path, self.log_queue)
 
-                for result in results:
-                        if "error" in result.lower():
-                            self.error_occurred.emit(result)
-                        else:
-                            self.detection_done.emit(result)
+                if "error" in results.lower():
+                    self.error_occurred.emit(results)
+                else:
+                    self.detection_done.emit(results)
                 
 
             else:
@@ -812,11 +823,15 @@ class DetectionWorker(QThread):
                     args_list = [(species_dir, self.log_queue) for species_dir in species_dirs]
                     results = executor.map(process_directory_wrapper, args_list)
 
-                    for result in results:
-                        if "error" in result.lower():
-                            self.error_occurred.emit(result)
-                        else:
-                            self.detection_done.emit(result)
+                    emoji = ['\U0001F38A', '\U0001F389', '\u2705', '\U0001F917']
+                    msg = f"Completed successfully {choice(emoji)}"
+
+                    has_error = ['error' in x.lower() for x in results]
+                    if any(has_error):
+                        error_index = [x for x, y in enumerate(has_error) if y == True]
+                        self.error_occurred.emit(results[error_index[0]])
+                    else:
+                        self.detection_done.emit(msg)
                             
         finally:
             self.log_emitter.stop()

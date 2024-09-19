@@ -12,9 +12,10 @@ class ModelParameter(QDialog):
    def __init__(self) -> None:
       super(ModelParameter, self).__init__()
       loadUi(f"{DECLAS_ROOT}/ui/ModelParameters.ui", self)
-      self.setWindowFlags(Qt.Window | Qt.CustomizeWindowHint | Qt.WindowTitleHint)
-      self.icon_file = str(Path( Path(__file__).parent.parent, 'icons', 'logo.png'))
-      self.setWindowIcon(QIcon(self.icon_file))
+      icon_file = str(Path( Path(__file__).parent.parent, 'icons', 'logo.png'))
+      self.setWindowIcon(QIcon(icon_file))
+      self.setWindowFlags(Qt.WindowCloseButtonHint)
+      self.setWindowTitle("Inference parameters")
       # Set font size for the entire window
 
       self.inference_param = None
