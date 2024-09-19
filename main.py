@@ -5,6 +5,7 @@ from PyQt5.QtGui import QFont
 
 # Add the directory containing 'sources' to sys.path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'sources'))
+ 
 from sources.Declas import Declas
 
 

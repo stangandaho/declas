@@ -20,7 +20,6 @@ def class_number(results = dict, category = str):
 
     return len(l)
 
-
 def get_metadata(image_path):
     # Extract and display metadata using Pillow
     try:

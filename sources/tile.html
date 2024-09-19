@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Map</title>
+    <!-- Leaflet CSS for styling the map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <!-- Leaflet JavaScript library -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+</head>
+<body>
+    <!-- The map will be rendered inside this div -->
+    <div id="map" style="height: 600px;"></div>
+
+    <script>
+        // Initialize the map and set its view to the specified coordinates and zoom level
+        var map = L.map('map').setView([11.108, 2.335], 8);
+
+        // Add the OpenStreetMap tile layer to the map
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19, // Maximum zoom level
+            attribution: '© OpenStreetMap contributors' // Attribution text
+        }).addTo(map);
+    </script>
+</body>
+</html>

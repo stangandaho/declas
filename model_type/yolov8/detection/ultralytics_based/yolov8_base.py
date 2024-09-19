@@ -199,11 +199,15 @@ class YOLOV8Base(BaseDetector):
                 
                 # Extract exif data
                 image_id = Path(img_path).name # image name
+                main_dir = load_json()
                 to_save = dect_or_clf_dict(image_path=img_path, 
                                            image_id=image_id, 
                                            count = animal_count)
+                if not main_dir["run_on_main_dir"]:
+                    to_save["Station"] = Path(img_path).parent.parent.name
+                    to_save["Species"] = Path(img_path).parent.name
   
-                # Prepare the result dictionary
+        
                 result[img_stem] = to_save
 
         Path(data_path, "detections").mkdir(exist_ok=True)
