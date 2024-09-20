@@ -16,7 +16,7 @@ class WeightTable(QWidget):
       font = QFont()
       font.setPointSize(12)  # Set font size to 12 points
       self.setFont(font)
-      self.icon_file = os.path.normpath( os.path.join(os.path.dirname(__file__), 'icons', 'logo.jpg') )
+      self.icon_file = os.path.normpath( os.path.join(os.path.dirname(__file__), 'icons', 'logo.png') )
       icon_file = self.icon_file.replace("sources", "")
       self.setWindowIcon(QIcon(icon_file))
 
