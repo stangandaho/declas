@@ -8,7 +8,6 @@ from PyQt5.QtWidgets import QMainWindow, QAction, \
     QFileDialog, QFileSystemModel, QVBoxLayout
 from PyQt5.QtWebEngineWidgets import QWebEngineProfile, QWebEngineView, QWebEngineSettings, QWebEnginePage
 import folium
-from numpy import Inf
 import sys, torch, os, json
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
@@ -193,16 +192,11 @@ class Declas(QMainWindow):
         if init:
             self.display_map.setUrl(QUrl.fromLocalFile(f"{DECLAS_ROOT}/sources/tile.html"))
         else:
-            m = folium.Map(
-            location=[lat, lon],
-            zoom_start=zoom_start,
-            tiles='https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png',
-            attr='&copy; OpenStreetMap France | &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            )
-            folium.Marker([lat, lon], popup=f"{lon} | {lat}").add_to(m)
-            # Generate HTML for the map in memory (without saving)
-            map_html = m.get_root().render()
-            self.display_map.setHtml(map_html)
+            folium_map = folium.Map(location=[lat, lon], zoom_start=zoom_start)
+            folium.Marker([lat, lon], popup=f"{lon} | {lat}").add_to(folium_map)
+            map_path = os.path.abspath(f"{DECLAS_ROOT}/sources/updated_map.html")
+            folium_map.save(map_path)
+            self.display_map.setUrl(QUrl.fromLocalFile(map_path))
 
 
     def import_dc_file(self):
@@ -814,24 +808,35 @@ class DetectionWorker(QThread):
 
             else:
                 all_dirs = [dir for dir in Path(dir_path).iterdir() if dir.is_dir()]
+                if len(all_dirs) == 0:
+                    self.error_occurred.emit("\u274C Choose a directory with structure 'deployment/station/species'")
+                    return
+                
                 for sub_dir in all_dirs:
                     self.log_queue.put(f"ON DIR: {sub_dir}")
                     species_dirs = [dir for dir in Path(sub_dir).iterdir() if dir.is_dir()]
+                    if len(species_dirs) == 0:
+                        self.error_occurred.emit("\u274C Choose a directory with structure 'deployment/station/species'")
+                        return
 
                 # Use ThreadPoolExecutor instead of ProcessPoolExecutor
-                with ThreadPoolExecutor() as executor:
-                    args_list = [(species_dir, self.log_queue) for species_dir in species_dirs]
-                    results = executor.map(process_directory_wrapper, args_list)
+                    try:
+                        with ThreadPoolExecutor() as executor:
+                            args_list = [(species_dir, self.log_queue) for species_dir in species_dirs]
+                            results = executor.map(process_directory_wrapper, args_list)
 
-                    emoji = ['\U0001F38A', '\U0001F389', '\u2705', '\U0001F917']
-                    msg = f"Completed successfully {choice(emoji)}"
+                            emoji = ['\U0001F38A', '\U0001F389', '\u2705', '\U0001F917']
+                            msg = f"Completed successfully {choice(emoji)}"
 
-                    has_error = ['error' in x.lower() for x in results]
-                    if any(has_error):
-                        error_index = [x for x, y in enumerate(has_error) if y == True]
-                        self.error_occurred.emit(results[error_index[0]])
-                    else:
-                        self.detection_done.emit(msg)
+                            has_error = ['error' in x.lower() for x in results]
+                            if any(has_error):
+                                error_index = [x for x, y in enumerate(has_error) if y == True]
+                                self.error_occurred.emit(results[error_index[0]])
+                            else:
+                                self.detection_done.emit(msg)
+                    except Exception as e:
+                        self.log_queue.put(f"Error processing directory {sub_dir}: {e}")
+                        continue
                             
         finally:
             self.log_emitter.stop()
