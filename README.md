@@ -1,7 +1,7 @@
-## Declas - Species Detection and Recognition Software
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10495310.svg)](https://doi.org/10.5281/zenodo.13821950)
 
-
-Declas is a software tool designed for detecting and recognizing species in camera trap data. It leverages computer vision techniques to detecte animal and identify different species, saving the for data processing and cleanning, and improving the accuracy of data analysis.
+## Automated Wildlife Detection and Species Classification
+Declas is an open source software designed for animal detection and species classification on camera trap data. It leverages computer vision models, saving the time for data processing and cleaning, and improving the accuracy of data analysis.
 
 ![Declas Interface](https://raw.githubusercontent.com/stangandaho/declas/main/app_interface.jpg?raw=true)
 
@@ -30,7 +30,7 @@ This guide will provide step-by-step instructions to install and run the Declas 
 ---
 
 ### Option 1: Run Executable
-1. [Download](#) the zip file.
+1. [Download](https://zenodo.org/records/13821950/files/Declas.zip?download=1) the zip file.
 
 2. Unzipe the downloaded file and go into `Declas` folder. Double-click `Declas.exe` file to launch the software.
 3. Create a shortcut on Desktop (optional) pressig `Shift` + `Right click` on `Declas.exe`. Got to `Send to` -> `Desktop (create shortcut)`. On the Desktop, the shortcut can be renamed as `Declas`.
