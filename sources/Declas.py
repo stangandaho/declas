@@ -4,9 +4,8 @@ from turtle import st
 from PyQt5.uic import loadUi
 from PyQt5.QtCore import Qt, QDir, QThread, pyqtSignal, QUrl
 from PyQt5.QtGui import QIcon, QPixmap, QFontDatabase
-from PyQt5.QtWidgets import QMainWindow, QAction, \
-    QFileDialog, QFileSystemModel, QVBoxLayout
-from PyQt5.QtWebEngineWidgets import QWebEngineProfile, QWebEngineView, QWebEngineSettings, QWebEnginePage
+from PyQt5.QtWidgets import QMainWindow, QAction, QFileDialog, QFileSystemModel
+from PyQt5.QtWebEngineWidgets import QWebEngineProfile, QWebEngineSettings, QWebEnginePage
 import folium
 import sys, torch, os, json
 from pathlib import Path
@@ -17,6 +16,7 @@ import pandas as pd
 
 ##
 sys.path.append(os.path.join(os.path.dirname(__file__), 'sources'))
+os.environ['YOLO_VERBOSE'] = 'False'
 from Classification import batch_classifications, single_classifications
 from ModelParameter import ModelParameter
 from WeightTable import WeightTable
@@ -192,11 +192,16 @@ class Declas(QMainWindow):
         if init:
             self.display_map.setUrl(QUrl.fromLocalFile(f"{DECLAS_ROOT}/sources/tile.html"))
         else:
-            folium_map = folium.Map(location=[lat, lon], zoom_start=zoom_start)
-            folium.Marker([lat, lon], popup=f"{lon} | {lat}").add_to(folium_map)
-            map_path = os.path.abspath(f"{DECLAS_ROOT}/sources/updated_map.html")
-            folium_map.save(map_path)
-            self.display_map.setUrl(QUrl.fromLocalFile(map_path))
+            m = folium.Map(
+            location=[lat, lon],
+            zoom_start=zoom_start,
+            tiles='https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png',
+            attr='&copy; OpenStreetMap France | &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            )
+            folium.Marker([lat, lon], popup=f"{lon} | {lat}").add_to(m)
+            # Generate HTML for the map in memory (without saving)
+            map_html = m.get_root().render()
+            self.display_map.setHtml(map_html)
 
 
     def import_dc_file(self):
@@ -282,7 +287,7 @@ class Declas(QMainWindow):
                 except Exception as e:
                     f"ERROR: {e}"
 
-        self.statusbar.showMessage("Split applied ✅", 1000)
+        self.statusbar.showMessage("Split applied \u2705", 1000)
 
 
     def select_an_image(self):
@@ -298,6 +303,14 @@ class Declas(QMainWindow):
                 self.metadata_text.setText(metadata_i)
             except:
                 self.metadata_text.setText(get_metadata(selected_image))
+            
+            # Add inference if available
+            fpath = Path(Path(selected_image).parent, "detections.json")
+
+            if fpath.exists():
+                txt = split_json_from_path(fpath, selected_image)
+                self.inference_result.setText(txt)
+                self.edit_inference.setEnabled(True)
 
             IMG_PATH.append(selected_image)
             return selected_image
@@ -339,18 +352,9 @@ class Declas(QMainWindow):
                     json_path = str(Path(fpath[fpath_exist.index(True)].parent, "detections.json"))
                     
                     try:
-                        with open(json_path, "r") as det:
-                            detections = json.load(fp=det)
-                            # Select right key
-                            right_key = [ky for i, ky in enumerate(list(detections.keys())) if ky.startswith(Path(file_path).stem)]
-                            
-                            if len(right_key) > 1:
-                                txt = "\n\n###\n\n".join([str(detections[ky]) for ky in right_key])
-                                self.inference_result.setText(txt)
-                            else:
-                                detections = detections[right_key[0]]
-                                self.inference_result.setText(str(detections))
-                            self.edit_inference.setEnabled(True)
+                        txt = split_json_from_path(json_path=json_path, image_path=file_path)
+                        self.inference_result.setText(str(txt))
+                        self.edit_inference.setEnabled(True)
                     except:
                         pass
 
@@ -475,12 +479,13 @@ class Declas(QMainWindow):
                                                  clf_conf_thres=parameters["clf_conf"],
                                                  device=parameters["device"]
                                                  )
-            self.statusbar.showMessage("Running...", 1000)  
+            
             if to_save:
                 self.view_detection.setEnabled(True)
                 self.edit_inference.setEnabled(True)
 
-            self.inference_result.setText(f"{to_save}")
+
+            self.inference_result.setText(split_json_obj(json_obj=to_save))
 
         except Exception as e:
             general_error(e)
@@ -522,7 +527,7 @@ class Declas(QMainWindow):
                 #json_path = str(Path(Path(image_path).parent, "detections.json"))
                 with open(json_path, "r") as det:
                     detections = json.load(fp=det)
-                    right_key = [ky for i, ky in enumerate(list(detections.keys())) if ky.startswith(Path(image_path).stem)]
+                    right_key = [ky for _, ky in enumerate(list(detections.keys())) if ky.startswith(Path(image_path).stem)]
                     
                     if len(right_key) > 1:
                         txt_split = new_value.split("\n\n###\n\n")
@@ -536,17 +541,10 @@ class Declas(QMainWindow):
                 with open(json_path, "w") as out_file:
                     json.dump(obj=detections, fp=out_file, indent=4)
 
-            else:
-                SINGLE_DETECTION[str(Path(image_path).stem)] = ast.literal_eval(new_value)
-
-                out_file = open(str(Path(Path(image_path).parent, "detections.json")), "w")
-                json.dump(SINGLE_DETECTION, out_file, indent = 4)
-                out_file.close()
-            self.statusbar.showMessage("Change applied ✅", 1000)
+            self.statusbar.showMessage("Change applied \u2705", 5000)
 
         except:#else:
             invalid_edit()
-
 
     def multiple_detection(self):
         try:
@@ -569,7 +567,6 @@ class Declas(QMainWindow):
                 self.worker = DetectionWorker(folder_path, main_subdir=main_subdir["run_on_main_dir"],
                                                  conf_thres= main_subdir["conf"])
                 # Connect the signals to the appropriate slots
-                self.worker.status_update.connect(self.on_status_update)
                 self.worker.detection_done.connect(self.on_detection_done)
                 self.worker.error_occurred.connect(self.on_detection_error)
                 self.worker.log_message.connect(self.update_log)
@@ -582,9 +579,6 @@ class Declas(QMainWindow):
 
     def update_log(self, message):
         self.batch_detection_log.append(message)
-
-    def on_status_update(self, message):
-        self.statusbar.showMessage(message)
 
     def on_detection_done(self, message):
         self.statusbar.showMessage(message, 5000)
@@ -721,7 +715,7 @@ def process_directory(dp, log_queue):
                     no_weight()
                     return
             
-            batch_detections(weights=weights, data_path=dp, 
+            to_save = batch_detections(weights=weights, data_path=dp, 
                             conf_thres=parameters["conf"],
                             model_type=parameters["model_type"],
                             device=parameters["device"],
@@ -742,6 +736,7 @@ def process_directory(dp, log_queue):
                                                  clf_thres=parameters["clf_conf"],
                                                  device=parameters["device"]
                                                  )
+        
         emoji = ['\U0001F38A', '\U0001F389', '\u2705', '\U0001F917']
         return f"Completed successfully {choice(emoji)}"
 
@@ -778,7 +773,6 @@ class DetectionWorker(QThread):
     detection_done = pyqtSignal(str)
     error_occurred = pyqtSignal(str)
     log_message = pyqtSignal(str)
-    status_update = pyqtSignal(str)
 
     def __init__(self, folder_path, main_subdir, conf_thres=0.55):
         super().__init__()
@@ -794,12 +788,12 @@ class DetectionWorker(QThread):
         self.log_emitter.start()
 
         try:
-            self.status_update.emit("Running ...")
+            #self.status_update.emit("Running ...")
             dir_path = Path(self.folder_path)
 
             if self.main_subdir:
                 results = process_directory(dir_path, self.log_queue)
-
+               
                 if "error" in results.lower():
                     self.error_occurred.emit(results)
                 else:
@@ -813,7 +807,7 @@ class DetectionWorker(QThread):
                     return
                 
                 for sub_dir in all_dirs:
-                    self.log_queue.put(f"ON DIR: {sub_dir}")
+                    self.log_queue.put(f"\U0001F504 RUNNING ON DIR: {sub_dir}\n")
                     species_dirs = [dir for dir in Path(sub_dir).iterdir() if dir.is_dir()]
                     if len(species_dirs) == 0:
                         self.error_occurred.emit("\u274C Choose a directory with structure 'deployment/station/species'")

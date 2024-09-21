@@ -168,7 +168,7 @@
            <enum>QTabWidget::Rounded</enum>
           </property>
           <property name="currentIndex">
-           <number>1</number>
+           <number>2</number>
           </property>
           <property name="movable">
            <bool>true</bool>
@@ -230,7 +230,7 @@
                </font>
               </property>
               <property name="styleSheet">
-               <string notr="true">background-color: white;</string>
+               <string notr="true"/>
               </property>
               <property name="frameShape">
                <enum>QFrame::NoFrame</enum>

@@ -290,6 +290,27 @@ def save_detection_json(save_dir, to_save):
     with open(str(save_path), "w") as to_s:
         json.dump(to_save, to_s, indent=4)
 
+
+def split_json_from_path(json_path, image_path, spliter = "\n\n###\n\n"):
+    with open(json_path, "r") as det:
+        detections = json.load(fp=det)
+    right_key = [ky for _, ky in enumerate(list(detections.keys())) if ky.startswith(Path(image_path).stem)]
+    if len(right_key) > 1:
+        txt_split = spliter.join([str(detections[ky]) for ky in right_key])
+    else:
+        txt_split = detections[right_key[0]]
+    
+    return txt_split
+
+def split_json_obj(json_obj, spliter = "\n\n###\n\n"):
+    right_key = [ky for _, ky in enumerate(list(json_obj.keys())) ]
+    if len(right_key) > 1:
+        txt_split = spliter.join([str(json_obj[ky]) for ky in right_key])
+    else:
+        txt_split = json_obj[right_key[0]]
+    
+    return txt_split
+
 def load_weight():
     DECLAS_ROOT = Path(__file__).resolve().parent.parent
     Path(DECLAS_ROOT, "config/model_/mdls").mkdir(parents=True, exist_ok=True)
