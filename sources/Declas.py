@@ -4,7 +4,7 @@ from turtle import st
 from PyQt5.uic import loadUi
 from PyQt5.QtCore import Qt, QDir, QThread, pyqtSignal, QUrl
 from PyQt5.QtGui import QIcon, QPixmap, QFontDatabase
-from PyQt5.QtWidgets import QMainWindow, QAction, QFileDialog, QFileSystemModel
+from PyQt5.QtWidgets import QMainWindow, QAction, QFileDialog, QFileSystemModel, QApplication
 from PyQt5.QtWebEngineWidgets import QWebEngineProfile, QWebEngineSettings, QWebEnginePage
 import folium
 import sys, torch, os, json
@@ -374,8 +374,8 @@ class Declas(QMainWindow):
 
     def get_next_and_previous_media(self):
 
-        if selected_folder:
-            try:
+        try:
+            if selected_folder:
                 if selected_file_path:
                     sf = str(Path(selected_file_path).parent)
                     global all_files
@@ -383,17 +383,13 @@ class Declas(QMainWindow):
                     
                 else:
                     sf = selected_folder
-            except:
-                pass
 
-            
-            try:
                 idx = all_files.index(str(Path(selected_file_path)))# selected_file_path from on_image_selected()
                 self.current_selected_media = idx
                 return idx, all_files
-            
-            except Exception as e:
-                f"ERROR {e}"
+                
+        except:
+            pass
 
             
     def show_previous_media(self):
@@ -407,13 +403,13 @@ class Declas(QMainWindow):
         
     
     def show_next_media(self):
-        if self.current_selected_media >= 0 and self.current_selected_media < (len(all_files) - 1):
-            self.current_selected_media += 1
-            try:
+        try:
+            if self.current_selected_media >= 0 and self.current_selected_media < (len(all_files) - 1):
+                self.current_selected_media += 1
                 previous_med = all_files[self.current_selected_media]
                 self.display_image(previous_med)
-            except Exception as e:
-                pass
+        except:
+            pass
 
 
 
@@ -453,6 +449,8 @@ class Declas(QMainWindow):
                 return
             
             self.statusbar.showMessage("Running...")
+            QApplication.processEvents()  # Force the UI to update immediately
+            
             if parameters["task"] == "Detection":
                 weights = model_weight[parameters["select_det_model"][0]]["Path"]
                 if not Path(weights).exists():
@@ -466,6 +464,8 @@ class Declas(QMainWindow):
                                     device=parameters["device"],
                                     class_of_interest=parameters["class_of_interest"], 
                                     save_json=True)
+                to_save = split_json_obj(json_obj=to_save, classif=False)
+                
             elif parameters["task"] == "Classification":
                 det_weights = model_weight[parameters["select_det_model"][0]]["Path"]
                 clf_weights = model_weight[parameters["select_clf_model"][0]]["Path"]
@@ -479,13 +479,14 @@ class Declas(QMainWindow):
                                                  clf_conf_thres=parameters["clf_conf"],
                                                  device=parameters["device"]
                                                  )
-            
+                to_save = split_json_obj(json_obj=to_save)
+            self.statusbar.showMessage("Running...", 1000)
             if to_save:
                 self.view_detection.setEnabled(True)
                 self.edit_inference.setEnabled(True)
 
+                self.inference_result.setText(to_save)
 
-            self.inference_result.setText(split_json_obj(json_obj=to_save))
 
         except Exception as e:
             general_error(e)
@@ -529,7 +530,9 @@ class Declas(QMainWindow):
                     detections = json.load(fp=det)
                     right_key = [ky for _, ky in enumerate(list(detections.keys())) if ky.startswith(Path(image_path).stem)]
                     
-                    if len(right_key) > 1:
+                    if right_key == []: # single detection
+                        detections = ast.literal_eval(new_value)
+                    elif len(right_key) > 1: #classification
                         txt_split = new_value.split("\n\n###\n\n")
                 
                         for ky, txt in zip(right_key, txt_split):
