@@ -30,7 +30,8 @@ This guide will provide step-by-step instructions to install and run the Declas 
 ---
 
 ### Option 1: Run Executable
-1. [Download](https://zenodo.org/records/13821950/files/Declas.zip?download=1) the zip file.
+1. [Download](https://zenodo.org/records/13858887/files/Declas.zip?download=1) the zip file.
+
 
 2. Unzipe the downloaded file and go into `Declas` folder. Double-click `Declas.exe` file to launch the software.
 3. Create a shortcut on Desktop (optional) pressig `Shift` + `Right click` on `Declas.exe`. Got to `Send to` -> `Desktop (create shortcut)`. On the Desktop, the shortcut can be renamed as `Declas`.

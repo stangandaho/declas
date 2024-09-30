@@ -25,7 +25,7 @@ def single_detections(weights = "", image_path = "", conf_thres = 0.55,
         results = detection_model.single_image_detection(transform(img), img.shape, 
                                                     image_path, conf_thres=conf_thres)
         
-    elif model_type in ["YoloV8"]:
+    elif model_type in ["YoloV8/9"]:
         detection_model = MegaDetectorV6(weights=weights, device=device, pretrained=False)
         transform = pw_trans.MegaDetector_v5_Transform(target_size=detection_model.IMAGE_SIZE,
                                                 stride=detection_model.STRIDE)
@@ -98,7 +98,7 @@ def batch_detections(weights = "", data_path = "", conf_thres = 0.55,
 
         save_detection_json(save_dir=data_path, to_save=to_save)
 
-    elif model_type == "YoloV8":
+    elif model_type == "YoloV8/9":
             detection_model = MegaDetectorV6(weights=weights,
                                              device=device, 
                                             pretrained=False)
