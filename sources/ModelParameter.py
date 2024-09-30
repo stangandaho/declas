@@ -29,7 +29,8 @@ class ModelParameter(QDialog):
 
       # CLASSIF OR DETECTION MODEL
       
-      self.model_type.addItems(["YoloV5", "YoloV8"])
+      self.model_type.addItems(["YoloV5", "YoloV8/9"])
+      self.model_type.currentTextChanged.connect(self.update_model_type_show)
       self.model_type.setCurrentIndex(0)
       self.model_type.setDuplicatesEnabled(False)
 
@@ -67,12 +68,21 @@ class ModelParameter(QDialog):
              return(640)
           
    def update_model_type_show(self):
-       if self.task.currentText() == "Classification":
+       if self.task.currentText() == "Classification" and self.model_type.currentText() == "YoloV5":
+           self.select_clf_model.show()
+           self.clf_model_label.show()
+           self.select_det_model.show()
+           self.det_model_label.show()
+       elif self.task.currentText() == "Classification" and self.model_type.currentText() == "YoloV8/9":
+           self.select_det_model.hide()
+           self.det_model_label.hide()
            self.select_clf_model.show()
            self.clf_model_label.show()
        else:
            self.select_clf_model.hide()
            self.clf_model_label.hide()
+           self.select_det_model.show()
+           self.det_model_label.show()
 
 
    def move_to_first_position(self, lst, selected_item):
