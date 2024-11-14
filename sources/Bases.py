@@ -20,7 +20,7 @@ def class_number(results = dict, category = str):
 
     return len(l)
 
-def get_metadata(image_path):
+def get_metadata(image_path, to_dict = False):
     # Extract and display metadata using Pillow
     try:
         image = Image.open(image_path)
@@ -46,6 +46,7 @@ def get_metadata(image_path):
                     gps_data = metadata_str
                 else:
                     metadata_str += f"{tag_name}: {value}\n"
+                    gps_data = None
 
             return metadata_str, gps_data
         else:
@@ -99,8 +100,6 @@ def format_gps_info(gps_info):
 
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
-
-
 
 # !!! Output paths need to be optimized !!!
 def save_detection_images(results, output_dir, input_dir = None, overwrite=False):
@@ -197,19 +196,21 @@ def time_to_radians(time_str):
 def exif_table(image_path):
     exif = piexif.load(image_path)
     gps_info = exif.get("GPS")
+    
+    if not gps_info:
+        lon = lat = alti = None
+    else:
+        north_or_south = str(gps_info[1])
+        west_or_est = str(gps_info[3])
 
-   # try:
-    north_or_south = str(gps_info[1])
-    west_or_est = str(gps_info[3])
+        lon = gps_info[4][0][0] + (gps_info[4][1][0])/60.0 + (gps_info[4][2][0])/3600.0
+        lat = gps_info[2][0][0] + (gps_info[2][1][0])/60.0 + (gps_info[2][2][0])/3600.0
 
-    lon = gps_info[4][0][0] + (gps_info[4][1][0])/60.0 + (gps_info[4][2][0])/3600.0
-    lat = gps_info[2][0][0] + (gps_info[2][1][0])/60.0 + (gps_info[2][2][0])/3600.0
+        lon = -lon if "S" in north_or_south else lon
+        lat = -lon if "W" in west_or_est else lat
+        lon = round(lon, 3); lat = round(lat, 3)
 
-    lon = -lon if "S" in north_or_south else lon
-    lat = -lon if "W" in west_or_est else lat
-    lon = round(lon, 3); lat = round(lat, 3)
-
-    alti = gps_info[6][0]
+        alti = gps_info[6][0]
 
     device_make = str(exif["0th"][271]).replace("b", "").replace("'", "")
     #device_model = exif["0th"][272].decode('utf-8')
