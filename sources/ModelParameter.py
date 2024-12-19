@@ -5,6 +5,8 @@ from PyQt5.QtGui import QIcon
 from pathlib import Path
 import torch
 
+from sources.Bases import get_unique
+
 
 DECLAS_ROOT = Path(__file__).resolve().parent.parent
 
@@ -90,7 +92,7 @@ class ModelParameter(QDialog):
       if selected_item in lst:
          lst.remove(selected_item)  # Remove the selected item from its current position
          lst.insert(0, selected_item)  # Insert it at the beginning (index 0)
-      return lst
+      return get_unique(lst)
 
    def save_inference_parameters(self):
       yolo_conf = self.yolo_conf.value()
@@ -123,8 +125,8 @@ class ModelParameter(QDialog):
                               "run_on_main_dir": run_on_main_dir,
                               "task": task, 
                               "model_type": model_type,
-                              "select_det_model": select_det_model,
-                              "select_clf_model": select_clf_model
+                              "select_det_model": get_unique(select_det_model),
+                              "select_clf_model": get_unique(select_clf_model)
                               }
       
       self.accept()

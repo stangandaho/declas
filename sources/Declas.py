@@ -84,7 +84,7 @@ class Declas(QMainWindow):
         self.model_weight = load_weight()
 
         # IMPORT FILE
-        self.action_import_dc_file.triggered.connect(self.import_dc_file)
+        self.action_import_dc_file.triggered.connect(self.import_dc_file) # dc = declas
         self.action_quit.triggered.connect(self.quit_declas)
         # MODE
         #self.action_dark.triggered.connect(self.set_dark_mode)
