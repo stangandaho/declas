@@ -1,4 +1,4 @@
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10495310.svg)](https://doi.org/10.5281/zenodo.13821950)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10495310.svg)](https://doi.org/10.5281/zenodo.14166440)
 
 ## Automated Wildlife Detection and Species Classification
 Declas is an open source software designed for animal detection and species classification on camera trap data. It leverages computer vision models, saving the time for data processing and cleaning, and improving the accuracy of data analysis.
