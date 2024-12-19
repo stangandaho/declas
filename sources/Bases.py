@@ -338,3 +338,22 @@ def load_weight():
 
     aw = "" if not weights else weights
     return aw
+
+
+def get_unique(list: list):
+    """
+    Remove duplicate elements from a list while preserving order.
+
+    Args:
+        list (list): The list from which duplicates need to be removed.
+
+    Returns:
+        list: A new list containing only unique elements from the original list, in the same order.
+    """
+    inner_list = []
+    for l in list:
+        if l not in inner_list:
+            inner_list.append(l)
+
+    print(5644)
+    return inner_list
