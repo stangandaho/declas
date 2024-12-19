@@ -32,8 +32,8 @@ This guide will provide step-by-step instructions to install and run the Declas 
 ### Option 1: Run Executable
 1. [Download](https://zenodo.org/records/14166440/files/Declas.zip?download=1) the zip file.
 
-2. Unzipe the downloaded file and go into `Declas` folder. Double-click `Declas.exe` file to launch the software.
-3. Create a shortcut on Desktop (optional) pressig `Shift` + `Right click` on `Declas.exe`. Got to `Send to` -> `Desktop (create shortcut)`. On the Desktop, the shortcut can be renamed as `Declas`.
+2. Unzip the downloaded file and go into `Declas` folder. Double-click `Declas.exe` file to launch the software.
+3. Create a shortcut on Desktop (optional) pressing `Shift` + `Right click` on `Declas.exe`. Got to `Send to` -> `Desktop (create shortcut)`. On the Desktop, the shortcut can be renamed as `Declas`.
 
 ### Option 2: Install from source
 ### 1. Install Prerequisites
@@ -114,11 +114,11 @@ To clone the repository, Git must be installed. [Install Git](https://git-scm.co
 It's a good idea to use a virtual environment to isolate dependencies. Set up a virtual environment with:
 
 ```bash
-python3 -m venv venv
-source venv/bin/activate
+python3 -m venv .venv
+source .venv/bin/activate
 ```
 
-You'll need to activate the virtual environment doing: `source venv/bin/activate`.
+You'll need to activate the virtual environment doing: `source .venv/bin/activate`.
 
 ### 2. Clone the Repository
 Once Git is installed, clone the repository using the following commands:
