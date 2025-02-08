@@ -62,6 +62,8 @@ class Declas(QMainWindow):
             inf_p = load_json()
             if inf_p:
                 self.inference_param = inf_p
+                self.inference_param['select_det_model'] = get_unique(self.inference_param['select_det_model'])
+                self.inference_param['select_clf_model'] = get_unique(self.inference_param['select_clf_model'])
         else:
             self.inference_param = {
                 "conf": 0.55,
@@ -198,11 +200,11 @@ class Declas(QMainWindow):
             tiles='https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png',
             attr='&copy; OpenStreetMap France | &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             )
+           
             folium.Marker([lat, lon], popup=f"{lon} | {lat}").add_to(m)
             # Generate HTML for the map in memory (without saving)
             map_html = m.get_root().render()
             self.display_map.setHtml(map_html)
-
 
     def import_dc_file(self):
         selected_json = QFileDialog.getOpenFileName(self, "Select json file", ".", "JSON (*json)")
@@ -306,9 +308,9 @@ class Declas(QMainWindow):
             
             # Add inference if available
             fpath = Path(Path(selected_image).parent, "detections.json")
-
             if fpath.exists():
                 txt = split_json_from_path(fpath, selected_image)
+                txt = f"{txt}"
                 self.inference_result.setText(txt)
                 self.edit_inference.setEnabled(True)
 
@@ -426,8 +428,8 @@ class Declas(QMainWindow):
                 gps_i = gps_i.split(sep="\n")
                 lat = float(gps_i[1].split(sep=":")[1].strip().split(sep=" ")[0].strip())
                 lon = float(gps_i[2].split(sep=":")[1].strip().split(sep=" ")[0].strip())
-                alt = float(gps_i[3].split(sep=":")[1].strip().split(sep=" ")[0].strip())
-
+                #alt = float(gps_i[3].split(sep=":")[1].strip().split(sep=" ")[0].strip())
+                
                 self.leaflet_map(lat = lat, lon = lon)
 
             except:
