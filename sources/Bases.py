@@ -28,10 +28,13 @@ def get_metadata(image_path, to_dict = False):
 
         if exif_data:
             metadata_str = ""
+            gps_data = None
             for tag_id, value in exif_data.items():
                 tag_name = ExifTags.TAGS.get(tag_id, tag_id)
-
-                if tag_name in ["MakerNote", "ComponentsConfiguration", "FileSource", "SceneType"]:
+                
+                if tag_name in ["MakerNote", "ComponentsConfiguration",
+                                "UserComment", "CompressedBitsPerPixel", 
+                                "ImageDescription", "FileSource", "SceneType"]:
                     continue
                 
                 if isinstance(value, bytes):
@@ -40,19 +43,18 @@ def get_metadata(image_path, to_dict = False):
                         value = value.decode('utf-8', 'ignore')
                     except UnicodeDecodeError:
                         value = "Binary data (not displayable)"
-
+                
                 if tag_name == "GPSInfo":
                     metadata_str += format_gps_info(value)
                     gps_data = metadata_str
                 else:
                     metadata_str += f"{tag_name}: {value}\n"
-                    gps_data = None
 
             return metadata_str, gps_data
         else:
             return "No metadata found."
     except Exception as e:
-        return  f"Failed to retrieve metadata: {e}"
+        return  f"Failed to retrieve metadata:\n {e}"
 
 
 def format_gps_info(gps_info):
@@ -89,11 +91,13 @@ def format_gps_info(gps_info):
         if 6 in gps_info:
             alt = gps_info[6]
             gps_str += f"  Altitude: {alt} meters\n"
+        else:
+            gps_str += f"  Altitude: {None}\n"
         
         # Other GPS info
-        for key in gps_info:
-            if key not in [1, 2, 3, 4, 6]:  # Skip already processed tags
-                gps_str += f"  {ExifTags.GPSTAGS.get(key, key)}: {gps_info[key]}\n"
+        # for key in gps_info:
+        #     if key not in [1, 2, 3, 4, 6]:  # Skip already processed tags
+        #         gps_str += f"  {ExifTags.GPSTAGS.get(key, key)}: {gps_info[key]}\n"
 
         return gps_str
 
@@ -148,7 +152,6 @@ def save_detection_images(results, output_dir, input_dir = None, overwrite=False
 
 
 import ast
-
 def is_valid_dict(output):
     try:
         # Attempt to parse the string as a dictionary
@@ -230,7 +233,7 @@ def exif_table(image_path):
                 #"Model": device_model,
                 "Date": original_date,
                 "Time": original_time,
-                "Time in Radian": time_diel}
+                "Time in radians": time_diel}
 
     return out_table
 
@@ -252,7 +255,7 @@ def dect_or_clf_dict(image_path, image_id, count):
             #"Model": device_model,
             "Date": exif_data["Date"] if exif_data != {} else None,
             "Time": exif_data["Time"] if exif_data != {} else None,
-            "Time in Radian": exif_data["Time in Radian"] if exif_data != {} else None}
+            "Time in radians": exif_data["Time in radians"] if exif_data != {} else None}
     
     return to_save
 
@@ -355,5 +358,4 @@ def get_unique(list: list):
         if l not in inner_list:
             inner_list.append(l)
 
-    print(5644)
     return inner_list
