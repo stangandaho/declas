@@ -14,6 +14,7 @@ sys.stderr = log_file
 sys.path.append(os.path.join(os.path.dirname(__file__), 'sources'))
 from sources.Declas import Declas
 
+
 if __name__ == "__main__":
     from multiprocessing import freeze_support
     freeze_support()  

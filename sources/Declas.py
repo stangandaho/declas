@@ -6,6 +6,8 @@ from PyQt5.QtCore import Qt, QDir, QThread, pyqtSignal, QUrl
 from PyQt5.QtGui import QIcon, QPixmap, QFontDatabase
 from PyQt5.QtWidgets import QMainWindow, QAction, QFileDialog, QFileSystemModel, QApplication
 from PyQt5.QtWebEngineWidgets import QWebEngineProfile, QWebEngineSettings, QWebEnginePage
+from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
+from PyQt5.QtMultimediaWidgets import QVideoWidget
 import folium
 import sys, torch, os, json
 from pathlib import Path
@@ -17,20 +19,35 @@ import pandas as pd
 ##
 sys.path.append(os.path.join(os.path.dirname(__file__), 'sources'))
 os.environ['YOLO_VERBOSE'] = 'False'
-from Classification import batch_classifications, single_classifications
+from Classification import (extension_single_classification,
+                            extension_batch_classification,
+                            extension_video_classification)
 from ModelParameter import ModelParameter
-from WeightTable import WeightTable
 from Bases import *
-from Detection import *
 from ErrorWarning import *
+from ExtensionDialog import ExtensionManagerDialog, PublishGuidelinesDialog
 
 ##
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-IMG_END = ["*.JPG", "*.JPEG", "*.jpg", "*.jpeg"]
-MEDIA_SUFFIX = [".JPG", ".JPEG", ".jpg", ".jpeg", ".mp4"]
+
+# Scan installed model extensions at startup
+try:
+    from model_extensions._loader import scan_extensions as _scan_extensions, load_adapter as _load_adapter
+    INSTALLED_EXTENSIONS = _scan_extensions()
+except Exception:
+    INSTALLED_EXTENSIONS = {}
+
+IMAGE_EXT  = {".JPG", ".JPEG", ".jpg", ".jpeg"}
+VIDEO_EXT  = {".mp4", ".avi", ".mov", ".mkv", ".MP4", ".AVI", ".MOV", ".MKV"}
+
+MEDIA_SUFFIX = [f"*{ext}" for ext in IMAGE_EXT | VIDEO_EXT] #["*.JPG", "*.JPEG", "*.jpg", "*.jpeg", "*.mp4", "*.avi"]
+MEDIA_EXT  = {p.lstrip("*") for p in MEDIA_SUFFIX} # suffix comparison set
+
 IMG_PATH = []
 SINGLE_DETECTION = {}
 DECLAS_ROOT = Path(__file__).resolve().parent.parent
+
+MESSAGE_DELAY = 7000
 
 try:
     from ctypes import windll  # Only exists on Windows.
@@ -48,7 +65,7 @@ class Declas(QMainWindow):
         self.icon_file = os.path.normpath( os.path.join(os.path.dirname(__file__), 'icons', 'logo.png') )
         icon_file = self.icon_file.replace("sources", "")
         self.setWindowIcon(QIcon(icon_file))
-        self.setWindowTitle("Declas 1.0.0")
+        self.setWindowTitle("Declas 1.1.0")
 
         # Load a custom font
         font_path = str(Path(DECLAS_ROOT, "sources/styles/Montserrat-Regular.ttf"))
@@ -62,23 +79,19 @@ class Declas(QMainWindow):
             inf_p = load_json()
             if inf_p:
                 self.inference_param = inf_p
-                self.inference_param['select_det_model'] = get_unique(self.inference_param['select_det_model'])
-                self.inference_param['select_clf_model'] = get_unique(self.inference_param['select_clf_model'])
         else:
             self.inference_param = {
                 "conf": 0.55,
-                "clf_conf": 0.55,
                 "imgsz": (1920, 1440),
                 "device": "cuda" if torch.cuda.is_available() else "cpu",
                 "max_det": 300,
-                "vid_stride": 1,
+                "vid_stride": 5,
                 "class_of_interest": "animal",
                 "half": False,
                 "run_on_main_dir": False,
-                "task": "Detection", 
-                "model_type": "MegaDetectorV6",
-                "select_det_model": [],
-                "select_clf_model": []
+                "process_video": True,
+                "task": "Detection",
+                "model_type": "",
             }
 
         dump_json(dict_obj=self.inference_param)
@@ -95,13 +108,14 @@ class Declas(QMainWindow):
         select_dir = QAction(QIcon(f"{DECLAS_ROOT}/icons/folder.png"), "Select directory", self)
         select_dir.triggered.connect(self.select_folder)
 
-        select_image = QAction(QIcon(f"{DECLAS_ROOT}/icons/image.png"), "Select image", self)
+        select_image = QAction(QIcon(f"{DECLAS_ROOT}/icons/image.png"), "Select media", self)
+        select_image.setToolTip("Select a single image or video")
         select_image.triggered.connect(self.select_an_image)
 
         globe = QAction(QIcon(f"{DECLAS_ROOT}/icons/globe.png"), "Show on map", self)
         globe.triggered.connect(self.show_on_map)
 
-        run_inference = QAction(QIcon(f"{DECLAS_ROOT}/icons/run.png"), "Run single image", self)
+        run_inference = QAction(QIcon(f"{DECLAS_ROOT}/icons/run.png"), "Run on current media", self)
         run_inference.triggered.connect(self.single_detection)
 
         batch_inference = QAction(QIcon(f"{DECLAS_ROOT}/icons/batch.png"), "Run folder(s)", self)
@@ -129,7 +143,7 @@ class Declas(QMainWindow):
         self.file_model = QFileSystemModel()
 
         self.file_model.setFilter(QDir.NoDotAndDotDot | QDir.AllDirs | QDir.Files)
-        self.file_model.setNameFilters(IMG_END)
+        self.file_model.setNameFilters(MEDIA_SUFFIX)
         self.file_model.setNameFilterDisables(False)
 
         self.dir_tree_view.setModel(self.file_model)
@@ -140,7 +154,7 @@ class Declas(QMainWindow):
         self.dir_tree_view.selectionModel().selectionChanged.connect(self.on_image_selected)
         self.dir_tree_view.selectionModel().selectionChanged.connect(self.get_next_and_previous_media)
 
-        # DISPLAY IMAGE
+        # DISPLAY IMAGE / VIDEO
         self.previous_media.hide()
         self.next_media.hide()
         self.play_media.hide()
@@ -148,6 +162,29 @@ class Declas(QMainWindow):
         self.previous_media.clicked.connect(self.show_previous_media)
         self.next_media.clicked.connect(self.show_next_media)
         self.current_selected_media = None
+
+        # VIDEO PLAYER
+        self._slider_dragging = False
+        self.media_player = QMediaPlayer(self, QMediaPlayer.VideoSurface)
+        self.media_player.setVideoOutput(self.video_display)
+
+        self.play_media.clicked.connect(self.toggle_play_pause)
+        self.jump_back_btn.clicked.connect(self.jump_backward)
+        self.jump_forward_btn.clicked.connect(self.jump_forward)
+
+        self.media_player.positionChanged.connect(self._on_position_changed)
+        self.media_player.durationChanged.connect(self._on_duration_changed)
+        self.media_player.stateChanged.connect(self._on_player_state_changed)
+
+        self.video_seek_slider.sliderPressed.connect(self._on_slider_pressed)
+        self.video_seek_slider.sliderReleased.connect(self._on_slider_released)
+
+        self._set_video_controls_visible(False)
+
+        # Ensure image page is shown at startup and video area is never black
+        self.media_stack.setCurrentIndex(0)
+        self.video_page.setStyleSheet("background-color: white;")
+        self.video_display.setStyleSheet("background-color: white;")
 
         # DISPLAY IMAGE METADATA
         self.metadata_text.setReadOnly(True)
@@ -182,9 +219,17 @@ class Declas(QMainWindow):
         # LOG
         self.batch_detection_log.setReadOnly(True)
 
-        # ADD MODEL
-        self.action_add_models.triggered.connect(self.add_model)
-        self.action_show_models.triggered.connect(self.show_model)
+        # MODEL EXTENSIONS
+        ext_action = QAction(QIcon(f"{DECLAS_ROOT}/icons/extensions.png"), "Extensions", self)
+        ext_action.setToolTip("Browse and install model extensions from the online registry")
+        ext_action.triggered.connect(self.open_extensions)
+        self.menuModels.addAction(ext_action)
+
+        # PUBLISH GUIDELINES
+        pub_action = QAction(QIcon(f"{DECLAS_ROOT}/icons/publish.png"), "Publish", self)
+        pub_action.setToolTip("Learn how to publish your own model extension")
+        pub_action.triggered.connect(self.open_publish_guidelines)
+        self.menuModels.addAction(pub_action)
 
         ## BUILD DETECTION TABLE
         #self.action_build_table.triggered.connect(self.build_table)
@@ -212,7 +257,7 @@ class Declas(QMainWindow):
 
         if selected_json:
             self.image_or_dir = selected_json
-            self.statusbar.showMessage("File imported ✅", 5000)
+            self.statusbar.showMessage("File imported ✅", MESSAGE_DELAY)
 
     def quit_declas(self):
             sys.exit()
@@ -225,8 +270,7 @@ class Declas(QMainWindow):
         current_set = load_json()
 
         mp = ModelParameter()
-        mp.yolo_conf.setValue(current_set["conf"]) # conf
-        mp.yolo_clf_conf.setValue(current_set["clf_conf"]) # conf
+        mp.yolo_conf.setValue(current_set["conf"])
 
         imgsz = [str(i) for i in current_set["imgsz"]]
         imgsz = " ".join(imgsz) if len(imgsz) == 2 else imgsz
@@ -235,18 +279,18 @@ class Declas(QMainWindow):
         mp.yolo_device.setItemText(0, current_set["device"])
         mp.yolo_max_det.setValue(current_set["max_det"]) # max_det
         mp.yolo_vid_stride.setValue(current_set["vid_stride"]) # vid_stride
-        mp.yolo_classes.setItemText(0, current_set["class_of_interest"])
-        mp.yolo_half.setChecked(current_set["half"]) #run_on_main_dir
-        mp.run_on_main_dir.setChecked(current_set["run_on_main_dir"]) #run_on_main_dir
+        mp.yolo_classes.setCurrentText(current_set["class_of_interest"])
+        mp.yolo_half.setChecked(current_set["half"])
+        mp.run_on_main_dir.setChecked(current_set["run_on_main_dir"])
+        mp.process_video.setChecked(current_set.get("process_video", True))
         mp.task.setCurrentText(current_set["task"])
-        mp.model_type.setCurrentText(current_set["model_type"])
+        saved_mt = current_set["model_type"]
+        idx = mp.model_type.findData(saved_mt)   # extension: match by userData
+        if idx >= 0:
+            mp.model_type.setCurrentIndex(idx)
+        else:
+            mp.model_type.setCurrentText(saved_mt)  # built-in: match by text
         
-        mp.select_det_model.addItems(self.inference_param["select_det_model"])
-        mp.select_clf_model.addItems(self.inference_param["select_clf_model"])
-        if current_set["select_det_model"] != []:
-            mp.select_det_model.setCurrentText(current_set["select_det_model"][0])
-            mp.select_clf_model.setCurrentText(current_set["select_clf_model"][0])
-
         mp.setWindowModality(Qt.ApplicationModal)
         if mp.exec_() == mp.Accepted:  # If the dialog is accepted
             self.inference_param = mp.inference_param
@@ -294,28 +338,23 @@ class Declas(QMainWindow):
 
     def select_an_image(self):
         IMG_PATH.clear()
-        selected_image = QFileDialog.getOpenFileName(self, "Select an image", ".", "Images (*jpg *JPG *jpeg *JPEG)")
-        selected_image = selected_image[0]
-        if selected_image :
-            self.display_image(selected_image)
-            self.image_or_dir = selected_image
-
-            try:
-                metadata_i, _ = get_metadata(selected_image)
-                self.metadata_text.setText(metadata_i)
-            except:
-                self.metadata_text.setText(get_metadata(selected_image))
-            
-            # Add inference if available
-            fpath = Path(Path(selected_image).parent, "detections.json")
-            if fpath.exists():
-                txt = split_json_from_path(fpath, selected_image)
-                txt = f"{txt}"
-                self.inference_result.setText(txt)
-                self.edit_inference.setEnabled(True)
-
-            IMG_PATH.append(selected_image)
-            return selected_image
+        selected_media, _ = QFileDialog.getOpenFileName(
+            self, "Select media", ".",
+            "All media (*.jpg *.JPG *.jpeg *.JPEG *.mp4 *.MP4 *.avi *.AVI *.mov *.MOV *.mkv *.MKV);;"
+            "Images (*.jpg *.JPG *.jpeg *.JPEG);;"
+            "Videos (*.mp4 *.MP4 *.avi *.AVI *.mov *.MOV *.mkv *.MKV)"
+        )
+        if selected_media:
+            self.image_or_dir = selected_media
+            self._display_media(selected_media)
+            self._update_metadata(selected_media)
+            self._update_inference_result(selected_media)
+            # Show nav buttons so the user can browse siblings
+            self.previous_media.show()
+            self.next_media.show()
+            self.play_media.show()
+            IMG_PATH.append(selected_media)
+            return selected_media
         
 
     def on_image_selected(self, selected):
@@ -335,30 +374,11 @@ class Declas(QMainWindow):
             self.play_media.show()
 
             if not self.file_model.isDir(index):
-                self.display_image(file_path)
+                self._display_media(file_path)
+                self._update_metadata(file_path)
 
-                try:
-                    metadata_i, _ = get_metadata(file_path)
-                    self.metadata_text.setText(metadata_i)
-                except:
-                    self.metadata_text.setText(get_metadata(file_path))
-
-                # Add inference if avalaible
-                fpath = [Path(Path(file_path).parent, "detections.json"),
-                         Path(Path(file_path).parent.parent, "detections.json")]
-                
-                fpath_exist = [Path(Path(file_path).parent, "detections.json").exists(),
-                         Path(Path(file_path).parent.parent, "detections.json").exists()]
-                
-                if any(fpath_exist):
-                    json_path = str(Path(fpath[fpath_exist.index(True)].parent, "detections.json"))
-                    
-                    try:
-                        txt = split_json_from_path(json_path=json_path, image_path=file_path)
-                        self.inference_result.setText(str(txt))
-                        self.edit_inference.setEnabled(True)
-                    except:
-                        pass
+                # Add inference result specific to this file
+                self._update_inference_result(file_path)
 
                 IMG_PATH.append(file_path)
                 return file_path
@@ -381,7 +401,7 @@ class Declas(QMainWindow):
                 if selected_file_path:
                     sf = str(Path(selected_file_path).parent)
                     global all_files
-                    all_files = [str(fl) for fl in Path(sf).iterdir() if not fl.is_dir() and fl.suffix in MEDIA_SUFFIX]
+                    all_files = [str(fl) for fl in Path(sf).iterdir() if not fl.is_dir() and fl.suffix in MEDIA_EXT]
                     
                 else:
                     sf = selected_folder
@@ -397,23 +417,145 @@ class Declas(QMainWindow):
     def show_previous_media(self):
         try:
             if self.current_selected_media > 0:
-                self.current_selected_media -= 1 
-                previous_med = all_files[self.current_selected_media]
-                self.display_image(previous_med)
+                self.current_selected_media -= 1
+                path = all_files[self.current_selected_media]
+                self._display_media(path)
+                self._update_metadata(path)
+                self._update_inference_result(path)
+                IMG_PATH.append(path)
         except:
             pass
-        
-    
+
     def show_next_media(self):
         try:
             if self.current_selected_media >= 0 and self.current_selected_media < (len(all_files) - 1):
                 self.current_selected_media += 1
-                previous_med = all_files[self.current_selected_media]
-                self.display_image(previous_med)
+                path = all_files[self.current_selected_media]
+                self._display_media(path)
+                self._update_metadata(path)
+                self._update_inference_result(path)
+                IMG_PATH.append(path)
         except:
             pass
 
 
+    # Media helpers 
+    def _update_metadata(self, path):
+        if self._is_video(path):
+            self.metadata_text.setText(get_video_metadata(path))
+        else:
+            try:
+                metadata_i, _ = get_metadata(path)
+                self.metadata_text.setText(metadata_i)
+            except:
+                self.metadata_text.setText(str(get_metadata(path)))
+
+    def _update_inference_result(self, file_path):
+        """Show detection/classification results specific to file_path, or clear if none."""
+        fp = Path(file_path)
+        candidates = [
+            fp.parent / "detections.json",
+            fp.parent.parent / "detections.json",
+        ]
+        # Annotated video frames live inside frames/detections/
+        # to reach <video_dir>/detections.json.
+        if fp.parent.name == "detections":
+            candidates.append(fp.parent.parent.parent / "detections.json")
+        json_path = next((str(p) for p in candidates if p.exists()), None)
+
+        if json_path:
+            try:
+                txt = split_json_from_path(json_path=json_path, image_path=file_path)
+                if txt is not None:
+                    self.inference_result.setText(str(txt))
+                    self.edit_inference.setEnabled(True)
+                    return
+            except Exception:
+                pass
+
+        # No result found for this specific media
+        self.inference_result.clear()
+        self.edit_inference.setEnabled(False)
+
+    def _is_video(self, path):
+        return Path(path).suffix.lower() in ['.mp4', '.avi', '.mov', '.mkv']
+
+    def _set_video_controls_visible(self, visible):
+        self.video_seek_slider.setVisible(visible)
+        self.video_current_time.setVisible(visible)
+        self.video_total_time.setVisible(visible)
+        #self.stop_media.setVisible(visible)
+        self.jump_back_btn.setVisible(visible)
+        self.jump_forward_btn.setVisible(visible)
+
+    def _display_media(self, path):
+        if self._is_video(path):
+            self._enter_video_mode(path)
+        else:
+            self._enter_image_mode()
+            self.display_image(path)
+
+    def _enter_image_mode(self):
+        self.media_player.stop()
+        self.media_stack.setCurrentIndex(0)
+        self.play_media.setEnabled(False)
+        self._set_video_controls_visible(False)
+
+    def _enter_video_mode(self, video_path):
+        self.media_stack.setCurrentIndex(1)
+        self.play_media.setEnabled(True)
+        self._set_video_controls_visible(True)
+        self.media_player.setMedia(QMediaContent(QUrl.fromLocalFile(video_path)))
+        self.media_player.play()
+
+    # Video controls
+
+    def toggle_play_pause(self):
+        if self.media_stack.currentIndex() != 1:
+            return
+        if self.media_player.state() == QMediaPlayer.PlayingState:
+            self.media_player.pause()
+        else:
+            self.media_player.play()
+
+    def jump_backward(self):
+        self.media_player.setPosition(max(0, self.media_player.position() - 10000))
+
+    def jump_forward(self):
+        self.media_player.setPosition(
+            min(self.media_player.duration(), self.media_player.position() + 10000)
+        )
+
+    def _on_slider_pressed(self):
+        self._slider_dragging = True
+
+    def _on_slider_released(self):
+        self._slider_dragging = False
+        self.media_player.setPosition(self.video_seek_slider.value())
+
+    def _on_position_changed(self, position):
+        if not self._slider_dragging:
+            self.video_seek_slider.setValue(position)
+        self.video_current_time.setText(self._format_time(position))
+
+    def _on_duration_changed(self, duration):
+        self.video_seek_slider.setRange(0, duration)
+        self.video_total_time.setText(self._format_time(duration))
+
+    def _on_player_state_changed(self, state):
+        if state == QMediaPlayer.PlayingState:
+            self.play_media.setIcon(
+                self.style().standardIcon(self.style().SP_MediaPause)
+            )
+        else:
+            self.play_media.setIcon(QIcon(f"{DECLAS_ROOT}/icons/play.png"))
+
+    @staticmethod
+    def _format_time(ms):
+        s = ms // 1000
+        return f"{s // 60:02d}:{s % 60:02d}"
+
+    # Map
 
     def show_on_map(self):
             # Initialize a folium map centered on the provided coordinates
@@ -437,58 +579,91 @@ class Declas(QMainWindow):
 
     def single_detection(self):
         try:
-            parameters = load_json()
+            parameters  = load_json()
             model_weight = load_weight()
 
             try:
-                image_path = IMG_PATH[-1]
+                media_path = IMG_PATH[-1]
             except:
                 missed_path()
                 return
 
-            if model_weight == "":
+            # Extensions are self-contained
+            _mt = parameters.get("model_type", "")
+            _is_ext = _mt in INSTALLED_EXTENSIONS
+            if not _is_ext:
                 no_weight()
                 return
-            
-            self.statusbar.showMessage("Running...")
-            QApplication.processEvents()  # Force the UI to update immediately
-            
+
+            is_vid = self._is_video(media_path)
+            vid_stride = parameters.get("vid_stride", 5)
+            to_save = None
+
+            if is_vid and not parameters.get("process_video", True):
+                self.statusbar.showMessage("Video processing is disabled. Enable it in Inference Parameters.", MESSAGE_DELAY)
+                return
+
+            self.statusbar.showMessage("Running…")
+            QApplication.processEvents()
+
             if parameters["task"] == "Detection":
-                weights = model_weight[parameters["select_det_model"][0]]["Path"]
-                if not Path(weights).exists():
-                    no_weight()
-                    return
-                
-                to_save = single_detections(weights=weights, 
-                                    image_path = image_path, 
-                                    model_type=parameters["model_type"],
-                                    conf_thres = parameters["conf"], 
-                                    device=parameters["device"],
-                                    class_of_interest=parameters["class_of_interest"], 
-                                    save_json=True)
-                to_save = split_json_obj(json_obj=to_save, classif=False)
-                
+                # Detection-extension path
+                if _is_ext:
+                    ext_info = INSTALLED_EXTENSIONS[_mt]
+                    if ext_info["status"] != "ready":
+                        self.statusbar.showMessage(
+                            f"Extension '{_mt}' weights not downloaded.", MESSAGE_DELAY)
+                        return
+                    adapter = _load_adapter(ext_info, device=parameters["device"])
+                    if is_vid:
+                        result_dict = extension_video_classification(
+                            video_path=media_path,
+                            adapter=adapter,
+                            conf_thres=parameters["conf"],
+                            vid_stride=vid_stride,
+                        )
+                        to_save = split_json_obj(json_obj=result_dict, classif=True) if result_dict else None
+                    else:
+                        entry = extension_single_classification(
+                            image_path=media_path,
+                            adapter=adapter,
+                            conf_thres=parameters["conf"],
+                        )
+                        to_save = str(entry)
+
             elif parameters["task"] == "Classification":
-                det_weights = model_weight[parameters["select_det_model"][0]]["Path"]
-                clf_weights = model_weight[parameters["select_clf_model"][0]]["Path"]
-                if not all([Path(det_weights).exists(), Path(clf_weights).exists()]) :
-                    no_weight()
-                    return
-                to_save = single_classifications(image_path=image_path,
-                                                 det_weight=det_weights,
-                                                 clf_weight=clf_weights,
-                                                 det_conf_thres=parameters["conf"],
-                                                 clf_conf_thres=parameters["clf_conf"],
-                                                 device=parameters["device"]
-                                                 )
-                to_save = split_json_obj(json_obj=to_save)
-            self.statusbar.showMessage("Running...", 1000)
+                model_type = parameters["model_type"]
+
+                # Model-extension path
+                if model_type in INSTALLED_EXTENSIONS:
+                    ext_info = INSTALLED_EXTENSIONS[model_type]
+                    if ext_info["status"] != "ready":
+                        self.statusbar.showMessage(
+                            f"Extension '{model_type}' weights not downloaded.", MESSAGE_DELAY)
+                        return
+                    adapter = _load_adapter(ext_info, device=parameters["device"])
+                    if is_vid:
+                        result_dict = extension_video_classification(
+                            video_path=media_path,
+                            adapter=adapter,
+                            conf_thres=parameters["conf"],
+                            vid_stride=vid_stride,
+                        )
+                        to_save = split_json_obj(json_obj=result_dict, classif=True) if result_dict else None
+                    else:
+                        result_dict = extension_single_classification(
+                            image_path=media_path,
+                            adapter=adapter,
+                            conf_thres=parameters["conf"],
+                        )
+                        to_save = split_json_obj(json_obj=result_dict)
+
+                # Built-in YoloV5 / YoloV8/9 path
+            self.statusbar.showMessage("Done ✅", MESSAGE_DELAY)
             if to_save:
                 self.view_detection.setEnabled(True)
                 self.edit_inference.setEnabled(True)
-
                 self.inference_result.setText(to_save)
-
 
         except Exception as e:
             general_error(e)
@@ -501,6 +676,7 @@ class Declas(QMainWindow):
             missed_path()
             return
         image_path = Path(Path(image_path).parent, "detections", Path(image_path).name)
+        self._enter_image_mode()  # annotated result is always a JPEG, show image page
         self.display_image(str(image_path), message="Run detection or classification before to click 'View'")
 
 
@@ -546,15 +722,18 @@ class Declas(QMainWindow):
                 with open(json_path, "w") as out_file:
                     json.dump(obj=detections, fp=out_file, indent=4)
 
-            self.statusbar.showMessage("Change applied \u2705", 5000)
+            self.statusbar.showMessage("Change applied \u2705", MESSAGE_DELAY)
 
         except:#else:
             invalid_edit()
 
     def multiple_detection(self):
         try:
+            parameters   = load_json()
             model_weight = load_weight()
-            if model_weight == "" or not Path(model_weight).exists():
+            _mt = parameters.get("model_type", "")
+            _is_ext = _mt in INSTALLED_EXTENSIONS
+            if not _is_ext and (model_weight == "" or not Path(model_weight).exists()):
                 no_weight()
                 return
         except Exception as e:
@@ -564,8 +743,9 @@ class Declas(QMainWindow):
             main_subdir = load_json()
             folder_path = selected_folder
             if folder_path:
-                image_inside = [fls for fls in list(Path(folder_path).iterdir()) if fls.suffix in [".JPG", ".JPEG", ".jpg", ".jpeg"]]
-                if len(image_inside) == 0 and main_subdir["run_on_main_dir"]:
+                media_inside = [fls for fls in Path(folder_path).iterdir()
+                                if fls.is_file() and fls.suffix in (IMAGE_EXT | VIDEO_EXT)]
+                if len(media_inside) == 0 and main_subdir["run_on_main_dir"]:
                     missed_folder()
                     return
                 # Create the worker and pass the folder path
@@ -586,87 +766,43 @@ class Declas(QMainWindow):
         self.batch_detection_log.append(message)
 
     def on_detection_done(self, message):
-        self.statusbar.showMessage(message, 5000)
+        self.statusbar.showMessage(message, MESSAGE_DELAY)
 
     def on_detection_error(self, message):
-        self.statusbar.showMessage(message, 5000)
+        self.statusbar.showMessage(message, MESSAGE_DELAY)
 
-    def add_model(self):
-        model_path = QFileDialog.getOpenFileName(caption="Select a model", directory=".", filter="Models (*.pt *.onnx *.ckpt)")
-        model_path = model_path[0]
-        if model_path:
-            # ADD WEIGHT TO select_det_model and select_clf_model
-            self.inference_param["select_det_model"].append(Path(model_path).stem)
-            self.inference_param["select_clf_model"].append(Path(model_path).stem)
-            dump_json(dict_obj=self.inference_param)
-            
+    def open_extensions(self):
+        """Open the Extension Manager dialog (non-modal — Declas stays interactive)."""
+        # Re-use an already-open dialog instead of stacking multiple instances.
+        if hasattr(self, "_ext_dlg") and self._ext_dlg.isVisible():
+            self._ext_dlg.raise_()
+            self._ext_dlg.activateWindow()
+            return
+        self._ext_dlg = ExtensionManagerDialog(parent=self)
+        self._ext_dlg.extension_changed.connect(self._reload_extensions)
+        self._ext_dlg.show()
+        self._ext_dlg.raise_()
+        self._ext_dlg.activateWindow()
 
-            file_path = Path(f"{DECLAS_ROOT}/config/model_/mdls/mdl.json")
-            file_path.parent.mkdir(parents=True, exist_ok=True)
+    def open_publish_guidelines(self):
+        """Open the Publish guidelines dialog."""
+        if hasattr(self, "_pub_dlg") and self._pub_dlg.isVisible():
+            self._pub_dlg.raise_()
+            self._pub_dlg.activateWindow()
+            return
+        self._pub_dlg = PublishGuidelinesDialog(parent=self)
+        self._pub_dlg.show()
+        self._pub_dlg.raise_()
+        self._pub_dlg.activateWindow()
 
-            if not file_path.exists():
-                file_path.touch(exist_ok=True)
-                with open(str(file_path), "w") as initiate:
-                    json.dump({}, initiate)
-
-            with open(str(file_path), "r") as current_state:
-                current_state = json.load(current_state)
-                if Path(model_path).stem in current_state:
-                    self.statusbar.showMessage(f"Weight {Path(model_path).stem.lower()} exists", 8*1000)
-                    return
-                current_state[Path(model_path).stem] = {
-                    "Id" : f"{date_to_id()}",
-                    "Path": str(Path(model_path)),
-                    "Size": f"{round((Path(model_path).stat().st_size)/(1024 * 1024))} MB",
-                    "Add date": datetime.today().strftime('%Y-%m-%d %H:%M:%S')
-                }
-
-            
-            with open(str(file_path), "w") as mdl:
-                json.dump(current_state, mdl)
-                self.statusbar.showMessage(f"Weight {Path(model_path).stem.lower()} added", 8*1000)
-                
-
-        else:
-            self.statusbar.showMessage(f"Weight cannot be added", 8*1000)
-
-    def remove_model(self, weights):
-        weight_path = Path(f"{DECLAS_ROOT}/config/model_/mdls/mdl.json")
-        if not weight_path.exists():
-            no_weight()
-        else:
-            with open(weight_path, "r") as wei:
-                weights = json.load(wei)
-                if weights == {}:
-                    no_weight()
-                else:
-                    weight_table = WeightTable(weight_data=weights)
-                    weight_table.remove_row(weight_data=weights)
-
-    def show_model(self):
-        weight_path = Path(f"{DECLAS_ROOT}/config/model_/mdls/mdl.json")
-        if not weight_path.exists():
-            no_weight()
-        else:
-            try:
-                with open(weight_path, "r") as wei:
-                    weights = json.load(wei)
-                    if weights == {} or weights == "":
-                        no_weight()
-                        return
-                    weight_table = WeightTable(weight_data=weights)
-                    for wgt in weights:
-                        individual = weights[str(wgt)]
-                        weight_table.add_row(id = individual["Id"],
-                                                 weight=f"{wgt}",
-                                                 path=individual["Path"],
-                                                 size=individual["Size"],
-                                                 add_date = individual["Add date"]
-                                                 )
-                    weight_table.show()
-
-            except Exception as e:
-                no_weight()
+    def _reload_extensions(self):
+        """Refresh the global extension registry after install / remove."""
+        global INSTALLED_EXTENSIONS
+        try:
+            INSTALLED_EXTENSIONS = _scan_extensions()
+        except Exception:
+            INSTALLED_EXTENSIONS = {}
+        self.statusbar.showMessage("Extensions reloaded.", MESSAGE_DELAY)
 
     def build_table(self):
         image_or_dir = self.image_or_dir
@@ -681,7 +817,11 @@ class Declas(QMainWindow):
                 if Path(image_or_dir).is_dir() and run_on_main_dir:
                     json_files = [str(Path(image_or_dir, "detections.json"))]
                 elif Path(image_or_dir).is_dir() and not run_on_main_dir:
-                    json_files =  list(root_path.rglob('detections.json'))
+                    # Exclude detections.json inside 'frames/' subdirectories —
+                    # those are intermediate per-frame files; the complete merged
+                    # result is always in the parent directory's detections.json.
+                    json_files = [str(p) for p in root_path.rglob('detections.json')
+                                  if 'frames' not in p.parts]
                 elif not Path(image_or_dir).is_dir():
                     json_files = [str(Path(Path(image_or_dir).parent, "detections.json"))]
                 for jsf in json_files:
@@ -705,43 +845,84 @@ class Declas(QMainWindow):
 
 ## QThread
 def process_directory(dp, log_queue):
-    parameters = load_json()
+    parameters  = load_json()
     model_weight = load_weight()
-    extension = [x.suffix for x in Path(dp).iterdir()][0]
 
-    if model_weight == "":
+    _mt = parameters.get("model_type", "")
+    _is_ext = _mt in INSTALLED_EXTENSIONS
+    if not _is_ext:
         no_weight()
         return
-        
+
+    # Separate image files from video files
+    all_files = [f for f in Path(dp).iterdir() if f.is_file()]
+    image_files = [f for f in all_files if f.suffix in IMAGE_EXT]
+    video_files = [f for f in all_files if f.suffix in VIDEO_EXT]
+
+    if not image_files and not video_files:
+        return "No media files found in directory."
+
+    vid_stride = parameters.get("vid_stride", 5)
+    process_video = parameters.get("process_video", True)
+
+    # When video processing is disabled, ignore video files entirely
+    if not process_video:
+        video_files = []
+
     try:
         if parameters["task"] == "Detection":
-            weights = model_weight[parameters["select_det_model"][0]]["Path"]
-            if not Path(weights).exists():
-                    no_weight()
-                    return
-            
-            to_save = batch_detections(weights=weights, data_path=dp, 
-                            conf_thres=parameters["conf"],
-                            model_type=parameters["model_type"],
-                            device=parameters["device"],
-                            class_of_interest=parameters["class_of_interest"],
-                            log_queue=log_queue)
-            
+            # Detection-extension path
+            if _is_ext:
+                ext_info = INSTALLED_EXTENSIONS[_mt]
+                if ext_info["status"] != "ready":
+                    if log_queue:
+                        log_queue.put(f"Extension '{_mt}' weights not downloaded.")
+                    return "Extension weights missing."
+                adapter = _load_adapter(ext_info, device=parameters["device"])
+                if image_files:
+                    ext_suffix = image_files[0].suffix
+                    extension_batch_classification(data_path=dp,
+                                                   adapter=adapter,
+                                                   conf_thres=parameters["conf"],
+                                                   extension=ext_suffix)
+                for vf in video_files:
+                    if log_queue:
+                        log_queue.put(f"Processing video: {vf.name}")
+                    extension_video_classification(video_path=str(vf),
+                                                   adapter=adapter,
+                                                   conf_thres=parameters["conf"],
+                                                   vid_stride=vid_stride,
+                                                   log_queue=log_queue)
+
         elif parameters["task"] == "Classification":
-                det_weights = model_weight[parameters["select_det_model"][0]]["Path"]
-                clf_weights = model_weight[parameters["select_clf_model"][0]]["Path"]
-                if not all([Path(det_weights).exists(), Path(clf_weights).exists()]) :
-                    no_weight()
-                    return
-                to_save = batch_classifications(data_path=dp,
-                                                extension=extension,
-                                                 det_weight=det_weights,
-                                                 clf_weight=clf_weights,
-                                                 det_thres=parameters["conf"],
-                                                 clf_thres=parameters["clf_conf"],
-                                                 device=parameters["device"]
-                                                 )
-        
+            model_type = parameters["model_type"]
+
+            # Model-extension batch path
+            if model_type in INSTALLED_EXTENSIONS:
+                ext_info = INSTALLED_EXTENSIONS[model_type]
+                if ext_info["status"] != "ready":
+                    if log_queue:
+                        log_queue.put(f"❌ Extension '{model_type}' weights not downloaded.")
+                    return "Extension weights missing."
+                adapter = _load_adapter(ext_info, device=parameters["device"])
+
+                if image_files:
+                    extension = image_files[0].suffix
+                    extension_batch_classification(data_path=dp,
+                                                   adapter=adapter,
+                                                   conf_thres=parameters["conf"],
+                                                   extension=extension)
+
+                for vf in video_files:
+                    if log_queue:
+                        log_queue.put(f"🎬 Processing video: {vf.name}")
+                    extension_video_classification(video_path=str(vf),
+                                                   adapter=adapter,
+                                                   conf_thres=parameters["conf"],
+                                                   vid_stride=vid_stride,
+                                                   log_queue=log_queue)
+
+
         emoji = ['\U0001F38A', '\U0001F389', '\u2705', '\U0001F917']
         return f"Completed successfully {choice(emoji)}"
 
