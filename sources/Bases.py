@@ -1,6 +1,6 @@
 from PIL import Image, ExifTags
-from datetime import datetime
-import os, re, cv2, json, piexif
+from datetime import datetime, timedelta
+import os, re, cv2, json, piexif, struct, calendar
 import numpy as np
 from PIL import Image
 import supervision as sv
@@ -19,6 +19,67 @@ def class_number(results = dict, category = str):
             l.append(x)
 
     return len(l)
+
+def get_video_metadata(video_path):
+    """Extract metadata from a video file using OpenCV."""
+    try:
+        cap = cv2.VideoCapture(str(video_path))
+        if not cap.isOpened():
+            return "Failed to open video file."
+
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        fourcc_int  = int(cap.get(cv2.CAP_PROP_FOURCC))
+        codec = "".join([chr((fourcc_int >> 8 * i) & 0xFF) for i in range(4)]).strip()
+        cap.release()
+
+        duration_sec = (frame_count / fps) if fps > 0 else 0
+        duration_str = f"{int(duration_sec // 60):02d}:{int(duration_sec % 60):02d}"
+        file_size_mb = Path(video_path).stat().st_size / (1024 * 1024)
+
+        return (
+            f"File: {Path(video_path).name}\n"
+            f"Size: {file_size_mb:.2f} MB\n"
+            f"Resolution: {width} × {height}\n"
+            f"Duration: {duration_str}\n"
+            f"FPS: {fps:.2f}\n"
+            f"Frames: {frame_count}\n"
+            f"Codec: {codec}\n"
+        )
+    except Exception as e:
+        return f"Failed to retrieve video metadata:\n {e}"
+
+
+def extract_video_frames(video_path, vid_stride=5):
+    """Extract every vid_stride-th frame from a video as JPEGs.
+
+    Frames are saved to  <video_dir>/frames/  named  <video_stem>_f<idx:06d>.jpg.
+    Returns the list of saved frame paths (strings).
+    """
+    video_path = Path(video_path)
+    frames_dir = Path(video_path.parent, "frames")
+    frames_dir.mkdir(exist_ok=True)
+
+    cap = cv2.VideoCapture(str(video_path))
+    frame_idx = 0
+    extracted = []
+
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+        if frame_idx % vid_stride == 0:
+            fname = f"{video_path.stem}_f{frame_idx:06d}.jpg"
+            fpath = str(Path(frames_dir, fname))
+            cv2.imwrite(fpath, frame)
+            extracted.append(fpath)
+        frame_idx += 1
+
+    cap.release()
+    return extracted
+
 
 def get_metadata(image_path, to_dict = False):
     # Extract and display metadata using Pillow
@@ -161,13 +222,6 @@ def is_valid_dict(output):
     except (ValueError, SyntaxError):
         return False
     
-# Date to id
-def date_to_id():
-    dt = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
-    dt = re.sub(r'\s+|:|-', '', dt)
-    return dt
-
-
 def time_to_radians(time_str):
     """
     Converts a time string in the format %H:%M:%S to a vector of radians scaled to [0, 2π].
@@ -198,65 +252,220 @@ def time_to_radians(time_str):
 
 def exif_table(image_path):
     exif = piexif.load(image_path)
-    gps_info = exif.get("GPS")
-    
-    if not gps_info:
-        lon = lat = alti = None
-    else:
-        north_or_south = str(gps_info[1])
-        west_or_est = str(gps_info[3])
 
-        lon = gps_info[4][0][0] + (gps_info[4][1][0])/60.0 + (gps_info[4][2][0])/3600.0
-        lat = gps_info[2][0][0] + (gps_info[2][1][0])/60.0 + (gps_info[2][2][0])/3600.0
+    def _decode_tag(raw):
+        if isinstance(raw, bytes):
+            return raw.decode("utf-8", errors="ignore").rstrip('\x00').strip()
+        return str(raw).rstrip('\x00').strip()
 
-        lon = -lon if "S" in north_or_south else lon
-        lat = -lon if "W" in west_or_est else lat
-        lon = round(lon, 3); lat = round(lat, 3)
+    def _r(rational):
+        """Convert a piexif (numerator, denominator) rational to float."""
+        num, den = rational
+        return num / den if den != 0 else 0.0
 
-        alti = gps_info[6][0]
+    gps_info = exif.get("GPS") or {}
+    lon = lat = alti = None
+    if gps_info:
+        try:
+            lat = _r(gps_info[2][0]) + _r(gps_info[2][1]) / 60.0 + _r(gps_info[2][2]) / 3600.0
+            lon = _r(gps_info[4][0]) + _r(gps_info[4][1]) / 60.0 + _r(gps_info[4][2]) / 3600.0
 
-    device_make = str(exif["0th"][271]).replace("b", "").replace("'", "")
-    #device_model = exif["0th"][272].decode('utf-8')
+            # Apply hemisphere signs (LatitudeRef N/S → lat, LongitudeRef E/W → lon)
+            lat_ref = _decode_tag(gps_info.get(1, b'N'))
+            lon_ref = _decode_tag(gps_info.get(3, b'E'))
+            if 'S' in lat_ref:
+                lat = -lat
+            if 'W' in lon_ref:
+                lon = -lon
 
-    original_datetime = str(exif["Exif"][36867]).replace("b'", "").replace("'", "")
-    original_date = original_datetime.split()[0].strip()
-    original_time = original_datetime.split()[1].strip()
+            lat = round(lat, 7)
+            lon = round(lon, 7)
+            alti = round(_r(gps_info[6]), 1) if 6 in gps_info else None
+        except (KeyError, TypeError, ZeroDivisionError, IndexError):
+            lon = lat = alti = None
 
-    time_diel = time_to_radians(original_time)
-    #time_diel = float(time_diel[0]) + (float(time_diel[1])/60) + (float(time_diel[2])/3600)
-    time_diel = round(time_diel, 3)
+    device_make  = _decode_tag(exif["0th"].get(271, b""))
+    device_model = _decode_tag(exif["0th"].get(272, b""))
 
-    out_table = {"Longitude": lon,
-                "Latitude": lat,
-                "Altitude": alti,
-                "Make": device_make,
-                #"Model": device_model,
-                "Date": original_date,
-                "Time": original_time,
-                "Time in radians": time_diel}
+    original_datetime = _decode_tag(exif["Exif"].get(36867, b""))
+    dt_parts = original_datetime.split()
+    original_date = dt_parts[0] if dt_parts else ""
+    original_time = dt_parts[1] if len(dt_parts) > 1 else ""
+    time_diel = round(time_to_radians(original_time), 3) if original_time else None
 
+    out_table = {
+        "longitude": lon,
+        "latitude": lat,
+        "altitude": alti,
+        "make": device_make,
+        "model": device_model,
+        "date": original_date,
+        "time": original_time,
+        "time_radian": time_diel,
+    }
     return out_table
 
 
-def dect_or_clf_dict(image_path, image_id, count):
+# Video datetime helpers
+
+def _get_mp4_creation_datetime(video_path):
+    """Parse creation_time from an MP4 file's moov/mvhd box.
+
+    Returns a naive local datetime, or None if unavailable / unreadable.
+    The MP4 epoch is 1904-01-01 00:00:00 UTC.
+    """
+    MP4_EPOCH = datetime(1904, 1, 1)
+    try:
+        size = Path(video_path).stat().st_size
+        read_bytes = min(2 * 1024 * 1024, size)   # first 2 MB is enough
+        with open(str(video_path), 'rb') as f:
+            data = f.read(read_bytes)
+        idx = data.find(b'mvhd')
+        if idx == -1:
+            return None
+        version = data[idx + 4]
+        if version == 0: # 32-bit timestamps
+            ct_raw = struct.unpack('>I', data[idx + 5: idx + 9])[0]
+        else: # version 1: 64-bit timestamps
+            ct_raw = struct.unpack('>Q', data[idx + 5: idx + 13])[0]
+        if ct_raw == 0:
+            return None
+        dt_utc = MP4_EPOCH + timedelta(seconds=int(ct_raw))
+        # Convert UTC → local naive datetime
+        utc_ts = calendar.timegm(dt_utc.timetuple())
+        return datetime.fromtimestamp(utc_ts)
+    except Exception:
+        return None
+
+
+def get_video_start_datetime(video_path):
+    """Return the best-available recording start datetime for a video.
+
+    Priority:
+      1. MP4 container creation_time (moov/mvhd box) — only for .mp4 files.
+      2. File modification time (mtime) as fallback.
+    """
+    video_path = Path(video_path)
+    if video_path.suffix.lower() == '.mp4':
+        dt = _get_mp4_creation_datetime(video_path)
+        if dt and dt.year > 1980:   # sanity-check: reject obviously wrong dates
+            return dt
+    return datetime.fromtimestamp(video_path.stat().st_mtime)
+
+
+def get_video_gps(video_path):
+    """Try to extract GPS coordinates from a video file.
+
+    Reads the MP4 binary and looks for the ©xyz atom (ISO 6709 location string)
+    used by most modern cameras (iOS, Android, GoPro, some trail cameras).
+    Format examples: "+25.1234+025.5678/" or "+25.1234+025.5678+1100.0/"
+
+    Returns (lat, lon, alt) — floats, or (None, None, None) on failure.
+    """
+    import re as _re
+    try:
+        video_path = Path(video_path)
+        if not video_path.exists():
+            return None, None, None
+        with open(str(video_path), 'rb') as f:
+            data = f.read(min(4 * 1024 * 1024, video_path.stat().st_size))
+        for marker in (b'\xa9xyz', b'\xc2\xa9xyz'):
+            idx = data.find(marker)
+            if idx == -1:
+                continue
+            # Atom payload: skip 2-byte data-length + 2-byte language code
+            chunk = data[idx + len(marker) + 4: idx + len(marker) + 4 + 64]
+            text  = chunk.split(b'\x00')[0].decode('ascii', errors='ignore')
+            m = _re.match(r'([+-]\d+(?:\.\d+)?)([+-]\d+(?:\.\d+)?)([+-]\d+(?:\.\d+)?)?', text)
+            if m:
+                lat = float(m.group(1))
+                lon = float(m.group(2))
+                alt = float(m.group(3)) if m.group(3) else None
+                return round(lat, 7), round(lon, 7), alt
+    except Exception:
+        pass
+    return None, None, None
+
+
+def get_video_frame_datetime(frame_path, source_video):
+    """Compute the exact recording datetime for an extracted video frame.
+
+    Frame filename convention: ``<video_stem>_f<frame_idx:06d>.jpg``
+    The offset is  frame_idx / FPS  seconds after the video's start time,
+    so every frame gets a unique, accurate timestamp.
+
+    Returns a datetime or None on failure.
+    """
+    try:
+        stem = Path(frame_path).stem # e.g. IMAG0015_f000150
+        frame_idx = int(stem.rsplit('_f', 1)[-1])  # → 150
+        cap = cv2.VideoCapture(str(source_video))
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        cap.release()
+        base_dt = get_video_start_datetime(source_video)
+        return base_dt + timedelta(seconds=frame_idx / fps if fps > 0 else 0)
+    except Exception:
+        return None
+
+
+def dect_or_clf_dict(image_path, image_id, count, source_video=None, category=None):
+    """Build the per-media result dict saved to detections.json.
+
+    Parameters
+    ----------
+    image_path : path of the image (or extracted video frame) being recorded.
+    image_id : filename / display name.
+    count : number of detections / animals of interest.
+    source_video : original video path when image_path is an extracted frame.
+                   Used to derive date/time from the video's mtime when the
+                   frame itself carries no EXIF data.
+    """
+    # Frames extracted from videos live in a 'frames' sub-folder
+    media_type = 'video' if 'frames' in Path(image_path).parts else 'image'
 
     try:
         exif_data = exif_table(image_path=image_path)
     except:
         exif_data = {}
 
-    to_save = {'Image path': f'{image_path}', 
-            'Image': image_id, 
-            'Count':count,
-            "Longitude": exif_data["Longitude"] if exif_data != {} else None,
-            "Latitude": exif_data["Latitude"] if exif_data != {} else None,
-            "Altitude": exif_data["Altitude"] if exif_data != {} else None,
-            "Make": exif_data["Make"] if exif_data != {} else None,
-            #"Model": device_model,
-            "Date": exif_data["Date"] if exif_data != {} else None,
-            "Time": exif_data["Time"] if exif_data != {} else None,
-            "Time in radians": exif_data["Time in radians"] if exif_data != {} else None}
-    
+    # Fallback for video frames: compute per-frame datetime from FPS + frame index,
+    # and propagate GPS from the video container if available.
+    if not exif_data and source_video is not None and source_video != "__batch__":
+        try:
+            frame_dt = get_video_frame_datetime(image_path, source_video)
+            if frame_dt is None:
+                frame_dt = get_video_start_datetime(source_video)
+            frame_time_str = frame_dt.strftime('%H:%M:%S')
+            v_lat, v_lon, v_alt = get_video_gps(source_video)
+            exif_data = {
+                "longitude": v_lon,
+                "latitude": v_lat,
+                "altitude": v_alt,
+                "make": None,
+                "model": None,
+                "date": frame_dt.strftime('%Y:%m:%d'),
+                "time": frame_time_str,
+                "time_radian": round(time_to_radians(frame_time_str), 3),
+            }
+        except Exception:
+            pass
+
+    to_save = {
+        'media_path':  str(image_path),
+        'media': image_id,
+        'media_type':  media_type,
+        'category': category,
+        'count': count,
+        'longitude': exif_data.get('longitude'),
+        'latitude': exif_data.get('latitude'),
+        'altitude': exif_data.get('altitude'),
+        'make': exif_data.get('make'),
+        'model': exif_data.get('model'),
+        'date': exif_data.get('date'),
+        'time': exif_data.get('time'),
+        'time_radian': exif_data.get('time_radian'),
+    }
+
     return to_save
 
 
@@ -299,18 +508,32 @@ def split_json_from_path(json_path, image_path, spliter = "\n\n###\n\n"):
     with open(json_path, "r") as det:
         detections = json.load(fp=det)
 
-    right_key = [ky for _, ky in enumerate(list(detections.keys())) if ky.startswith(Path(image_path).stem)]
-    if right_key == []:
-        txt_split = str(detections)
-    elif len(right_key) > 1:
-        txt_split = spliter.join([str(detections[ky]) for ky in right_key])
-    else:
-        txt_split = detections[right_key[0]]
-    
-    return txt_split
+    # Legacy flat-dict format (old single-image saves): match only if Image path agrees
+    if "media_path" in detections:
+        if Path(detections.get("media_path", "")) == Path(image_path):
+            return str(detections)
+        return None  # Flat dict belongs to a different image
+
+    # Nested dict: find keys that belong exactly to this file.
+    # Keys may be  <stem>  (image),  <stem>_<species>  (classification),
+    # or  <stem>_f<frame>  (video frame).
+    stem = Path(image_path).stem
+    right_key = [
+        ky for ky in detections.keys()
+        if ky == stem or ky.startswith(stem + "_") or ky.startswith(stem + "-")
+    ]
+
+    if not right_key:
+        return None  # No detection recorded for this media
+    if len(right_key) > 1:
+        return spliter.join([str(detections[ky]) for ky in right_key])
+    return str(detections[right_key[0]])
 
 def split_json_obj(json_obj, spliter = "\n\n###\n\n", classif = True):
     right_key = [ky for _, ky in enumerate(list(json_obj.keys())) ]
+
+    if not right_key:
+        return None  # no detections/classifications to display
 
     if classif:
         if len(right_key) > 1:
@@ -319,7 +542,7 @@ def split_json_obj(json_obj, spliter = "\n\n###\n\n", classif = True):
             txt_split = json_obj[right_key[0]]
     else:
         txt_split = json_obj
-    
+
     return str(txt_split)
 
 def load_weight():

@@ -47,37 +47,123 @@
        </layout>
       </item>
       <item>
-       <layout class="QVBoxLayout" name="verticalLayout_6" stretch="9,1">
+       <layout class="QVBoxLayout" name="verticalLayout_6" stretch="9,0,0,1">
         <property name="spacing">
          <number>1</number>
         </property>
         <item>
-         <widget class="QLabel" name="image_display">
+         <widget class="QStackedWidget" name="media_stack">
           <property name="minimumSize">
            <size>
             <width>480</width>
             <height>370</height>
            </size>
           </property>
-          <property name="autoFillBackground">
-           <bool>false</bool>
-          </property>
-          <property name="frameShape">
-           <enum>QFrame::NoFrame</enum>
-          </property>
-          <property name="lineWidth">
+          <property name="currentIndex">
            <number>1</number>
           </property>
-          <property name="text">
-           <string/>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignCenter</set>
-          </property>
-          <property name="wordWrap">
-           <bool>false</bool>
+          <widget class="QWidget" name="image_page">
+           <layout class="QVBoxLayout" name="image_page_layout">
+            <property name="spacing">
+             <number>0</number>
+            </property>
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="image_display">
+              <property name="autoFillBackground">
+               <bool>false</bool>
+              </property>
+              <property name="frameShape">
+               <enum>QFrame::NoFrame</enum>
+              </property>
+              <property name="lineWidth">
+               <number>1</number>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+              <property name="wordWrap">
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="video_page">
+           <layout class="QVBoxLayout" name="video_page_layout">
+            <property name="spacing">
+             <number>0</number>
+            </property>
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QVideoWidget" name="video_display" native="true"/>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSlider" name="video_seek_slider">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
           </property>
          </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="time_display_layout">
+          <item>
+           <widget class="QLabel" name="video_current_time">
+            <property name="text">
+             <string>00:00</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="time_spacer">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QLabel" name="video_total_time">
+            <property name="text">
+             <string>00:00</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="6,2,6">
@@ -108,6 +194,19 @@
              </widget>
             </item>
             <item>
+             <widget class="QPushButton" name="jump_back_btn">
+              <property name="maximumSize">
+               <size>
+                <width>30</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>◀◀</string>
+              </property>
+             </widget>
+            </item>
+            <item>
              <widget class="QPushButton" name="play_media">
               <property name="text">
                <string/>
@@ -115,6 +214,19 @@
               <property name="icon">
                <iconset>
                 <normaloff>../icons/play.png</normaloff>../icons/play.png</iconset>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="jump_forward_btn">
+              <property name="maximumSize">
+               <size>
+                <width>30</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>▶▶</string>
               </property>
              </widget>
             </item>
@@ -315,7 +427,7 @@
      <x>0</x>
      <y>0</y>
      <width>961</width>
-     <height>26</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuSetting">
@@ -339,8 +451,6 @@
     <property name="title">
      <string>Models</string>
     </property>
-    <addaction name="action_add_models"/>
-    <addaction name="action_show_models"/>
    </widget>
    <widget class="QMenu" name="menuFile">
     <property name="title">
@@ -387,33 +497,6 @@
     <string>Language</string>
    </property>
   </action>
-  <action name="action_add_models">
-   <property name="icon">
-    <iconset>
-     <normaloff>../icons/add.png</normaloff>../icons/add.png</iconset>
-   </property>
-   <property name="text">
-    <string>Add model</string>
-   </property>
-  </action>
-  <action name="action_remove_model">
-   <property name="icon">
-    <iconset>
-     <normaloff>C:/Users/ganda/.designer/icons/remove.png</normaloff>C:/Users/ganda/.designer/icons/remove.png</iconset>
-   </property>
-   <property name="text">
-    <string>Revoke model</string>
-   </property>
-  </action>
-  <action name="action_show_models">
-   <property name="icon">
-    <iconset>
-     <normaloff>../icons/view.png</normaloff>../icons/view.png</iconset>
-   </property>
-   <property name="text">
-    <string>Show models</string>
-   </property>
-  </action>
   <action name="action_import_dc_file">
    <property name="icon">
     <iconset>
@@ -457,6 +540,12 @@
    <class>QWebEngineView</class>
    <extends>QWidget</extends>
    <header>PyQt5.QtWebEngineWidgets</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>QVideoWidget</class>
+   <extends>QWidget</extends>
+   <header>PyQt5.QtMultimediaWidgets</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

@@ -1,11 +1,21 @@
 from PyQt5.QtWidgets import QDialog
 from PyQt5.uic import loadUi
-from PyQt5.QtCore import Qt 
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
 from pathlib import Path
-import torch
+import sys, torch
 
 from sources.Bases import get_unique
+
+_DECLAS_ROOT = Path(__file__).resolve().parent.parent
+if str(_DECLAS_ROOT) not in sys.path:
+    sys.path.insert(0, str(_DECLAS_ROOT))
+
+try:
+    from model_extensions._loader import scan_extensions as _scan_extensions
+    _INSTALLED_EXTENSIONS = _scan_extensions()
+except Exception:
+    _INSTALLED_EXTENSIONS = {}
 
 
 DECLAS_ROOT = Path(__file__).resolve().parent.parent
@@ -29,17 +39,14 @@ class ModelParameter(QDialog):
       self.clf_model_label.hide()
       self.task.currentTextChanged.connect(self.update_model_type_show)
 
-      # CLASSIF OR DETECTION MODEL
-      
-      self.model_type.addItems(["YoloV5", "YoloV8/9"])
-      self.model_type.currentTextChanged.connect(self.update_model_type_show)
-      self.model_type.setCurrentIndex(0)
+      # CLASSIF OR DETECTION MODEL — populated from installed extensions, filtered by task.
       self.model_type.setDuplicatesEnabled(False)
+      self._populate_model_type(self.task.currentText())
+      self.task.currentTextChanged.connect(self._on_task_changed)
+      self.model_type.setCurrentIndex(0)
 
       self.select_det_model.setDuplicatesEnabled(False)
       self.select_det_model.setCurrentIndex(0)
-      self.select_clf_model.setDuplicatesEnabled(False)
-      self.select_clf_model.setCurrentIndex(0)
 
 
       self.buttonBox.accepted.connect(self.save_inference_parameters)
@@ -69,20 +76,33 @@ class ModelParameter(QDialog):
           except:
              return(640)
           
+   def _populate_model_type(self, task: str) -> None:
+       """Fill model_type combo with extensions that match *task* and are ready."""
+       self.model_type.blockSignals(True)
+       self.model_type.clear()
+       task_key = task.lower()   # "detection" or "classification"
+       for ext_name, ext_info in _INSTALLED_EXTENSIONS.items():
+           if ext_info.get("status") != "ready":
+               continue
+           m = ext_info.get("manifest", {})
+           if m.get("task", "").lower() != task_key:
+               continue
+           display_name = m.get("display_name", ext_name)
+           self.model_type.addItem(display_name, userData=ext_name)
+       if self.model_type.count() == 0:
+           self.model_type.addItem("No models installed")
+       self.model_type.blockSignals(False)
+
+   def _on_task_changed(self, task: str) -> None:
+       self._populate_model_type(task)
+       self.model_type.setCurrentIndex(0)
+
    def update_model_type_show(self):
-       if self.task.currentText() == "Classification" and self.model_type.currentText() == "YoloV5":
-           self.select_clf_model.show()
-           self.clf_model_label.show()
-           self.select_det_model.show()
-           self.det_model_label.show()
-       elif self.task.currentText() == "Classification" and self.model_type.currentText() == "YoloV8/9":
+       task = self.task.currentText()
+       if task == "Classification":
            self.select_det_model.hide()
            self.det_model_label.hide()
-           self.select_clf_model.show()
-           self.clf_model_label.show()
        else:
-           self.select_clf_model.hide()
-           self.clf_model_label.hide()
            self.select_det_model.show()
            self.det_model_label.show()
 
@@ -96,7 +116,6 @@ class ModelParameter(QDialog):
 
    def save_inference_parameters(self):
       yolo_conf = self.yolo_conf.value()
-      yolo_clf_conf = self.yolo_clf_conf.value()
       yolo_imgsz = self.yolo_imgsz_parse()
       yolo_device = self.yolo_device.currentText()
       yolo_max_det = self.yolo_max_det.value()
@@ -104,18 +123,15 @@ class ModelParameter(QDialog):
       yolo_classes = self.yolo_classes.currentText()
       yolo_half = self.yolo_half.isChecked()
       run_on_main_dir = self.run_on_main_dir.isChecked()
-      #
+      process_video = self.process_video.isChecked()
       task = self.task.currentText()
-      model_type = self.model_type.currentText()
+      # For extension entries the UserData stores the internal name; fall back to text.
+      model_type = (self.model_type.currentData() or self.model_type.currentText())
 
       select_det_model = [self.select_det_model.itemText(i) for i in range(self.select_det_model.count())]
       select_det_model = self.move_to_first_position(select_det_model, self.select_det_model.currentText())
 
-      select_clf_model = [self.select_clf_model.itemText(i) for i in range(self.select_clf_model.count())]
-      select_clf_model = self.move_to_first_position(select_clf_model, self.select_clf_model.currentText())
-
       self.inference_param = {"conf": yolo_conf,
-                              "clf_conf": yolo_clf_conf,
                               "imgsz": yolo_imgsz,
                               "device": yolo_device,
                               "max_det": yolo_max_det,
@@ -123,10 +139,10 @@ class ModelParameter(QDialog):
                               "class_of_interest": yolo_classes,
                               "half": yolo_half,
                               "run_on_main_dir": run_on_main_dir,
-                              "task": task, 
+                              "process_video": process_video,
+                              "task": task,
                               "model_type": model_type,
                               "select_det_model": get_unique(select_det_model),
-                              "select_clf_model": get_unique(select_clf_model)
                               }
       
       self.accept()
