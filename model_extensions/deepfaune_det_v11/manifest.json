@@ -1,0 +1,30 @@
+{
+  "name": "deepfaune_det_v11",
+  "display_name": "DeepFaune Detection v1.1 (Europe)",
+  "version": "1.1",
+  "author": "The DeepFaune initiative",
+  "email": "",
+  "description": "YOLOv8 detector for European camera-trap images. Detects animals, people and vehicles.",
+  "license": "CC BY-NC-SA 4.0",
+  "license_url": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+  "citation_url": "https://doi.org/10.1007/s10344-023-01742-7",
+  "info_url": "https://www.deepfaune.cnrs.fr/en/",
+  "region": "Europe",
+  "task": "detection",
+  "framework": "ultralytics",
+  "model_arch": "yolov8",
+  "environment": "PyTorch",
+  "input_type": "detect",
+  "model_file": "deepfaune-yolov8s_960.pt",
+  "download_url": "https://pbil.univ-lyon1.fr/software/download/deepfaune/v1.1/deepfaune-yolov8s_960.pt",
+  "size_mb": 22,
+  "zip_url": "",
+  "adapter": "adapter.py",
+  "adapter_url": "",
+  "classes": [
+    "animal",
+    "person",
+    "vehicle"
+  ],
+  "sha256_adapter": ""
+}

@@ -5,9 +5,14 @@ import sys
 import json
 from pathlib import Path
 
-EXTENSIONS_DIR = Path(__file__).parent
-# Ensure the Declas root (parent of model_extensions/) is importable
-_DECLAS_ROOT = EXTENSIONS_DIR.parent
+# In a packaged build sys._MEIPASS points to _internal/; adapters and weights
+# both live under _internal/model_extensions/<name>/.
+if getattr(sys, 'frozen', False):
+    _BUNDLED_DIR = Path(sys._MEIPASS) / "model_extensions"
+else:
+    _BUNDLED_DIR = Path(__file__).parent
+
+_DECLAS_ROOT = _BUNDLED_DIR.parent
 if str(_DECLAS_ROOT) not in sys.path:
     sys.path.insert(0, str(_DECLAS_ROOT))
 
@@ -15,22 +20,28 @@ if str(_DECLAS_ROOT) not in sys.path:
 def scan_extensions() -> dict:
     """Return metadata for every installed extension.
 
+    Scans _BUNDLED_DIR for manifest.json files. Weights are expected in the
+    same directory (downloaded there by download_extension).
+
     Returns
     -------
     dict keyed by extension name:
         {
-            "manifest": dict,
+            "manifest":      dict,
             "adapter_path":  str,
-            "weights_path":  str | None,   # None when weights file is missing
-            "status": "ready" | "missing_weights" | "missing_adapter" | "bad_manifest"
+            "weights_path":  str | None,
+            "status":        "ready" | "missing_weights" | "missing_adapter" | "bad_manifest"
         }
     """
     installed = {}
-    for manifest_path in EXTENSIONS_DIR.glob("*/manifest.json"):
-        ext_dir  = manifest_path.parent
-        name     = ext_dir.name
+
+    for manifest_path in sorted(_BUNDLED_DIR.glob("*/manifest.json")):
+        name = manifest_path.parent.name
         if name.startswith("_"):
             continue
+
+        ext_dir = _BUNDLED_DIR / name
+
         try:
             with open(manifest_path, "r", encoding="utf-8") as f:
                 manifest = json.load(f)
@@ -38,21 +49,20 @@ def scan_extensions() -> dict:
             installed[name] = {"manifest": {}, "status": "bad_manifest"}
             continue
 
-        adapter_file = ext_dir / manifest.get("adapter", "adapter.py")
+        adapter_name = manifest.get("adapter", "adapter.py")
+        adapter_file = ext_dir / adapter_name
         if not adapter_file.exists():
             installed[name] = {"manifest": manifest, "status": "missing_adapter"}
             continue
 
         model_filename = manifest.get("model_file", "")
-        weights_file   = ext_dir / model_filename if model_filename else None
-        weights_ready  = weights_file.exists() if weights_file else False
+        weights_file   = None
+        weights_ready  = False
 
-        # Fallback: also accept weights placed in the top-level model/ directory
-        # (useful while the user hasn't gone through the Extensions download flow).
-        if not weights_ready and model_filename:
-            legacy = _DECLAS_ROOT / "model" / model_filename
-            if legacy.exists():
-                weights_file  = legacy
+        if model_filename:
+            candidate = ext_dir / model_filename
+            if candidate.exists():
+                weights_file  = candidate
                 weights_ready = True
 
         installed[name] = {
@@ -61,6 +71,7 @@ def scan_extensions() -> dict:
             "weights_path": str(weights_file) if weights_ready else None,
             "status":       "ready" if weights_ready else "missing_weights",
         }
+
     return installed
 
 
@@ -80,13 +91,12 @@ def load_adapter(extension_info: dict, device: str = "cpu"):
 
     adapter_path = extension_info["adapter_path"]
     weights_path = extension_info["weights_path"]
-    manifest = extension_info["manifest"]
+    manifest     = extension_info["manifest"]
 
-    spec = importlib.util.spec_from_file_location("_ext_adapter", adapter_path)
+    spec   = importlib.util.spec_from_file_location("_ext_adapter", adapter_path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
 
-    # Find the ModelAdapter subclass defined in the module
     adapter_cls = None
     for attr_name in dir(module):
         attr = getattr(module, attr_name)

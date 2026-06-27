@@ -8,7 +8,7 @@ from PyQt5.QtGui import QFont, QIcon
 from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QScrollArea, QWidget, QFrame, QSizePolicy, QTabWidget,
-    QTextEdit, QListWidget, QMessageBox, QTextBrowser,
+    QTextEdit, QListWidget, QMessageBox, QTextBrowser, QProgressBar,
 )
 
 _DECLAS_ROOT = Path(__file__).resolve().parent.parent
@@ -29,8 +29,9 @@ class _FetchWorker(QThread):
 
 
 class _DownloadWorker(QThread):
-    progress = pyqtSignal(str)
-    finished = pyqtSignal(bool)
+    progress       = pyqtSignal(str)
+    bytes_progress = pyqtSignal(int, int)   # (downloaded_bytes, total_bytes)
+    finished       = pyqtSignal(bool)
 
     def __init__(self, manifest: dict):
         super().__init__()
@@ -38,7 +39,8 @@ class _DownloadWorker(QThread):
 
     def run(self):
         ok = download_extension(self.manifest,
-                                progress_callback=self.progress.emit)
+                                progress_callback=self.progress.emit,
+                                bytes_callback=self.bytes_progress.emit)
         self.finished.emit(ok)
 
 
@@ -79,6 +81,12 @@ class ExtensionManagerDialog(QDialog):
 
         self._build_installed_tab()
         self._build_available_tab()
+
+        # Download progress bar (hidden until a download starts)
+        self._progress_bar = QProgressBar()
+        self._progress_bar.setMaximumHeight(18)
+        self._progress_bar.setVisible(False)
+        root.addWidget(self._progress_bar)
 
         # Log / progress area
         self._log = QTextEdit()
@@ -133,7 +141,7 @@ class ExtensionManagerDialog(QDialog):
         elif not models:
             self._status_lbl.setText("No models found in registry.")
         else:
-            self._status_lbl.setText(f"{len(models)} model(s) available online.")
+            self._status_lbl.setText(f"{len(models)} model(s) available.")
             for m in models:
                 self._cards_layout.addWidget(self._make_card(m))
 
@@ -155,20 +163,27 @@ class ExtensionManagerDialog(QDialog):
         task = m.get("task", "")
         arch = m.get("model_arch", m.get("input_type", ""))
         badge = QLabel(f"[{task}]  [{arch}]")
-        badge.setStyleSheet("color: gray; font-size: 10px;")
+        badge.setStyleSheet("color: gray; font-size: 13px;")
         top.addWidget(badge)
         layout.addLayout(top)
 
         # Meta row (developer · region · size · environment)
         meta_parts = []
-        if m.get("developer"): meta_parts.append(m["developer"])
+        #if m.get("developer"): meta_parts.append(m["developer"])
         if m.get("region"): meta_parts.append(m["region"])
         if m.get("size_mb"):   meta_parts.append(f"{m['size_mb']} MB")
         if m.get("environment"): meta_parts.append(m["environment"])
         if meta_parts:
             meta = QLabel("  |  ".join(meta_parts))
-            meta.setStyleSheet("color: gray; font-size: 10px;")
+            meta.setStyleSheet("color: gray; font-size: 13px;")
             layout.addWidget(meta)
+
+        # Author
+        author = m.get("author", [])
+        if author:
+            author_lbl = QLabel(f"Author: {author}")
+            author_lbl.setStyleSheet("color: gray; font-size: 13px;")
+            layout.addWidget(author_lbl)
 
         # Description
         desc = QLabel(m.get("description", ""))
@@ -191,24 +206,27 @@ class ExtensionManagerDialog(QDialog):
         if links:
             link_lbl = QLabel("  |  ".join(links))
             link_lbl.setOpenExternalLinks(True)
-            link_lbl.setStyleSheet("font-size: 10px;")
+            link_lbl.setStyleSheet("font-size: 13px;")
             layout.addWidget(link_lbl)
 
         # Species preview
         classes = m.get("classes", [])
         if classes:
-            preview = ", ".join(classes[:12]) + (f"  … (+{len(classes)-12} more)" if len(classes) > 12 else "")
+            preview = ", ".join(classes)# + (f"  … (+{len(classes)-12} more)" if len(classes) > 12 else "")
             cls_lbl = QLabel(f"Classes: {preview}")
             cls_lbl.setWordWrap(True)
-            cls_lbl.setStyleSheet("font-size: 10px;")
+            cls_lbl.setStyleSheet("font-size: 13px;")
             layout.addWidget(cls_lbl)
+
+
 
         # Download button
         bottom = QHBoxLayout()
         bottom.addStretch()
-        is_installed = m.get("name") in self._installed
-        btn = QPushButton("Installed ✓" if is_installed else "Download")
-        btn.setEnabled(not is_installed)
+        _info = self._installed.get(m.get("name"), {})
+        is_ready = _info.get("status") == "ready"
+        btn = QPushButton("Installed ✓" if is_ready else "Download")
+        btn.setEnabled(not is_ready)
         btn.setFixedWidth(120)
         btn.clicked.connect(
             lambda _, manifest=m, b=btn: self._start_download(manifest, b)
@@ -220,16 +238,33 @@ class ExtensionManagerDialog(QDialog):
 
     def _start_download(self, manifest: dict, btn: QPushButton):
         btn.setEnabled(False)
-        btn.setText("Downloading …")
+        btn.setText(" Downloading …")
+        self._progress_bar.setValue(0)
+        self._progress_bar.setFormat("%p%")
+        self._progress_bar.setVisible(True)
         worker = _DownloadWorker(manifest)
         worker.progress.connect(self._log.append)
+        worker.bytes_progress.connect(self._on_bytes_progress)
         worker.finished.connect(
             lambda ok, b=btn, m=manifest: self._on_download_done(ok, b, m)
         )
         self._workers.append(worker)
         worker.start()
 
+    def _on_bytes_progress(self, downloaded: int, total: int):
+        if total > 0:
+            self._progress_bar.setMaximum(total)
+            self._progress_bar.setValue(downloaded)
+            mb_done  = downloaded / 1_048_576
+            mb_total = total / 1_048_576
+            self._progress_bar.setFormat(f"{mb_done:.1f} / {mb_total:.1f} MB  (%p%)")
+        else:
+            self._progress_bar.setMaximum(0)
+            mb_done = downloaded / 1_048_576
+            self._progress_bar.setFormat(f"{mb_done:.1f} MB …")
+
     def _on_download_done(self, ok: bool, btn: QPushButton, manifest: dict):
+        self._progress_bar.setVisible(False)
         if ok:
             btn.setText("Installed ✓")
             self._refresh_installed()
@@ -260,20 +295,20 @@ class ExtensionManagerDialog(QDialog):
     def _refresh_installed(self):
         self._installed = scan_extensions()
         self._inst_list.clear()
-        for name, info in self._installed.items():
+        ready = {n: i for n, i in self._installed.items() if i["status"] == "ready"}
+        for name, info in ready.items():
             m = info.get("manifest", {})
-            status = "Active" if info["status"] == "ready" else "⚠ Weights missing"
             text = (
                 f"{m.get('display_name', name)}  "
-                f"v{m.get('version', '?')}  by  "
-                f"{m.get('author', '')}  and  {status}"
+                f"v{m.get('version', '?')}  —  "
+                f"{m.get('author', '')}"
             )
             from PyQt5.QtWidgets import QListWidgetItem
             item = QListWidgetItem(text)
             item.setData(Qt.UserRole, name)
             self._inst_list.addItem(item)
 
-        self._tabs.setTabText(0, f"Installed ({len(self._installed)})")
+        self._tabs.setTabText(0, f"Installed ({len(ready)})")
 
     def _delete_selected(self):
         item = self._inst_list.currentItem()

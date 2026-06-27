@@ -1,0 +1,30 @@
+{
+  "name": "megadetector_5b",
+  "display_name": "MegaDetector 5b",
+  "version": "5.0b",
+  "author": "Microsoft AI for Earth",
+  "email": "",
+  "description": "YOLOv5 global detector for animals, people and vehicles (5b variant).",
+  "license": "MIT",
+  "license_url": "https://github.com/agentmorris/MegaDetector/blob/main/LICENSE",
+  "citation_url": "https://arxiv.org/abs/1907.06772",
+  "info_url": "https://github.com/agentmorris/MegaDetector",
+  "region": "Global",
+  "task": "detection",
+  "framework": "ultralytics",
+  "model_arch": "yolov5",
+  "environment": "PyTorch",
+  "input_type": "detect",
+  "model_file": "md_v5b.0.0.pt",
+  "download_url": "https://github.com/agentmorris/MegaDetector/releases/download/v5.0/md_v5b.0.0.pt",
+  "size_mb": 281,
+  "zip_url": "",
+  "adapter": "adapter.py",
+  "adapter_url": "",
+  "classes": [
+    "animal",
+    "person",
+    "vehicle"
+  ],
+  "sha256_adapter": ""
+}

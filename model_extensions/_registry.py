@@ -3,24 +3,37 @@
 import json
 import urllib.request
 import urllib.error
-import zipfile
-import io
-import shutil
 from pathlib import Path
 
-# Public registry hosted in the Declas GitHub repo.
-# Push model_extensions/registry.json to enable the online catalogue.
+from model_extensions._loader import _BUNDLED_DIR
+
 REGISTRY_URL = (
     "https://raw.githubusercontent.com/stangandaho/declas/main"
     "/model_extensions/registry.json"
 )
-EXTENSIONS_DIR = Path(__file__).parent
 _TIMEOUT_SEC = 10
+_CHUNK_SIZE  = 256 * 1024   # 256 KB per read
+
+
+def _download_with_progress(url: str, dest: Path, bytes_cb=None) -> None:
+    """Stream *url* to *dest*, calling bytes_cb(downloaded, total) after each chunk."""
+    with urllib.request.urlopen(url, timeout=600) as resp:
+        total      = int(resp.headers.get("Content-Length") or 0)
+        downloaded = 0
+        with open(dest, "wb") as fout:
+            while True:
+                chunk = resp.read(_CHUNK_SIZE)
+                if not chunk:
+                    break
+                fout.write(chunk)
+                downloaded += len(chunk)
+                if bytes_cb:
+                    bytes_cb(downloaded, total)
 
 
 def fetch_registry() -> dict:
     """Fetch the online registry JSON.
-    
+
     Returns the parsed dict on success, or {"models": [], "error": "<msg>"} on
     failure so callers can always iterate over registry["models"] safely.
     """
@@ -34,25 +47,16 @@ def fetch_registry() -> dict:
 
 
 def download_extension(manifest: dict,
-                       progress_callback=None) -> bool:
-    """Download and install one extension from the registry.
+                       progress_callback=None,
+                       bytes_callback=None) -> bool:
+    """Download model weights into the bundled extension directory.
 
-    Steps
-    -----
-    1. Download the extension ZIP (manifest.json + adapter.py + auxiliaries).
-    2. Extract to  model_extensions/<name>/.
-    3. Download the model weights separately (potentially hundreds of MB).
-    4. Write / overwrite manifest.json to ensure local copy is consistent.
-
-    Parameters
-    ----------
-    manifest : registry entry for the model (dict)
-    progress_callback : optional callable(message: str) for status updates
-
-    Returns True on success.
+    The adapter and manifest are already bundled with the app.
+    Only the weights file (which can be hundreds of MB) is downloaded at
+    runtime and stored alongside the bundled adapter in _internal/model_extensions/<name>/.
     """
-    name = manifest.get("name", "unknown")
-    ext_dir = EXTENSIONS_DIR / name
+    name    = manifest.get("name", "unknown")
+    ext_dir = _BUNDLED_DIR / name
     ext_dir.mkdir(parents=True, exist_ok=True)
 
     def report(msg: str):
@@ -60,33 +64,15 @@ def download_extension(manifest: dict,
             progress_callback(msg)
 
     try:
-        # 1 — Extension ZIP (adapter code + any auxiliaries)
-        zip_url = manifest.get("zip_url", "")
-        if zip_url:
-            report(f"Downloading {name} package …")
-            with urllib.request.urlopen(zip_url, timeout=120) as resp:
-                zdata = resp.read()
-            with zipfile.ZipFile(io.BytesIO(zdata)) as zf:
-                zf.extractall(ext_dir)
-            report("Package extracted.")
-        else:
-            # No ZIP: download adapter.py directly if provided
-            adapter_url = manifest.get("adapter_url", "")
-            if adapter_url:
-                report("Downloading adapter …")
-                urllib.request.urlretrieve(adapter_url,
-                                           str(ext_dir / "adapter.py"))
-
-        # 2 — Model weights (separate because they can be very large)
         weights_url = manifest.get("download_url", "")
         model_file  = manifest.get("model_file", "")
         if weights_url and model_file:
             dest = ext_dir / model_file
             report(f"Downloading weights ({model_file}). This may take a while …")
-            urllib.request.urlretrieve(weights_url, str(dest))
+            _download_with_progress(weights_url, dest, bytes_cb=bytes_callback)
             report(f"Weights saved → {dest.name}")
 
-        # 3 — Write manifest locally
+        # Refresh the manifest so the local copy stays in sync with the registry.
         with open(ext_dir / "manifest.json", "w", encoding="utf-8") as f:
             json.dump(manifest, f, indent=2)
 
@@ -99,12 +85,25 @@ def download_extension(manifest: dict,
 
 
 def remove_extension(name: str) -> bool:
-    """Delete an installed extension directory and all its contents.
+    """Delete only the weights file for an extension.
 
-    Returns True if the directory existed and was removed.
+    The adapter and manifest (bundled) are left intact so the extension
+    shows as 'missing_weights' — ready to be re-downloaded.
+    Returns True if a weights file was found and deleted.
     """
-    ext_dir = EXTENSIONS_DIR / name
-    if ext_dir.exists() and ext_dir.is_dir():
-        shutil.rmtree(str(ext_dir))
-        return True
+    ext_dir      = _BUNDLED_DIR / name
+    manifest_path = ext_dir / "manifest.json"
+    if not manifest_path.exists():
+        return False
+    try:
+        with open(manifest_path, "r", encoding="utf-8") as f:
+            manifest = json.load(f)
+        model_file = manifest.get("model_file", "")
+        if model_file:
+            weights = ext_dir / model_file
+            if weights.exists():
+                weights.unlink()
+                return True
+    except Exception:
+        pass
     return False
