@@ -1,4 +1,4 @@
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10495310.svg)](https://doi.org/10.5281/zenodo.14166440)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20951592.svg)](https://doi.org/10.5281/zenodo.20951592)
 
 ## Automated Wildlife Detection and Species Classification
 Declas is an open source software designed for animal detection and species classification on camera trap data. It leverages computer vision models, saving the time for data processing and cleaning, and improving the accuracy of data analysis.
@@ -7,30 +7,30 @@ Declas is an open source software designed for animal detection and species clas
 
 ## Features
 
-- 🦌**Animal detection and Species identification**
-- 👨🏾‍💻**User-Friendly Interface**
-- 🗃️**Mass detection or classification** - Analyse single image or folder(s) with high optimization.
-- ⚙︎**Customizable Settings** - Adjust settings and parameters for animal detection and species recognition based on specific requirements.
-- 📄**Comprehensive Reports** - Generate detailed reports with detected animals or recognized species and relevant metadata in JSON and CSV.
-- 🌫️**Filter images** - Separate empty images from images with at least one animal
-- 🤖**Extensibility** - Easily extendable to include more species or custom recognition models.
+- User-Friendly Interface
+- Animal detection and Species identification
+- Mass species detection or classification
+- Adjust parameters for specific requirements
+- Generate detailed reports in CSV or JSON
+- Separate empty images from images with at least one animal
+- Easily extendable to include models
 
 ## Installation
 This guide will provide step-by-step instructions to install and run the Declas software from source on Linux, macOS, and Windows systems.
 
 ## Table of Contents
 
-1. [Windows Installation](#windows-installation-)
-2. [Linux Installation](#linux-installation-)
-2. [macOS Installation](#macos-installation-)
+1. [Windows Installation](#windows-installation)
+2. [Linux Installation](#linux-installation)
+2. [macOS Installation](#macos-installation)
 4. [Troubleshooting](#troubleshooting)
 
 ---
-## Windows Installation 🪟
+## WINDOWS INSTALLATION
 ---
 
 ### Option 1: Run Executable
-1. [Download](https://zenodo.org/records/15811203/files/Declas_050725.zip?download=1) the zip file.
+1. [Download](https://zenodo.org/records/20951592/files/Declas_270626.zip?download=1) the zip file.
 
 2. Unzip the downloaded file and go into `Declas` folder. Double-click `Declas.exe` file to launch the software.
 3. Create a shortcut on Desktop (optional) pressing `Shift` + `Right click` on `Declas.exe`. Got to `Send to` -> `Desktop (create shortcut)`. On the Desktop, the shortcut can be renamed as `Declas`.
@@ -89,7 +89,7 @@ python main.py
 ```
 
 ---
-## Linux Installation 🐧
+## LINUX INSTALLATION
 ---
 ### 1. Install Prerequisites
 #### a. Python Installation
@@ -145,7 +145,7 @@ python3 main.py
 ```
 
 ---
-## macOS Installation 🍏
+## MacOS INSTALLATION
 ---
 ### 1. Install Prerequisites
 #### a. Python Installation
