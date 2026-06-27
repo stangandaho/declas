@@ -26,6 +26,7 @@ from ModelParameter import ModelParameter
 from Bases import *
 from ErrorWarning import *
 from ExtensionDialog import ExtensionManagerDialog, PublishGuidelinesDialog
+from MagnifierOverlay import MagnifierOverlay, MagnifierFilter
 
 ##
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
@@ -112,6 +113,10 @@ class Declas(QMainWindow):
         select_image.setToolTip("Select a single image or video")
         select_image.triggered.connect(self.select_an_image)
 
+        self._zoom_action = QAction(QIcon(f"{DECLAS_ROOT}/icons/zoom.png"), "Zoom lens", self)
+        self._zoom_action.setToolTip("Hover over the image to magnify")
+        self._zoom_action.setCheckable(True)
+
         globe = QAction(QIcon(f"{DECLAS_ROOT}/icons/globe.png"), "Show on map", self)
         globe.triggered.connect(self.show_on_map)
 
@@ -121,10 +126,10 @@ class Declas(QMainWindow):
         batch_inference = QAction(QIcon(f"{DECLAS_ROOT}/icons/batch.png"), "Run folder(s)", self)
         batch_inference.triggered.connect(self.multiple_detection)
 
-        buil_tables = QAction(QIcon(f"{DECLAS_ROOT}/icons/table.png"), "Construct table from detection/classification", self)
+        buil_tables = QAction(QIcon(f"{DECLAS_ROOT}/icons/table.png"), "Build table from detection/classification", self)
         buil_tables.triggered.connect(self.build_table)
 
-        split_detection = QAction(QIcon(f"{DECLAS_ROOT}/icons/split.png"), "'Target | No target' split", self)
+        split_detection = QAction(QIcon(f"{DECLAS_ROOT}/icons/split.png"), "Target or No target split", self)
         split_detection.triggered.connect(self.filter_detection)
 
         self.tool_bar1.addAction(select_dir)
@@ -137,7 +142,15 @@ class Declas(QMainWindow):
         self.tool_bar1.addAction(buil_tables)
         self.tool_bar1.addSeparator()
         self.tool_bar1.addAction(split_detection)
+        self.tool_bar1.addAction(self._zoom_action)
 
+
+        # MAGNIFIER ZOOM LENS
+        self._mag_overlay = MagnifierOverlay()
+        self._mag_filter  = MagnifierFilter(self.image_display, self._mag_overlay)
+        self.image_display.setMouseTracking(True)
+        self.image_display.installEventFilter(self._mag_filter)
+        self._zoom_action.toggled.connect(self._mag_filter.set_active)
 
         # FOLDER TREE VIEW
         self.file_model = QFileSystemModel()
@@ -385,12 +398,13 @@ class Declas(QMainWindow):
 
 
     def display_image(self, image_path, message = "Unable to load image"):
-        # Load and display the image
         pixmap = QPixmap(image_path)
         if pixmap.isNull():
             self.image_display.setText(message)
             self.view_detection.setEnabled(False)
+            self._mag_filter.set_pixmap(None)
         else:
+            self._mag_filter.set_pixmap(pixmap)
             self.image_display.setPixmap(pixmap.scaled(self.image_display.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
 
 
@@ -502,6 +516,7 @@ class Declas(QMainWindow):
         self._set_video_controls_visible(False)
 
     def _enter_video_mode(self, video_path):
+        self._mag_overlay.hide()   # lens irrelevant while video plays
         self.media_stack.setCurrentIndex(1)
         self.play_media.setEnabled(True)
         self._set_video_controls_visible(True)
