@@ -10,19 +10,19 @@
     <x>0</x>
     <y>0</y>
     <width>500</width>
-    <height>470</height>
+    <height>520</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
     <width>500</width>
-    <height>270</height>
+    <height>320</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
     <width>500</width>
-    <height>470</height>
+    <height>520</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -35,7 +35,7 @@
    <property name="geometry">
     <rect>
      <x>70</x>
-     <y>299</y>
+     <y>349</y>
      <width>371</width>
      <height>20</height>
     </rect>
@@ -194,32 +194,26 @@
      <x>41</x>
      <y>140</y>
      <width>421</width>
-     <height>30</height>
+     <height>80</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="gridLayout_5">
-    <item row="0" column="0">
-     <widget class="QLabel" name="yolo_device_4">
-      <property name="text">
-       <string>Object of interest:</string>
+    <item row="0" column="1">
+     <widget class="QListWidget" name="yolo_classes">
+      <property name="minimumSize">
+       <size>
+        <width>160</width>
+        <height>75</height>
+       </size>
       </property>
      </widget>
     </item>
-    <item row="0" column="1">
-     <spacer name="horizontalSpacer_11">
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
+    <item row="0" column="0">
+     <widget class="QLabel" name="yolo_device_4">
+      <property name="text">
+       <string>Classes of interest:</string>
       </property>
-      <property name="sizeHint" stdset="0">
-       <size>
-        <width>48</width>
-        <height>20</height>
-       </size>
-      </property>
-     </spacer>
-    </item>
-    <item row="0" column="2">
-     <widget class="QComboBox" name="yolo_classes"/>
+     </widget>
     </item>
    </layout>
   </widget>
@@ -227,7 +221,7 @@
    <property name="geometry">
     <rect>
      <x>40</x>
-     <y>189</y>
+     <y>239</y>
      <width>421</width>
      <height>31</height>
     </rect>
@@ -282,7 +276,7 @@
    <property name="geometry">
     <rect>
      <x>40</x>
-     <y>229</y>
+     <y>279</y>
      <width>421</width>
      <height>28</height>
     </rect>
@@ -308,7 +302,7 @@
    <property name="geometry">
     <rect>
      <x>40</x>
-     <y>259</y>
+     <y>309</y>
      <width>421</width>
      <height>30</height>
     </rect>
@@ -343,7 +337,7 @@
    <property name="geometry">
     <rect>
      <x>32</x>
-     <y>430</y>
+     <y>480</y>
      <width>444</width>
      <height>31</height>
     </rect>
@@ -433,7 +427,7 @@
    <property name="geometry">
     <rect>
      <x>130</x>
-     <y>330</y>
+     <y>380</y>
      <width>201</width>
      <height>28</height>
     </rect>
@@ -442,11 +436,11 @@
     <string/>
    </property>
   </widget>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>41</x>
-     <y>331</y>
+     <y>381</y>
      <width>71</width>
      <height>30</height>
     </rect>
@@ -465,7 +459,7 @@
    <property name="geometry">
     <rect>
      <x>40</x>
-     <y>370</y>
+     <y>420</y>
      <width>71</width>
      <height>20</height>
     </rect>
@@ -478,7 +472,7 @@
    <property name="geometry">
     <rect>
      <x>130</x>
-     <y>370</y>
+     <y>420</y>
      <width>331</width>
      <height>28</height>
     </rect>

@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QDialog
+from PyQt5.QtWidgets import QDialog, QListWidgetItem
 from PyQt5.uic import loadUi
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
@@ -24,6 +24,8 @@ class ModelParameter(QDialog):
    def __init__(self) -> None:
       super(ModelParameter, self).__init__()
       loadUi(f"{DECLAS_ROOT}/ui/ModelParameters.ui", self)
+      global _INSTALLED_EXTENSIONS
+      _INSTALLED_EXTENSIONS = _scan_extensions()
       icon_file = str(Path( Path(__file__).parent.parent, 'icons', 'logo.png'))
       self.setWindowIcon(QIcon(icon_file))
       self.setWindowFlags(Qt.WindowCloseButtonHint)
@@ -60,9 +62,10 @@ class ModelParameter(QDialog):
           self.yolo_device.addItem("cpu")
           self.yolo_device.addItem("cuda")
 
-      self.yolo_classes.addItem("animal")
-      self.yolo_classes.addItem("person")
-      self.yolo_classes.addItem("vehicle")
+      self._populate_classes(self.model_type.currentData())
+      self.model_type.currentIndexChanged.connect(
+          lambda _: self._populate_classes(self.model_type.currentData())
+      )
 
 
    def yolo_imgsz_parse(self):
@@ -96,6 +99,31 @@ class ModelParameter(QDialog):
    def _on_task_changed(self, task: str) -> None:
        self._populate_model_type(task)
        self.model_type.setCurrentIndex(0)
+       self._populate_classes(self.model_type.currentData())
+
+   def _populate_classes(self, ext_name: str | None) -> None:
+       """Fill yolo_classes list from the selected extension's manifest classes."""
+       classes = []
+       if ext_name and ext_name in _INSTALLED_EXTENSIONS:
+           classes = _INSTALLED_EXTENSIONS[ext_name].get("manifest", {}).get("classes", [])
+       if not classes:
+           classes = ["animal", "person", "vehicle"]
+       self.yolo_classes.clear()
+       for cls in classes:
+           item = QListWidgetItem(cls)
+           item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
+           item.setCheckState(Qt.Checked)
+           self.yolo_classes.addItem(item)
+
+   def set_class_of_interest(self, value) -> None:
+       """Restore class checkboxes from a saved value.
+
+       value: None or [] → all checked; list[str] → only those classes checked.
+       """
+       for i in range(self.yolo_classes.count()):
+           item = self.yolo_classes.item(i)
+           state = Qt.Checked if (not value or item.text() in value) else Qt.Unchecked
+           item.setCheckState(state)
 
    def update_model_type_show(self):
        task = self.task.currentText()
@@ -120,7 +148,12 @@ class ModelParameter(QDialog):
       yolo_device = self.yolo_device.currentText()
       yolo_max_det = self.yolo_max_det.value()
       yolo_vid_stride = self.yolo_vid_stride.value()
-      yolo_classes = self.yolo_classes.currentText()
+      checked = [
+          self.yolo_classes.item(i).text()
+          for i in range(self.yolo_classes.count())
+          if self.yolo_classes.item(i).checkState() == Qt.Checked
+      ]
+      yolo_classes = None if len(checked) == self.yolo_classes.count() else checked
       yolo_half = self.yolo_half.isChecked()
       run_on_main_dir = self.run_on_main_dir.isChecked()
       process_video = self.process_video.isChecked()

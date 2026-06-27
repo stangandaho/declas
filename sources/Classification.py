@@ -56,7 +56,8 @@ def _draw_and_save_annotated(image_path: str, detections: list) -> None:
 
 def extension_single_classification(image_path: str, adapter,
                                      conf_thres: float,
-                                     source_video=None) -> dict:
+                                     source_video=None,
+                                     class_filter=None) -> dict:
     """Run a model-extension adapter on one image.
 
     Saves the annotated image to  <img_dir>/detections/<img_name>  and,
@@ -65,6 +66,8 @@ def extension_single_classification(image_path: str, adapter,
     Returns the result dict (same format as single_classifications).
     """
     detections = adapter.predict_single(image_path, conf_thres)
+    if class_filter:
+        detections = [d for d in detections if d.get("species") in class_filter]
     _draw_and_save_annotated(image_path, detections)
 
     result = _summarise_extension_detections(detections, image_path,
@@ -76,7 +79,8 @@ def extension_single_classification(image_path: str, adapter,
 
 def extension_batch_classification(data_path: str, adapter,
                                     conf_thres: float,
-                                    extension: str = ".JPG") -> dict:
+                                    extension: str = ".JPG",
+                                    class_filter=None) -> dict:
     """Run a model-extension adapter on every image in data_path.
 
     Saves annotated images and writes a single merged detections.json.
@@ -91,6 +95,8 @@ def extension_batch_classification(data_path: str, adapter,
         )
         if img_path is None:
             continue
+        if class_filter:
+            detections = [d for d in detections if d.get("species") in class_filter]
         _draw_and_save_annotated(img_path, detections)
         entry = _summarise_extension_detections(detections, img_path,
                                                  source_video="__batch__")
@@ -103,7 +109,8 @@ def extension_batch_classification(data_path: str, adapter,
 def extension_video_classification(video_path: str, adapter,
                                     conf_thres: float,
                                     vid_stride: int = 5,
-                                    log_queue=None) -> dict:
+                                    log_queue=None,
+                                    class_filter=None) -> dict:
     """Extract frames from a video and run an extension adapter on each frame."""
     video_path = Path(video_path)
     frames = extract_video_frames(video_path, vid_stride=vid_stride)
@@ -119,6 +126,8 @@ def extension_video_classification(video_path: str, adapter,
     to_save: dict = {}
     for fpath in frames:
         detections = adapter.predict_single(fpath, conf_thres)
+        if class_filter:
+            detections = [d for d in detections if d.get("species") in class_filter]
         _draw_and_save_annotated(fpath, detections)
         result = _summarise_extension_detections(detections, fpath,
                                                   source_video=str(video_path))
