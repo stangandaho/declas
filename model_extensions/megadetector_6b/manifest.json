@@ -1,0 +1,30 @@
+{
+  "name": "megadetector_6b",
+  "display_name": "MegaDetector 6b",
+  "version": "6.0",
+  "author": "Microsoft AI for Earth",
+  "email": "",
+  "description": "YOLOv9 global detector for animals, people and vehicles in camera-trap images.",
+  "license": "MIT",
+  "license_url": "https://github.com/microsoft/CameraTraps/blob/main/LICENSE",
+  "citation_url": "https://arxiv.org/abs/2405.12930",
+  "info_url": "https://github.com/microsoft/CameraTraps?tab=readme-ov-file",
+  "region": "Global",
+  "task": "detection",
+  "framework": "ultralytics",
+  "model_arch": "yolov9",
+  "environment": "PyTorch",
+  "input_type": "detect",
+  "model_file": "MDV6b-yolov9c.pt",
+  "download_url": "https://zenodo.org/records/11192829/files/MDV6b-yolov9c.pt?download=1",
+  "size_mb": 50,
+  "zip_url": "",
+  "adapter": "adapter.py",
+  "adapter_url": "",
+  "classes": [
+    "animal",
+    "person",
+    "vehicle"
+  ],
+  "sha256_adapter": ""
+}

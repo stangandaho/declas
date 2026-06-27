@@ -51,7 +51,7 @@ MESSAGE_DELAY = 7000
 
 try:
     from ctypes import windll  # Only exists on Windows.
-    declas_id = 'declas.1.0.0'
+    declas_id = 'declas.1.1.0'
     windll.shell32.SetCurrentProcessExplicitAppUserModelID(declas_id)
 except ImportError:
     pass
