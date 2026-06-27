@@ -86,7 +86,7 @@ class Declas(QMainWindow):
                 "device": "cuda" if torch.cuda.is_available() else "cpu",
                 "max_det": 300,
                 "vid_stride": 5,
-                "class_of_interest": "animal",
+                "class_of_interest": None,
                 "half": False,
                 "run_on_main_dir": False,
                 "process_video": True,
@@ -279,7 +279,7 @@ class Declas(QMainWindow):
         mp.yolo_device.setItemText(0, current_set["device"])
         mp.yolo_max_det.setValue(current_set["max_det"]) # max_det
         mp.yolo_vid_stride.setValue(current_set["vid_stride"]) # vid_stride
-        mp.yolo_classes.setCurrentText(current_set["class_of_interest"])
+        mp.set_class_of_interest(current_set["class_of_interest"])
         mp.yolo_half.setChecked(current_set["half"])
         mp.run_on_main_dir.setChecked(current_set["run_on_main_dir"])
         mp.process_video.setChecked(current_set.get("process_video", True))
@@ -621,6 +621,7 @@ class Declas(QMainWindow):
                             adapter=adapter,
                             conf_thres=parameters["conf"],
                             vid_stride=vid_stride,
+                            class_filter=parameters.get("class_of_interest"),
                         )
                         to_save = split_json_obj(json_obj=result_dict, classif=True) if result_dict else None
                     else:
@@ -628,6 +629,7 @@ class Declas(QMainWindow):
                             image_path=media_path,
                             adapter=adapter,
                             conf_thres=parameters["conf"],
+                            class_filter=parameters.get("class_of_interest"),
                         )
                         to_save = str(entry)
 
@@ -648,6 +650,7 @@ class Declas(QMainWindow):
                             adapter=adapter,
                             conf_thres=parameters["conf"],
                             vid_stride=vid_stride,
+                            class_filter=parameters.get("class_of_interest"),
                         )
                         to_save = split_json_obj(json_obj=result_dict, classif=True) if result_dict else None
                     else:
@@ -655,6 +658,7 @@ class Declas(QMainWindow):
                             image_path=media_path,
                             adapter=adapter,
                             conf_thres=parameters["conf"],
+                            class_filter=parameters.get("class_of_interest"),
                         )
                         to_save = split_json_obj(json_obj=result_dict)
 
@@ -884,7 +888,8 @@ def process_directory(dp, log_queue):
                     extension_batch_classification(data_path=dp,
                                                    adapter=adapter,
                                                    conf_thres=parameters["conf"],
-                                                   extension=ext_suffix)
+                                                   extension=ext_suffix,
+                                                   class_filter=parameters.get("class_of_interest"))
                 for vf in video_files:
                     if log_queue:
                         log_queue.put(f"Processing video: {vf.name}")
@@ -892,7 +897,8 @@ def process_directory(dp, log_queue):
                                                    adapter=adapter,
                                                    conf_thres=parameters["conf"],
                                                    vid_stride=vid_stride,
-                                                   log_queue=log_queue)
+                                                   log_queue=log_queue,
+                                                   class_filter=parameters.get("class_of_interest"))
 
         elif parameters["task"] == "Classification":
             model_type = parameters["model_type"]
@@ -911,7 +917,8 @@ def process_directory(dp, log_queue):
                     extension_batch_classification(data_path=dp,
                                                    adapter=adapter,
                                                    conf_thres=parameters["conf"],
-                                                   extension=extension)
+                                                   extension=extension,
+                                                   class_filter=parameters.get("class_of_interest"))
 
                 for vf in video_files:
                     if log_queue:
@@ -920,7 +927,8 @@ def process_directory(dp, log_queue):
                                                    adapter=adapter,
                                                    conf_thres=parameters["conf"],
                                                    vid_stride=vid_stride,
-                                                   log_queue=log_queue)
+                                                   log_queue=log_queue,
+                                                   class_filter=parameters.get("class_of_interest"))
 
 
         emoji = ['\U0001F38A', '\U0001F389', '\u2705', '\U0001F917']

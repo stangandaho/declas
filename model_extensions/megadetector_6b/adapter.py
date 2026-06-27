@@ -10,11 +10,12 @@ class MegaDetectorV6bAdapter(ModelAdapter):
         self._device = device
 
     def predict_single(self, image_path: str, conf_thres: float) -> list:
+        import numpy as np
+        from PIL import Image as _PIL
+        img = np.array(_PIL.open(image_path).convert("RGB"))
         results = self._model.predict(
-            source=image_path,
-            conf=conf_thres,
-            device=self._device,
-            verbose=False,
+            source=img, conf=conf_thres,
+            device=self._device, verbose=False,
         )
         detections = []
         for r in results:

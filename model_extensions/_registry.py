@@ -68,7 +68,7 @@ def download_extension(manifest: dict,
         model_file  = manifest.get("model_file", "")
         if weights_url and model_file:
             dest = ext_dir / model_file
-            report(f"Downloading weights ({model_file}). This may take a while …")
+            report(f"Downloading weights {model_file}")
             _download_with_progress(weights_url, dest, bytes_cb=bytes_callback)
             report(f"Weights saved → {dest.name}")
 
