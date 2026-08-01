@@ -4,7 +4,9 @@ from turtle import st
 from PyQt5.uic import loadUi
 from PyQt5.QtCore import Qt, QDir, QThread, pyqtSignal, QUrl
 from PyQt5.QtGui import QIcon, QPixmap, QFontDatabase
-from PyQt5.QtWidgets import QMainWindow, QAction, QFileDialog, QFileSystemModel, QApplication
+from PyQt5.QtWidgets import (QMainWindow, QAction, QFileDialog, QFileSystemModel,
+                             QApplication, QWidget, QFormLayout, QLineEdit,
+                             QDateEdit, QScrollArea, QPushButton, QVBoxLayout, QLabel)
 from PyQt5.QtWebEngineWidgets import QWebEngineProfile, QWebEngineSettings, QWebEnginePage
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
@@ -27,6 +29,8 @@ from Bases import *
 from ErrorWarning import *
 from ExtensionDialog import ExtensionManagerDialog, PublishGuidelinesDialog
 from MagnifierOverlay import MagnifierOverlay, MagnifierFilter
+from TagsDialog import (TagsDialog, load_tag_definitions,
+                        load_media_tags, save_media_tags)
 
 ##
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
@@ -52,7 +56,7 @@ MESSAGE_DELAY = 7000
 
 try:
     from ctypes import windll  # Only exists on Windows.
-    declas_id = 'declas.1.1.0'
+    declas_id = 'declas.1.2.1'
     windll.shell32.SetCurrentProcessExplicitAppUserModelID(declas_id)
 except ImportError:
     pass
@@ -66,7 +70,7 @@ class Declas(QMainWindow):
         self.icon_file = os.path.normpath( os.path.join(os.path.dirname(__file__), 'icons', 'logo.png') )
         icon_file = self.icon_file.replace("sources", "")
         self.setWindowIcon(QIcon(icon_file))
-        self.setWindowTitle("Declas 1.1.0")
+        self.setWindowTitle("Declas 1.2.0")
 
         # Load a custom font
         font_path = str(Path(DECLAS_ROOT, "sources/styles/Montserrat-Regular.ttf"))
@@ -244,8 +248,156 @@ class Declas(QMainWindow):
         pub_action.triggered.connect(self.open_publish_guidelines)
         self.menuModels.addAction(pub_action)
 
+        # CUSTOM TAGS — settings menu entry
+        tags_action = QAction("Tags", self)
+        tags_action.setToolTip("Define custom per-media tags for density estimation methods")
+        tags_action.triggered.connect(self.open_tags_dialog)
+        self.menuSetting.addAction(tags_action)
+
+        # CUSTOM TAGS — tab next to Inference
+        self._tags_tab = QWidget()
+        self._tags_form_layout = QFormLayout()
+        self._tags_fields = {}   # title -> (widget, type_str)
+
+        form_container = QWidget()
+        form_container.setLayout(self._tags_form_layout)
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(scroll.NoFrame)
+        scroll.setWidget(form_container)
+
+        save_tags_btn = QPushButton("Save Tags")
+        save_tags_btn.clicked.connect(self.save_current_media_tags)
+
+        tab_layout = QVBoxLayout(self._tags_tab)
+        tab_layout.addWidget(scroll)
+        tab_layout.addWidget(save_tags_btn)
+
+        self.tabWidget.addTab(self._tags_tab, "Custom Tags")
+        self.build_tags_form()
+
         ## BUILD DETECTION TABLE
         #self.action_build_table.triggered.connect(self.build_table)
+
+    # ── Custom Tags ───────────────────────────────────────────────────────────
+
+    def open_tags_dialog(self):
+        dlg = TagsDialog(parent=self)
+        if dlg.exec_() == dlg.Accepted:
+            self.build_tags_form()
+            # Reload values for whatever media is currently displayed
+            try:
+                self._update_custom_tags(IMG_PATH[-1])
+            except IndexError:
+                pass
+
+    def build_tags_form(self):
+        """Rebuild the Custom Tags form from the current tag definitions."""
+        while self._tags_form_layout.rowCount():
+            self._tags_form_layout.removeRow(0)
+        self._tags_fields.clear()
+
+        tags = load_tag_definitions()
+        if not tags:
+            self._tags_form_layout.addRow(
+                QLabel("No tags defined. Go to Setting → Tags to add some.")
+            )
+            return
+
+        from PyQt5.QtGui import QDoubleValidator, QIntValidator
+        from PyQt5.QtCore import QDate
+        from PyQt5.QtWidgets import QCheckBox
+
+        for tag in tags:
+            title = tag["title"]
+            type_ = tag["type"]
+
+            if type_ == "boolean":
+                field = QCheckBox()
+            elif type_ == "date":
+                field = QDateEdit()
+                field.setCalendarPopup(True)
+                field.setDate(QDate.currentDate())
+                field.setSpecialValueText(" ")
+            elif type_ in ("float", "double"):
+                field = QLineEdit()
+                field.setValidator(QDoubleValidator())
+                field.setPlaceholderText("e.g. 3.5")
+            elif type_ == "integer":
+                field = QLineEdit()
+                field.setValidator(QIntValidator())
+                field.setPlaceholderText("e.g. 2")
+            else:
+                field = QLineEdit()
+                field.setPlaceholderText("text")
+
+            self._tags_fields[title] = (field, type_)
+            self._tags_form_layout.addRow(f"{title}:", field)
+
+    def _update_custom_tags(self, file_path):
+        """Populate the Custom Tags form with any saved values for *file_path*."""
+        if not self._tags_fields:
+            return
+        folder   = Path(file_path).parent
+        filename = Path(file_path).name
+        values   = load_media_tags(folder, filename)
+
+        from PyQt5.QtCore import QDate
+
+        from PyQt5.QtWidgets import QCheckBox
+
+        for title, (field, type_) in self._tags_fields.items():
+            raw = values.get(title, "")
+            if type_ == "boolean" and isinstance(field, QCheckBox):
+                field.setChecked(bool(raw))
+            elif type_ == "date" and isinstance(field, QDateEdit):
+                if raw:
+                    field.setDate(QDate.fromString(str(raw), "yyyy-MM-dd"))
+                else:
+                    field.setDate(field.minimumDate())
+            else:
+                field.setText(str(raw) if raw is not None else "")
+
+    def save_current_media_tags(self):
+        """Read form fields and persist tag values for the current media."""
+        try:
+            file_path = IMG_PATH[-1]
+        except IndexError:
+            return
+
+        from PyQt5.QtCore import QDate
+
+        values = {}
+        from PyQt5.QtWidgets import QCheckBox
+
+        for title, (field, type_) in self._tags_fields.items():
+            if type_ == "boolean" and isinstance(field, QCheckBox):
+                values[title] = field.isChecked()
+            elif type_ == "date" and isinstance(field, QDateEdit):
+                d = field.date()
+                values[title] = d.toString("yyyy-MM-dd") if d != field.minimumDate() else None
+            else:
+                text = field.text().strip()
+                if text == "":
+                    values[title] = None
+                elif type_ in ("float", "double"):
+                    try:
+                        values[title] = float(text)
+                    except ValueError:
+                        values[title] = text
+                elif type_ == "integer":
+                    try:
+                        values[title] = int(text)
+                    except ValueError:
+                        values[title] = text
+                else:
+                    values[title] = text
+
+        save_media_tags(Path(file_path).parent, Path(file_path).name, values)
+        self.statusbar.showMessage("Tags saved ✅", MESSAGE_DELAY)
+
+    # ─────────────────────────────────────────────────────────────────────────
 
     def leaflet_map(self, lon, lat, zoom_start = 12, init = False):
         
@@ -362,6 +514,7 @@ class Declas(QMainWindow):
             self._display_media(selected_media)
             self._update_metadata(selected_media)
             self._update_inference_result(selected_media)
+            self._update_custom_tags(selected_media)
             # Show nav buttons so the user can browse siblings
             self.previous_media.show()
             self.next_media.show()
@@ -389,9 +542,8 @@ class Declas(QMainWindow):
             if not self.file_model.isDir(index):
                 self._display_media(file_path)
                 self._update_metadata(file_path)
-
-                # Add inference result specific to this file
                 self._update_inference_result(file_path)
+                self._update_custom_tags(file_path)
 
                 IMG_PATH.append(file_path)
                 return file_path
@@ -436,6 +588,7 @@ class Declas(QMainWindow):
                 self._display_media(path)
                 self._update_metadata(path)
                 self._update_inference_result(path)
+                self._update_custom_tags(path)
                 IMG_PATH.append(path)
         except:
             pass
@@ -448,6 +601,7 @@ class Declas(QMainWindow):
                 self._display_media(path)
                 self._update_metadata(path)
                 self._update_inference_result(path)
+                self._update_custom_tags(path)
                 IMG_PATH.append(path)
         except:
             pass
@@ -844,12 +998,39 @@ class Declas(QMainWindow):
                 elif not Path(image_or_dir).is_dir():
                     json_files = [str(Path(Path(image_or_dir).parent, "detections.json"))]
                 for jsf in json_files:
+                    jsf_folder = Path(jsf).parent
+                    tags_path = jsf_folder / "custom_tags.json"
+                    custom_tags_data = {}
+                    if tags_path.exists():
+                        try:
+                            with open(tags_path) as tf:
+                                custom_tags_data = json.load(tf)
+                        except Exception:
+                            pass
+
                     with open(jsf, "r") as content:
                         content = json.load(content)
                         if content == {}:
                             continue
                         for each_c in content:
-                            content_data.append(content[each_c])
+                            row = content[each_c]
+                            if not isinstance(row, dict):
+                                continue
+                            # For images: match by filename directly
+                            media_name = Path(row.get("media_path", "")).name
+                            tags = custom_tags_data.get(media_name, {})
+                            # For video frames (e.g. video_f000150.jpg), fall back to
+                            # matching by video stem — tags were saved under "video.mp4"
+                            if not tags and row.get("media_type") == "video":
+                                frame_stem = Path(row.get("media_path", "")).stem
+                                video_stem = frame_stem.rsplit("_f", 1)[0]
+                                tags = next(
+                                    (v for k, v in custom_tags_data.items()
+                                     if Path(k).stem == video_stem),
+                                    {}
+                                )
+                            row.update(tags)
+                            content_data.append(row)
 
                 success_table_build(f"Table built successfully and saved at {folder}")
 
