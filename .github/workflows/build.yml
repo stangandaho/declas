@@ -33,17 +33,15 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pyinstaller
+      - name: Install Linux system libs
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get update && sudo apt-get install -y libgl1 libegl1 libxcb-cursor0
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install pyinstaller
-          # On Linux, install CPU-only torch to avoid multi-GB CUDA libraries
+          # On Linux, install CPU-only torch first so the huge CUDA build is not pulled in
           if [ "${{ runner.os }}" = "Linux" ]; then
             pip install torch==2.4.1 torchvision==0.19.1 torchaudio==2.4.1 --index-url https://download.pytorch.org/whl/cpu
           fi
@@ -58,7 +56,6 @@ jobs:
       - name: Package (Windows - build installer with Inno Setup)
         if: matrix.os == 'windows-latest'
         run: |
-          # Extract the tag (e.g. v1.0.0 -> 1.0.0) for the installer version
           $version = "${{ github.ref_name }}" -replace '^v', ''
           if (-not $version) { $version = "0.0.0" }
           iscc /DMyAppVersion=$version installer\declas.iss
