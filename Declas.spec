@@ -3,7 +3,7 @@
 from PyInstaller.utils.hooks import collect_data_files
 
 # Collect ultralytics data files (including cfg/default.yaml) automatically,
-# wherever the package is installed. Works on locally and on CI runners.
+# wherever the package is installed. Works locally and on CI runners.
 
 ultralytics_datas = collect_data_files('ultralytics')
 
@@ -16,7 +16,6 @@ a = Analysis(
         ('sources', './sources'),
         ('ui', './ui'),
         ('model_extensions', './model_extensions'),
-        ('config', './config'),
     ] + ultralytics_datas,
     hiddenimports=['cv2', 'supervision', 'piexif', 'ultralytics', 'PytorchWildlife'],
     hookspath=[],
