@@ -68,16 +68,14 @@ pyinstaller==6.10.0
 pyinstaller-hooks-contrib==2024.8
 pyparsing==3.1.2
 PyQt5==5.15.11
-PyQt5-Qt5==5.15.2
 PyQt5_sip==12.15.0
 pyqtlet==0.3.3
 PyQtWebEngine==5.15.7
-PyQtWebEngine-Qt5==5.15.2
 python-dateutil==2.9.0.post0
 python-multipart==0.0.9
 PytorchWildlife==1.0.2.16
 pytz==2024.1
-pywin32-ctypes==0.2.3
+pywin32-ctypes==0.2.3 ; sys_platform == "win32"
 PyYAML==6.0.2
 requests==2.32.3
 rich==13.7.1
