@@ -107,8 +107,9 @@ class Declas(QMainWindow):
         self.action_import_dc_file.triggered.connect(self.import_dc_file) # dc = declas
         self.action_quit.triggered.connect(self.quit_declas)
         # MODE
-        #self.action_dark.triggered.connect(self.set_dark_mode)
         self.action_light.triggered.connect(self.set_light_mode)
+        self.action_dark.triggered.connect(self.set_dark_mode)
+        self.action_system.triggered.connect(self.set_system_mode)
         # TOOLBAR
         select_dir = QAction(QIcon(f"{DECLAS_ROOT}/icons/folder.png"), "Select directory", self)
         select_dir.triggered.connect(self.select_folder)
@@ -249,15 +250,16 @@ class Declas(QMainWindow):
         self.menuModels.addAction(pub_action)
 
         # CUSTOM TAGS — settings menu entry
-        tags_action = QAction("Tags", self)
-        tags_action.setToolTip("Define custom per-media tags for density estimation methods")
+        tags_action = QAction(QIcon(f"{DECLAS_ROOT}/icons/tags.png"), "Tags", self)
+        tags_action.setToolTip("Define custom tags")
         tags_action.triggered.connect(self.open_tags_dialog)
         self.menuSetting.addAction(tags_action)
+        self.menuSetting.addMenu(self.menuAppearance)
 
         # CUSTOM TAGS — tab next to Inference
         self._tags_tab = QWidget()
         self._tags_form_layout = QFormLayout()
-        self._tags_fields = {}   # title -> (widget, type_str)
+        self._tags_fields = {} # title -> (widget, type_str)
 
         form_container = QWidget()
         form_container.setLayout(self._tags_form_layout)
@@ -280,8 +282,7 @@ class Declas(QMainWindow):
         ## BUILD DETECTION TABLE
         #self.action_build_table.triggered.connect(self.build_table)
 
-    # ── Custom Tags ───────────────────────────────────────────────────────────
-
+    # ── Custom Tags 
     def open_tags_dialog(self):
         dlg = TagsDialog(parent=self)
         if dlg.exec_() == dlg.Accepted:
@@ -430,6 +431,23 @@ class Declas(QMainWindow):
     def set_light_mode(self):
         with open(f"{DECLAS_ROOT}/sources/styles/light.qss", "r") as file:
             self.setStyleSheet(file.read())
+
+    def set_dark_mode(self):
+        with open(f"{DECLAS_ROOT}/sources/styles/dark.qss", "r") as file:
+            self.setStyleSheet(file.read())
+
+    def set_system_mode(self):
+        try:
+            import winreg
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER,
+                                 r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize")
+            value, _ = winreg.QueryValueEx(key, "AppsUseLightTheme")
+            if value == 0:
+                self.set_dark_mode()
+                return
+        except Exception:
+            pass
+        self.set_light_mode()
 
     def models_parameters(self):
         current_set = load_json()
