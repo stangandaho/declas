@@ -6,9 +6,34 @@ QMenuBar, QMenu {
     background-color: #ffffff;
     color: #000000;
 }
-QLineEdit, QTextEdit, QPlainTextEdit, QAbstractItemView {
-    background-color: #f0f0f0;
+QMenuBar::item:selected, QMenu::item:selected,
+QMenuBar::item:hover, QMenu::item:hover {
+    background-color: #0078d4;
+    color: #ffffff;
+}
+QLineEdit {
+    background-color: #ffffff;
     color: #000000;
+    border: 1px solid #cccccc;
+    border-radius: 2px;
+}
+QTextEdit, QPlainTextEdit {
+    background-color: #ffffff;
+    color: #000000;
+}
+QAbstractItemView {
+    background-color: #ffffff;
+    color: #000000;
+}
+QTreeView {
+    border: 1px solid #d0d0d0;
+}
+QTabWidget::pane {
+    background-color: #ffffff;
+    border: 1px solid #d0d0d0;
+}
+#batch_detection_log {
+    border: 1px solid #d0d0d0;
 }
 QPushButton {
     background-color: #e0e0e0;

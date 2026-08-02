@@ -6,13 +6,17 @@ QMenuBar, QMenu {
     background-color: #2b2b2b;
     color: #ffffff;
 }
-QMenuBar::item::hover, QMenu::item::hover {
-    background-color: #ffffff;  /* Background color on hover */
-    color: yellow;             /* Text color on hover */
+QMenuBar::item:selected, QMenu::item:selected,
+QMenuBar::item:hover, QMenu::item:hover {
+    background-color: #404040;
+    color: #ffffff;
 }
 QLineEdit, QTextEdit, QPlainTextEdit, QAbstractItemView {
     background-color: #3b3b3b;
     color: #ffffff;
+}
+QTabBar::tab {
+    color: #000000;
 }
 QPushButton {
     background-color: #555555;
