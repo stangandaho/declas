@@ -5,8 +5,9 @@ from PyQt5.uic import loadUi
 from PyQt5.QtCore import Qt, QDir, QThread, pyqtSignal, QUrl
 from PyQt5.QtGui import QIcon, QPixmap, QFontDatabase
 from PyQt5.QtWidgets import (QMainWindow, QAction, QFileDialog, QFileSystemModel,
-                             QApplication, QWidget, QFormLayout, QLineEdit,
-                             QDateEdit, QScrollArea, QPushButton, QVBoxLayout, QLabel)
+                             QApplication, QWidget, QLineEdit, QComboBox, QCheckBox,
+                             QDateEdit, QScrollArea, QPushButton, QVBoxLayout, QHBoxLayout,
+                             QLabel, QTableWidget, QHeaderView)
 from PyQt5.QtWebEngineWidgets import QWebEngineProfile, QWebEngineSettings, QWebEnginePage
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
@@ -260,23 +261,30 @@ class Declas(QMainWindow):
 
         # CUSTOM TAGS — tab next to Inference
         self._tags_tab = QWidget()
-        self._tags_form_layout = QFormLayout()
-        self._tags_fields = {} # title -> (widget, type_str)
+        self._tags_table = None          # QTableWidget, rebuilt by build_tags_form
+        self._tag_definitions = []       # list of tag defs
 
-        form_container = QWidget()
-        form_container.setLayout(self._tags_form_layout)
+        self._tags_table_container = QWidget()
+        self._tags_table_vbox = QVBoxLayout(self._tags_table_container)
+        self._tags_table_vbox.setContentsMargins(0, 0, 0, 0)
 
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setFrameShape(scroll.NoFrame)
-        scroll.setWidget(form_container)
+        tags_scroll = QScrollArea()
+        tags_scroll.setWidgetResizable(True)
+        tags_scroll.setFrameShape(tags_scroll.NoFrame)
+        tags_scroll.setWidget(self._tags_table_container)
 
+        tags_btn_row = QHBoxLayout()
+        add_tag_btn = QPushButton("Add Tag")
+        add_tag_btn.clicked.connect(self._add_tag_row)
         save_tags_btn = QPushButton("Save Tags")
         save_tags_btn.clicked.connect(self.save_current_media_tags)
+        tags_btn_row.addWidget(add_tag_btn)
+        tags_btn_row.addStretch()
+        tags_btn_row.addWidget(save_tags_btn)
 
         tab_layout = QVBoxLayout(self._tags_tab)
-        tab_layout.addWidget(scroll)
-        tab_layout.addWidget(save_tags_btn)
+        tab_layout.addWidget(tags_scroll)
+        tab_layout.addLayout(tags_btn_row)
 
         self.tabWidget.addTab(self._tags_tab, "Custom Tags")
         self.build_tags_form()
@@ -296,109 +304,140 @@ class Declas(QMainWindow):
                 pass
 
     def build_tags_form(self):
-        """Rebuild the Custom Tags form from the current tag definitions."""
-        while self._tags_form_layout.rowCount():
-            self._tags_form_layout.removeRow(0)
-        self._tags_fields.clear()
+        """Rebuild the Custom Tags table from the current tag definitions."""
+        if self._tags_table is not None:
+            self._tags_table_vbox.removeWidget(self._tags_table)
+            self._tags_table.deleteLater()
+            self._tags_table = None
 
-        tags = load_tag_definitions()
-        if not tags:
-            self._tags_form_layout.addRow(
-                QLabel("No tags defined. Go to Setting → Tags to add some.")
-            )
+        self._tag_definitions = load_tag_definitions()
+        if not self._tag_definitions:
+            lbl = QLabel("No tags defined. Go to Setting > Tags to add some.")
+            self._tags_table_vbox.addWidget(lbl)
             return
 
+        cols = [t["title"] for t in self._tag_definitions]
+        tbl = QTableWidget(0, len(cols))
+        tbl.setHorizontalHeaderLabels(cols)
+        tbl.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        tbl.setSelectionBehavior(QTableWidget.SelectRows)
+        self._tags_table = tbl
+        self._tags_table_vbox.addWidget(tbl)
+        self._add_tag_row()
+
+    def _add_tag_row(self, values=None):
+        """Append one entry row to the tags table."""
+        if self._tags_table is None:
+            return
         from PyQt5.QtGui import QDoubleValidator, QIntValidator
         from PyQt5.QtCore import QDate
-        from PyQt5.QtWidgets import QCheckBox
 
-        for tag in tags:
-            title = tag["title"]
-            type_ = tag["type"]
+        row = self._tags_table.rowCount()
+        self._tags_table.insertRow(row)
 
-            if type_ == "boolean":
-                field = QCheckBox()
+        for col, tag in enumerate(self._tag_definitions):
+            title  = tag["title"]
+            type_  = tag["type"]
+            predef = tag.get("values", [])
+            raw    = (values or {}).get(title, "")
+
+            if predef:
+                widget = QComboBox()
+                widget.addItems(predef)
+                if raw in predef:
+                    widget.setCurrentText(str(raw))
+            elif type_ == "boolean":
+                widget = QCheckBox()
+                widget.setChecked(bool(raw))
             elif type_ == "date":
-                field = QDateEdit()
-                field.setCalendarPopup(True)
-                field.setDate(QDate.currentDate())
-                field.setSpecialValueText(" ")
+                widget = QDateEdit()
+                widget.setCalendarPopup(True)
+                if raw:
+                    widget.setDate(QDate.fromString(str(raw), "yyyy-MM-dd"))
+                else:
+                    widget.setDate(QDate.currentDate())
             elif type_ in ("float", "double"):
-                field = QLineEdit()
-                field.setValidator(QDoubleValidator())
-                field.setPlaceholderText("e.g. 3.5")
+                widget = QLineEdit()
+                widget.setValidator(QDoubleValidator())
+                widget.setText(str(raw) if raw is not None else "")
             elif type_ == "integer":
-                field = QLineEdit()
-                field.setValidator(QIntValidator())
-                field.setPlaceholderText("e.g. 2")
+                widget = QLineEdit()
+                widget.setValidator(QIntValidator())
+                widget.setText(str(raw) if raw is not None else "")
             else:
-                field = QLineEdit()
-                field.setPlaceholderText("text")
+                widget = QLineEdit()
+                widget.setText(str(raw) if raw is not None else "")
 
-            self._tags_fields[title] = (field, type_)
-            self._tags_form_layout.addRow(f"{title}:", field)
+            self._tags_table.setCellWidget(row, col, widget)
+
+    def _det_folder(self, file_path):
+        """Return the detections/ folder for a given media path.
+        Works whether file_path points to the original or to an image already
+        inside a detections/ subfolder."""
+        p = Path(file_path)
+        if p.parent.name == "detections":
+            return p.parent          # already inside detections/
+        return p.parent / "detections"
 
     def _update_custom_tags(self, file_path):
-        """Populate the Custom Tags form with any saved values for *file_path*."""
-        if not self._tags_fields:
+        """Populate the tags table with any saved entries for *file_path*."""
+        if self._tags_table is None:
             return
-        folder   = Path(file_path).parent
-        filename = Path(file_path).name
-        values   = load_media_tags(folder, filename)
-
-        from PyQt5.QtCore import QDate
-
-        from PyQt5.QtWidgets import QCheckBox
-
-        for title, (field, type_) in self._tags_fields.items():
-            raw = values.get(title, "")
-            if type_ == "boolean" and isinstance(field, QCheckBox):
-                field.setChecked(bool(raw))
-            elif type_ == "date" and isinstance(field, QDateEdit):
-                if raw:
-                    field.setDate(QDate.fromString(str(raw), "yyyy-MM-dd"))
-                else:
-                    field.setDate(field.minimumDate())
-            else:
-                field.setText(str(raw) if raw is not None else "")
+        self._tags_table.setRowCount(0)
+        det_folder = self._det_folder(file_path)
+        entries = load_media_tags(det_folder, Path(file_path).name)
+        if not entries:
+            self._add_tag_row()
+            return
+        for entry in entries:
+            self._add_tag_row(values=entry)
 
     def save_current_media_tags(self):
-        """Read form fields and persist tag values for the current media."""
+        """Read the tags table and persist entries for the current media."""
         try:
             file_path = IMG_PATH[-1]
         except IndexError:
             return
+        if self._tags_table is None:
+            return
 
         from PyQt5.QtCore import QDate
 
-        values = {}
-        from PyQt5.QtWidgets import QCheckBox
+        entries = []
+        for row in range(self._tags_table.rowCount()):
+            entry = {}
+            for col, tag in enumerate(self._tag_definitions):
+                title  = tag["title"]
+                type_  = tag["type"]
+                predef = tag.get("values", [])
+                widget = self._tags_table.cellWidget(row, col)
 
-        for title, (field, type_) in self._tags_fields.items():
-            if type_ == "boolean" and isinstance(field, QCheckBox):
-                values[title] = field.isChecked()
-            elif type_ == "date" and isinstance(field, QDateEdit):
-                d = field.date()
-                values[title] = d.toString("yyyy-MM-dd") if d != field.minimumDate() else None
-            else:
-                text = field.text().strip()
-                if text == "":
-                    values[title] = None
-                elif type_ in ("float", "double"):
-                    try:
-                        values[title] = float(text)
-                    except ValueError:
-                        values[title] = text
-                elif type_ == "integer":
-                    try:
-                        values[title] = int(text)
-                    except ValueError:
-                        values[title] = text
-                else:
-                    values[title] = text
+                if predef and isinstance(widget, QComboBox):
+                    val = widget.currentText()
+                    entry[title] = val if val else None
+                elif type_ == "boolean" and isinstance(widget, QCheckBox):
+                    entry[title] = widget.isChecked()
+                elif type_ == "date" and isinstance(widget, QDateEdit):
+                    entry[title] = widget.date().toString("yyyy-MM-dd")
+                elif isinstance(widget, QLineEdit):
+                    text = widget.text().strip()
+                    if text == "":
+                        entry[title] = None
+                    elif type_ in ("float", "double"):
+                        try:    entry[title] = float(text)
+                        except ValueError: entry[title] = text
+                    elif type_ == "integer":
+                        try:    entry[title] = int(text)
+                        except ValueError: entry[title] = text
+                    else:
+                        entry[title] = text
 
-        save_media_tags(Path(file_path).parent, Path(file_path).name, values)
-        self.statusbar.showMessage("Tags saved ✅", MESSAGE_DELAY)
+            if any(v is not None and v != "" for v in entry.values()):
+                entries.append(entry)
+
+        det_folder = self._det_folder(file_path)
+        save_media_tags(det_folder, Path(file_path).name, entries)
+        self.statusbar.showMessage("Tags saved", MESSAGE_DELAY)
 
     # ─────────────────────────────────────────────────────────────────────────
 
@@ -1017,9 +1056,19 @@ class Declas(QMainWindow):
                                   if 'frames' not in p.parts]
                 elif not Path(image_or_dir).is_dir():
                     json_files = [str(Path(Path(image_or_dir).parent, "detections.json"))]
+                # Pre-compute binary expansion columns from tag definitions
+                tag_defs = load_tag_definitions()
+                binary_cols = {
+                    t["title"]: t["values"]
+                    for t in tag_defs
+                    if t.get("values") and t.get("type") in ("text", "")
+                }
+
                 for jsf in json_files:
                     jsf_folder = Path(jsf).parent
-                    tags_path = jsf_folder / "custom_tags.json"
+
+                    # Tags are saved in the detections/ subfolder
+                    tags_path = jsf_folder / "detections" / "custom_tags.json"
                     custom_tags_data = {}
                     if tags_path.exists():
                         try:
@@ -1028,28 +1077,63 @@ class Declas(QMainWindow):
                         except Exception:
                             pass
 
-                    with open(jsf, "r") as content:
-                        content = json.load(content)
-                        if content == {}:
+                    with open(jsf, "r") as f:
+                        content = json.load(f)
+                    if content == {}:
+                        continue
+
+                    for each_c in content:
+                        row = content[each_c]
+                        if not isinstance(row, dict):
                             continue
-                        for each_c in content:
-                            row = content[each_c]
-                            if not isinstance(row, dict):
-                                continue
-                            # For images: match by filename directly
-                            media_name = Path(row.get("media_path", "")).name
-                            tags = custom_tags_data.get(media_name, {})
-                            # For video frames (e.g. video_f000150.jpg), fall back to
-                            # matching by video stem — tags were saved under "video.mp4"
-                            if not tags and row.get("media_type") == "video":
-                                frame_stem = Path(row.get("media_path", "")).stem
-                                video_stem = frame_stem.rsplit("_f", 1)[0]
-                                tags = next(
-                                    (v for k, v in custom_tags_data.items()
-                                     if Path(k).stem == video_stem),
-                                    {}
-                                )
-                            row.update(tags)
+
+                        # Restore species/station columns from folder structure
+                        if not run_on_main_dir:
+                            row["species"] = jsf_folder.name
+                            row["station"] = jsf_folder.parent.name
+
+                        # Look up tag entries (list of dicts) by image filename
+                        media_name = Path(row.get("media_path", "")).name
+                        tag_entries = custom_tags_data.get(media_name, [])
+                        if isinstance(tag_entries, dict):
+                            tag_entries = [tag_entries] if tag_entries else []
+
+                        # For video frames fall back to matching by video stem
+                        if not tag_entries and row.get("media_type") == "video":
+                            frame_stem = Path(row.get("media_path", "")).stem
+                            video_stem = frame_stem.rsplit("_f", 1)[0]
+                            found = next(
+                                (v for k, v in custom_tags_data.items()
+                                 if Path(k).stem == video_stem),
+                                []
+                            )
+                            if isinstance(found, dict):
+                                found = [found] if found else []
+                            tag_entries = found
+
+                        if tag_entries:
+                            for entry in tag_entries:
+                                row_copy = dict(row)
+                                # Expand predefined text values into binary columns
+                                for title, allowed in binary_cols.items():
+                                    val = entry.get(title, "")
+                                    for v in allowed:
+                                        row_copy[f"{title}_{v}"] = 1 if val == v else 0
+                                # Pass through remaining tag fields as-is
+                                for title, val in entry.items():
+                                    if title not in binary_cols:
+                                        row_copy[title] = val
+                                content_data.append(row_copy)
+                        else:
+                            # No tags: emit row with None for every tag column so
+                            # all columns (binary and non-binary) appear in the CSV
+                            for t in tag_defs:
+                                title = t["title"]
+                                if title in binary_cols:
+                                    for v in binary_cols[title]:
+                                        row[f"{title}_{v}"] = None
+                                else:
+                                    row[title] = None
                             content_data.append(row)
 
                 success_table_build(f"Table built successfully and saved at {folder}")

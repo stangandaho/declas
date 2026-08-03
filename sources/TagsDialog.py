@@ -3,7 +3,7 @@ from pathlib import Path
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
-    QComboBox, QDialog, QHBoxLayout, QHeaderView,
+    QComboBox, QDialog, QHBoxLayout, QHeaderView, QLineEdit,
     QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout,
 )
 
@@ -28,26 +28,30 @@ def save_tag_definitions(tags):
 
 
 def load_media_tags(folder, filename):
-    """Return the saved custom-tag values for *filename* inside *folder*, or {}."""
+    """Return saved tag entries for *filename* inside *folder* as a list of dicts."""
     path = Path(folder) / "custom_tags.json"
     if not path.exists():
-        return {}
+        return []
     try:
         with open(path) as f:
             data = json.load(f)
-        return data.get(str(filename), {})
+        val = data.get(str(filename), [])
+        if isinstance(val, dict):
+            return [val] if val else []
+        return val if isinstance(val, list) else []
     except Exception:
-        return {}
+        return []
 
 
-def save_media_tags(folder, filename, values):
-    """Persist *values* (dict) for *filename* in folder/custom_tags.json."""
+def save_media_tags(folder, filename, entries):
+    """Persist *entries* (list of dicts) for *filename* in folder/custom_tags.json."""
     path = Path(folder) / "custom_tags.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
     try:
         data = json.loads(path.read_text()) if path.exists() else {}
     except Exception:
         data = {}
-    data[str(filename)] = values
+    data[str(filename)] = entries
     with open(path, "w") as f:
         json.dump(data, f, indent=2)
 
@@ -57,15 +61,18 @@ class TagsDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Custom Tags")
         self.setWindowModality(Qt.ApplicationModal)
-        self.resize(480, 320)
-        self.setMaximumSize(700, 600)
+        self.resize(600, 320)
+        self.setMaximumSize(900, 600)
 
         layout = QVBoxLayout(self)
 
-        self.table = QTableWidget(0, 2)
-        self.table.setHorizontalHeaderLabels(["Tag Title", "Data Type"])
-        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
+        self.table = QTableWidget(0, 3)
+        self.table.setHorizontalHeaderLabels(
+            ["Tag Title", "Data Type", "Predefined Values (comma-separated)"]
+        )
+        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         layout.addWidget(self.table)
 
@@ -84,9 +91,13 @@ class TagsDialog(QDialog):
         layout.addLayout(btn_row)
 
         for tag in load_tag_definitions():
-            self.add_row(tag.get("title", ""), tag.get("type", "float"))
+            self.add_row(
+                tag.get("title", ""),
+                tag.get("type", "float"),
+                ", ".join(tag.get("values", [])),
+            )
 
-    def add_row(self, title="", type_="float"):
+    def add_row(self, title="", type_="float", values=""):
         row = self.table.rowCount()
         self.table.insertRow(row)
         self.table.setItem(row, 0, QTableWidgetItem(title))
@@ -94,7 +105,7 @@ class TagsDialog(QDialog):
         combo.addItems(TAG_TYPES)
         combo.setCurrentText(type_ if type_ in TAG_TYPES else "float")
         self.table.setCellWidget(row, 1, combo)
-        # Only enter edit mode when user clicks Add Tag (empty title), not when loading saved tags
+        self.table.setItem(row, 2, QTableWidgetItem(values))
         if not title and self.isVisible():
             self.table.editItem(self.table.item(row, 0))
 
@@ -106,10 +117,14 @@ class TagsDialog(QDialog):
     def save_and_close(self):
         tags = []
         for row in range(self.table.rowCount()):
-            item = self.table.item(row, 0)
+            title_item = self.table.item(row, 0)
             combo = self.table.cellWidget(row, 1)
-            title = item.text().strip() if item else ""
-            if title:
-                tags.append({"title": title, "type": combo.currentText()})
+            vals_item = self.table.item(row, 2)
+            title = title_item.text().strip() if title_item else ""
+            if not title:
+                continue
+            raw_vals = vals_item.text() if vals_item else ""
+            values = [v.strip() for v in raw_vals.split(",") if v.strip()]
+            tags.append({"title": title, "type": combo.currentText(), "values": values})
         save_tag_definitions(tags)
         self.accept()
