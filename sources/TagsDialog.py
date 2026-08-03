@@ -60,6 +60,7 @@ class TagsDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Custom Tags")
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self.setWindowModality(Qt.ApplicationModal)
         self.resize(600, 320)
         self.setMaximumSize(900, 600)
