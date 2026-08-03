@@ -2,12 +2,13 @@ from random import choice
 import shutil
 from turtle import st
 from PyQt5.uic import loadUi
-from PyQt5.QtCore import Qt, QDir, QThread, pyqtSignal, QUrl
+from PyQt5.QtCore import Qt, QDir, QThread, pyqtSignal, QUrl, QTimer, QSettings
 from PyQt5.QtGui import QIcon, QPixmap, QFontDatabase
 from PyQt5.QtWidgets import (QMainWindow, QAction, QFileDialog, QFileSystemModel,
-                             QApplication, QWidget, QLineEdit, QComboBox, QCheckBox,
+                             QApplication, QWidget, QDialog, QLineEdit, QComboBox, QCheckBox,
                              QDateEdit, QScrollArea, QPushButton, QVBoxLayout, QHBoxLayout,
-                             QLabel, QTableWidget, QHeaderView)
+                             QLabel, QFrame, QFormLayout, QGroupBox, QMenu,
+                             QTableWidget, QHeaderView)
 from PyQt5.QtWebEngineWidgets import QWebEngineProfile, QWebEngineSettings, QWebEnginePage
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
@@ -53,16 +54,110 @@ IMG_PATH = []
 SINGLE_DETECTION = {}
 DECLAS_ROOT = Path(__file__).resolve().parent.parent
 
-MESSAGE_DELAY = 7000
+MESSAGE_DELAY = 10000
 
 try:
     from ctypes import windll  # Only exists on Windows.
-    declas_id = 'declas.1.2.1'
+    declas_id = 'declas.1.2.0'
     windll.shell32.SetCurrentProcessExplicitAppUserModelID(declas_id)
 except ImportError:
     pass
 
-# 
+
+def _play_notification_sound(sound_file=""):
+    path = (sound_file or "").strip()
+    if not path or not Path(path).exists():
+        default = DECLAS_ROOT / "notifications" / "bell-notification-933.wav"
+        path = str(default) if default.exists() else ""
+    if not path:
+        return
+    try:
+        import winsound
+        winsound.PlaySound(path, winsound.SND_FILENAME | winsound.SND_ASYNC)
+    except (ImportError, Exception):
+        pass
+
+
+class GeneralSettingsDialog(QDialog):
+    def __init__(self, app_settings, notifications_dir, parent=None):
+        super().__init__(parent)
+        self._notifications_dir = Path(notifications_dir)
+        self.setWindowTitle("General Settings")
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+        self.setMinimumWidth(440)
+        self.setWindowModality(Qt.ApplicationModal)
+
+        layout = QVBoxLayout(self)
+        layout.setSpacing(12)
+
+        # Notification
+        notif_group = QGroupBox("Notification")
+        notif_layout = QVBoxLayout(notif_group)
+        self.notify_check = QCheckBox("Enable notification sound on completion")
+        self.notify_check.setChecked(app_settings.value("notification_sound", True, type=bool))
+        notif_layout.addWidget(self.notify_check)
+
+        sound_row = QHBoxLayout()
+        sound_row.addWidget(QLabel("Sound:"))
+        self.sound_combo = QComboBox()
+        saved = app_settings.value("notification_sound_file", "", type=str)
+        if self._notifications_dir.exists():
+            for wav in sorted(self._notifications_dir.glob("*.wav")):
+                label = wav.stem.replace("-", " ").replace("_", " ").title()
+                self.sound_combo.addItem(label, wav.name)
+        idx = self.sound_combo.findData(saved)
+        self.sound_combo.setCurrentIndex(idx if idx >= 0 else 0)
+        self.sound_combo.currentIndexChanged.connect(self._preview_sound)
+        sound_row.addWidget(self.sound_combo, 1)
+        notif_layout.addLayout(sound_row)
+        layout.addWidget(notif_group)
+
+        # Language
+        lang_group = QGroupBox("Language")
+        lang_layout = QFormLayout(lang_group)
+        self.lang_combo = QComboBox()
+        self.lang_combo.addItems(["English (en)", "Français (fr)"])
+        current_lang = app_settings.value("language", "en", type=str)
+        self.lang_combo.setCurrentIndex(0 if current_lang == "en" else 1)
+        self.lang_combo.setEnabled(False)
+        lang_layout.addRow("Language:", self.lang_combo)
+        layout.addWidget(lang_group)
+
+        # Appearance
+        appear_group = QGroupBox("Appearance")
+        appear_layout = QFormLayout(appear_group)
+        self.appear_combo = QComboBox()
+        self.appear_combo.addItems(["Light", "Dark", "System"])
+        self.appear_combo.setCurrentText(app_settings.value("theme", "System", type=str))
+        appear_layout.addRow("Theme:", self.appear_combo)
+        layout.addWidget(appear_group)
+
+        # Buttons
+        btn_row = QHBoxLayout()
+        btn_row.addStretch()
+        cancel_btn = QPushButton("Cancel")
+        cancel_btn.clicked.connect(self.reject)
+        ok_btn = QPushButton("OK")
+        ok_btn.setDefault(True)
+        ok_btn.clicked.connect(self.accept)
+        btn_row.addWidget(cancel_btn)
+        btn_row.addWidget(ok_btn)
+        layout.addLayout(btn_row)
+
+    def _preview_sound(self):
+        name = self.sound_combo.currentData()
+        if name:
+            _play_notification_sound(str(self._notifications_dir / name))
+
+    def get_settings(self):
+        return {
+            "notification_sound": self.notify_check.isChecked(),
+            "notification_sound_file": self.sound_combo.currentData(),
+            "language": "en" if self.lang_combo.currentIndex() == 0 else "fr",
+            "theme": self.appear_combo.currentText(),
+        }
+
+
 class Declas(QMainWindow):
     def __init__(self) -> None:
         super(Declas, self).__init__()
@@ -237,6 +332,16 @@ class Declas(QMainWindow):
         # STATUS BAR
         self.statusbar = self.statusBar
 
+        # SPINNER (bottom-left, shown during batch detection)
+        self._spinner_label = QLabel("")
+        self._spinner_label.setVisible(False)
+        self.statusbar.addWidget(self._spinner_label)
+        self._spinner_chars = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+        self._spinner_idx = 0
+        self._spinner_timer = QTimer(self)
+        self._spinner_timer.setInterval(100)
+        self._spinner_timer.timeout.connect(self._tick_spinner)
+
         # LOG
         self.batch_detection_log.setReadOnly(True)
 
@@ -257,34 +362,49 @@ class Declas(QMainWindow):
         tags_action.setToolTip("Define custom tags")
         tags_action.triggered.connect(self.open_tags_dialog)
         self.menuSetting.addAction(tags_action)
-        self.menuSetting.addMenu(self.menuAppearance)
+
+        # GENERAL SETTINGS
+        self._app_settings = QSettings("Declas", "Declas")
+        general_action = QAction(QIcon(f"{DECLAS_ROOT}/icons/general_settings.png"), "General", self)
+        general_action.triggered.connect(self.open_general_settings)
+        self.menuSetting.addAction(general_action)
+
+        # Apply saved theme at startup
+        saved_theme = self._app_settings.value("theme", "System", type=str)
+        if saved_theme == "Light":
+            self.set_light_mode()
+        elif saved_theme == "Dark":
+            self.set_dark_mode()
+        else:
+            self.set_system_mode()
 
         # CUSTOM TAGS — tab next to Inference
         self._tags_tab = QWidget()
-        self._tags_table = None          # QTableWidget, rebuilt by build_tags_form
-        self._tag_definitions = []       # list of tag defs
+        self._tag_cards = [] # list of (card_widget, widgets_dict)
+        self._tag_definitions = [] # list of tag defs
+        self._updating_tags = False # guard: suppress auto-save during load
 
-        self._tags_table_container = QWidget()
-        self._tags_table_vbox = QVBoxLayout(self._tags_table_container)
-        self._tags_table_vbox.setContentsMargins(0, 0, 0, 0)
+        self._tags_container = QWidget()
+        self._tags_vbox = QVBoxLayout(self._tags_container)
+        self._tags_vbox.setContentsMargins(4, 4, 4, 4)
+        self._tags_vbox.setSpacing(6)
 
         tags_scroll = QScrollArea()
         tags_scroll.setWidgetResizable(True)
         tags_scroll.setFrameShape(tags_scroll.NoFrame)
-        tags_scroll.setWidget(self._tags_table_container)
+        tags_scroll.setWidget(self._tags_container)
 
-        tags_btn_row = QHBoxLayout()
-        add_tag_btn = QPushButton("Add Tag")
-        add_tag_btn.clicked.connect(self._add_tag_row)
-        save_tags_btn = QPushButton("Save Tags")
-        save_tags_btn.clicked.connect(self.save_current_media_tags)
-        tags_btn_row.addWidget(add_tag_btn)
-        tags_btn_row.addStretch()
-        tags_btn_row.addWidget(save_tags_btn)
+        add_entry_btn = QPushButton(" Add Entry ")
+        add_entry_btn.setFixedWidth(110)
+        add_entry_btn.clicked.connect(lambda: self._add_tag_card())
+
+        btn_row = QHBoxLayout()
+        btn_row.addWidget(add_entry_btn)
+        btn_row.addStretch()
 
         tab_layout = QVBoxLayout(self._tags_tab)
         tab_layout.addWidget(tags_scroll)
-        tab_layout.addLayout(tags_btn_row)
+        tab_layout.addLayout(btn_row)
 
         self.tabWidget.addTab(self._tags_tab, "Custom Tags")
         self.build_tags_form()
@@ -292,7 +412,25 @@ class Declas(QMainWindow):
         ## BUILD DETECTION TABLE
         #self.action_build_table.triggered.connect(self.build_table)
 
-    # ── Custom Tags 
+    def open_general_settings(self):
+        dlg = GeneralSettingsDialog(
+            self._app_settings,
+            DECLAS_ROOT / "notifications",
+            parent=self
+        )
+        if dlg.exec_() == dlg.Accepted:
+            s = dlg.get_settings()
+            for key, val in s.items():
+                self._app_settings.setValue(key, val)
+            theme = s["theme"]
+            if theme == "Light":
+                self.set_light_mode()
+            elif theme == "Dark":
+                self.set_dark_mode()
+            else:
+                self.set_system_mode()
+
+    # ── Custom Tags
     def open_tags_dialog(self):
         dlg = TagsDialog(parent=self)
         if dlg.exec_() == dlg.Accepted:
@@ -304,71 +442,99 @@ class Declas(QMainWindow):
                 pass
 
     def build_tags_form(self):
-        """Rebuild the Custom Tags table from the current tag definitions."""
-        if self._tags_table is not None:
-            self._tags_table_vbox.removeWidget(self._tags_table)
-            self._tags_table.deleteLater()
-            self._tags_table = None
+        self._updating_tags = True
+        while self._tags_vbox.count():
+            item = self._tags_vbox.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+        self._tag_cards = []
 
         self._tag_definitions = load_tag_definitions()
         if not self._tag_definitions:
             lbl = QLabel("No tags defined. Go to Setting > Tags to add some.")
-            self._tags_table_vbox.addWidget(lbl)
+            self._tags_vbox.addWidget(lbl)
+            self._updating_tags = False
             return
 
-        cols = [t["title"] for t in self._tag_definitions]
-        tbl = QTableWidget(0, len(cols))
-        tbl.setHorizontalHeaderLabels(cols)
-        tbl.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        tbl.setSelectionBehavior(QTableWidget.SelectRows)
-        self._tags_table = tbl
-        self._tags_table_vbox.addWidget(tbl)
-        self._add_tag_row()
+        self._tags_vbox.addStretch()
+        self._updating_tags = False
+        self._add_tag_card()
 
-    def _add_tag_row(self, values=None):
-        """Append one entry row to the tags table."""
-        if self._tags_table is None:
-            return
+    def _add_tag_card(self, values=None):
         from PyQt5.QtGui import QDoubleValidator, QIntValidator
         from PyQt5.QtCore import QDate
 
-        row = self._tags_table.rowCount()
-        self._tags_table.insertRow(row)
+        if not self._tag_definitions:
+            return
 
-        for col, tag in enumerate(self._tag_definitions):
+        card = QFrame()
+        card.setFrameShape(QFrame.StyledPanel)
+        card_layout = QVBoxLayout(card)
+        card_layout.setContentsMargins(8, 6, 8, 6)
+        card_layout.setSpacing(4)
+
+        header = QHBoxLayout()
+        header.addWidget(QLabel(f"Entry {len(self._tag_cards) + 1}"))
+        header.addStretch()
+        rm_btn = QPushButton("−")
+        rm_btn.setFixedSize(22, 22)
+        rm_btn.setStyleSheet("padding: 0;")
+        rm_btn.setToolTip("Remove this entry")
+        rm_btn.clicked.connect(lambda: self._remove_tag_card(card))
+        header.addWidget(rm_btn)
+        card_layout.addLayout(header)
+
+        form = QFormLayout()
+        form.setContentsMargins(0, 0, 0, 0)
+        widgets = {}
+        for tag in self._tag_definitions:
             title  = tag["title"]
             type_  = tag["type"]
             predef = tag.get("values", [])
             raw    = (values or {}).get(title, "")
 
             if predef:
-                widget = QComboBox()
-                widget.addItems(predef)
+                w = QComboBox()
+                w.addItems(predef)
                 if raw in predef:
-                    widget.setCurrentText(str(raw))
+                    w.setCurrentText(str(raw))
+                w.currentIndexChanged.connect(self._auto_save_tags)
             elif type_ == "boolean":
-                widget = QCheckBox()
-                widget.setChecked(bool(raw))
+                w = QCheckBox()
+                w.setChecked(bool(raw))
+                w.stateChanged.connect(self._auto_save_tags)
             elif type_ == "date":
-                widget = QDateEdit()
-                widget.setCalendarPopup(True)
-                if raw:
-                    widget.setDate(QDate.fromString(str(raw), "yyyy-MM-dd"))
-                else:
-                    widget.setDate(QDate.currentDate())
+                w = QDateEdit()
+                w.setCalendarPopup(True)
+                w.setDate(QDate.fromString(str(raw), "yyyy-MM-dd") if raw
+                          else QDate.currentDate())
+                w.dateChanged.connect(self._auto_save_tags)
             elif type_ in ("float", "double"):
-                widget = QLineEdit()
-                widget.setValidator(QDoubleValidator())
-                widget.setText(str(raw) if raw is not None else "")
+                w = QLineEdit(str(raw) if raw is not None else "")
+                w.setValidator(QDoubleValidator())
+                w.textChanged.connect(self._auto_save_tags)
             elif type_ == "integer":
-                widget = QLineEdit()
-                widget.setValidator(QIntValidator())
-                widget.setText(str(raw) if raw is not None else "")
+                w = QLineEdit(str(raw) if raw is not None else "")
+                w.setValidator(QIntValidator())
+                w.textChanged.connect(self._auto_save_tags)
             else:
-                widget = QLineEdit()
-                widget.setText(str(raw) if raw is not None else "")
+                w = QLineEdit(str(raw) if raw is not None else "")
+                w.textChanged.connect(self._auto_save_tags)
 
-            self._tags_table.setCellWidget(row, col, widget)
+            form.addRow(title + ":", w)
+            widgets[title] = w
+
+        card_layout.addLayout(form)
+
+        insert_pos = max(0, self._tags_vbox.count() - 1)
+        self._tags_vbox.insertWidget(insert_pos, card)
+        self._tag_cards.append((card, widgets))
+
+    def _remove_tag_card(self, card):
+        self._tags_vbox.removeWidget(card)
+        self._tag_cards = [(c, w) for c, w in self._tag_cards if c is not card]
+        card.deleteLater()
+        self._auto_save_tags()
 
     def _det_folder(self, file_path):
         """Return the detections/ folder for a given media path.
@@ -376,51 +542,60 @@ class Declas(QMainWindow):
         inside a detections/ subfolder."""
         p = Path(file_path)
         if p.parent.name == "detections":
-            return p.parent          # already inside detections/
+            return p.parent # already inside detections/
         return p.parent / "detections"
 
     def _update_custom_tags(self, file_path):
-        """Populate the tags table with any saved entries for *file_path*."""
-        if self._tags_table is None:
+        if not self._tag_definitions:
             return
-        self._tags_table.setRowCount(0)
+        self._updating_tags = True
+        for card, _ in self._tag_cards:
+            self._tags_vbox.removeWidget(card)
+            card.deleteLater()
+        self._tag_cards = []
         det_folder = self._det_folder(file_path)
         entries = load_media_tags(det_folder, Path(file_path).name)
+        self._updating_tags = False
         if not entries:
-            self._add_tag_row()
-            return
-        for entry in entries:
-            self._add_tag_row(values=entry)
+            self._add_tag_card()
+        else:
+            for entry in entries:
+                self._add_tag_card(values=entry)
 
-    def save_current_media_tags(self):
-        """Read the tags table and persist entries for the current media."""
+    def _auto_save_tags(self, *args):
+        if self._updating_tags:
+            return
+        self.save_current_media_tags(silent=True)
+
+    def save_current_media_tags(self, silent=False):
         try:
             file_path = IMG_PATH[-1]
         except IndexError:
             return
-        if self._tags_table is None:
+        if not self._tag_definitions:
             return
 
         from PyQt5.QtCore import QDate
 
         entries = []
-        for row in range(self._tags_table.rowCount()):
+        for card, widgets in self._tag_cards:
             entry = {}
-            for col, tag in enumerate(self._tag_definitions):
+            for tag in self._tag_definitions:
                 title  = tag["title"]
                 type_  = tag["type"]
                 predef = tag.get("values", [])
-                widget = self._tags_table.cellWidget(row, col)
-
-                if predef and isinstance(widget, QComboBox):
-                    val = widget.currentText()
+                w = widgets.get(title)
+                if w is None:
+                    continue
+                if predef and isinstance(w, QComboBox):
+                    val = w.currentText()
                     entry[title] = val if val else None
-                elif type_ == "boolean" and isinstance(widget, QCheckBox):
-                    entry[title] = widget.isChecked()
-                elif type_ == "date" and isinstance(widget, QDateEdit):
-                    entry[title] = widget.date().toString("yyyy-MM-dd")
-                elif isinstance(widget, QLineEdit):
-                    text = widget.text().strip()
+                elif type_ == "boolean" and isinstance(w, QCheckBox):
+                    entry[title] = w.isChecked()
+                elif type_ == "date" and isinstance(w, QDateEdit):
+                    entry[title] = w.date().toString("yyyy-MM-dd")
+                elif isinstance(w, QLineEdit):
+                    text = w.text().strip()
                     if text == "":
                         entry[title] = None
                     elif type_ in ("float", "double"):
@@ -431,15 +606,15 @@ class Declas(QMainWindow):
                         except ValueError: entry[title] = text
                     else:
                         entry[title] = text
-
             if any(v is not None and v != "" for v in entry.values()):
                 entries.append(entry)
 
         det_folder = self._det_folder(file_path)
         save_media_tags(det_folder, Path(file_path).name, entries)
-        self.statusbar.showMessage("Tags saved", MESSAGE_DELAY)
+        if not silent:
+            self.statusbar.showMessage("Tags saved", MESSAGE_DELAY)
 
-    # ─────────────────────────────────────────────────────────────────────────
+    # ───────────────────────────
 
     def leaflet_map(self, lon, lat, zoom_start = 12, init = False):
         
@@ -470,8 +645,9 @@ class Declas(QMainWindow):
             sys.exit()
 
     def set_light_mode(self):
+        styles_dir = str(DECLAS_ROOT / "sources" / "styles").replace("\\", "/")
         with open(f"{DECLAS_ROOT}/sources/styles/light.qss", "r") as file:
-            self.setStyleSheet(file.read())
+            self.setStyleSheet(file.read().replace("{STYLES_DIR}", styles_dir))
 
     def set_dark_mode(self):
         with open(f"{DECLAS_ROOT}/sources/styles/dark.qss", "r") as file:
@@ -983,11 +1159,12 @@ class Declas(QMainWindow):
                 # Create the worker and pass the folder path
                 self.worker = DetectionWorker(folder_path, main_subdir=main_subdir["run_on_main_dir"],
                                                  conf_thres= main_subdir["conf"])
-                # Connect the signals to the appropriate slots
                 self.worker.detection_done.connect(self.on_detection_done)
+                self.worker.detection_done.connect(self._stop_spinner)
                 self.worker.error_occurred.connect(self.on_detection_error)
+                self.worker.error_occurred.connect(self._stop_spinner)
                 self.worker.log_message.connect(self.update_log)
-                # Start the worker thread
+                self._start_spinner()
                 self.worker.start()
             else:
                 missed_folder()
@@ -999,9 +1176,26 @@ class Declas(QMainWindow):
 
     def on_detection_done(self, message):
         self.statusbar.showMessage(message, MESSAGE_DELAY)
+        if self._app_settings.value("notification_sound", True, type=bool):
+            sound_name = self._app_settings.value("notification_sound_file", "", type=str)
+            sound_file = str(DECLAS_ROOT / "notifications" / sound_name) if sound_name else ""
+            _play_notification_sound(sound_file)
 
     def on_detection_error(self, message):
         self.statusbar.showMessage(message, MESSAGE_DELAY)
+
+    def _start_spinner(self):
+        self._spinner_idx = 0
+        self._spinner_label.setVisible(True)
+        self._spinner_timer.start()
+
+    def _stop_spinner(self):
+        self._spinner_timer.stop()
+        self._spinner_label.setVisible(False)
+
+    def _tick_spinner(self):
+        self._spinner_label.setText(self._spinner_chars[self._spinner_idx % len(self._spinner_chars)])
+        self._spinner_idx += 1
 
     def open_extensions(self):
         """Open the Extension Manager dialog (non-modal — Declas stays interactive)."""
@@ -1148,6 +1342,28 @@ class Declas(QMainWindow):
 
 
 ## QThread
+def _collect_leaf_dirs(root: Path, skip: frozenset) -> list:
+    """Return all dirs under root (excluding skip names) that directly contain media."""
+    result = []
+    try:
+        children = [c for c in root.iterdir() if c.is_dir() and c.name not in skip]
+    except PermissionError:
+        return result
+    for child in children:
+        try:
+            has_media = any(
+                f.suffix in IMAGE_EXT or f.suffix in VIDEO_EXT
+                for f in child.iterdir() if f.is_file()
+            )
+        except PermissionError:
+            continue
+        if has_media:
+            result.append(child)
+        else:
+            result.extend(_collect_leaf_dirs(child, skip))
+    return result
+
+
 def process_directory(dp, log_queue):
     parameters  = load_json()
     model_weight = load_weight()
@@ -1281,51 +1497,79 @@ class DetectionWorker(QThread):
     def run(self):
         self.log_emitter.start()
 
+        _SKIP = {"detections", "frames"}
+
+        def _is_bad(r):
+            if r is None:
+                return True
+            rl = r.lower()
+            return "error" in rl or "no media" in rl or "missing" in rl
+
         try:
-            #self.status_update.emit("Running ...")
             dir_path = Path(self.folder_path)
 
             if self.main_subdir:
-                results = process_directory(dir_path, self.log_queue)
-               
-                if "error" in results.lower():
-                    self.error_occurred.emit(results)
+                self.log_queue.put(f"\U0001F504 Processing: {dir_path.name}\n")
+                result = process_directory(dir_path, self.log_queue)
+                if _is_bad(result):
+                    self.error_occurred.emit(result or "No media found or error occurred")
                 else:
-                    self.detection_done.emit(results)
-                
+                    self.detection_done.emit(result)
 
             else:
-                all_dirs = [dir for dir in Path(dir_path).iterdir() if dir.is_dir()]
-                if len(all_dirs) == 0:
-                    self.error_occurred.emit("\u274C Choose a directory with structure 'deployment/station/species'")
+                _SKIP_FS = frozenset(_SKIP)
+                station_dirs = [
+                    d for d in dir_path.iterdir()
+                    if d.is_dir() and d.name not in _SKIP_FS
+                ]
+                if not station_dirs:
+                    self.error_occurred.emit(
+                        "\u274C No valid subdirectories found. Select the parent folder "
+                        "that contains station sub-folders."
+                    )
                     return
-                
-                for sub_dir in all_dirs:
-                    self.log_queue.put(f"\U0001F504 RUNNING ON DIR: {sub_dir}\n")
-                    species_dirs = [dir for dir in Path(sub_dir).iterdir() if dir.is_dir()]
-                    if len(species_dirs) == 0:
-                        self.error_occurred.emit("\u274C Choose a directory with structure 'deployment/station/species'")
-                        return
 
-                # Use ThreadPoolExecutor instead of ProcessPoolExecutor
+                all_errors = []
+                any_success = False
+
+                for station in station_dirs:
+                    leaf_dirs = _collect_leaf_dirs(station, _SKIP_FS)
+                    if not leaf_dirs:
+                        self.log_queue.put(
+                            f"\u26A0\uFE0F  Skipping '{station.name}': no media found\n"
+                        )
+                        continue
+                    self.log_queue.put(
+                        f"\U0001F504 Station: {station.name}"
+                    )
                     try:
                         with ThreadPoolExecutor() as executor:
-                            args_list = [(species_dir, self.log_queue) for species_dir in species_dirs]
-                            results = executor.map(process_directory_wrapper, args_list)
-
-                            emoji = ['\U0001F38A', '\U0001F389', '\u2705', '\U0001F917']
-                            msg = f"Completed successfully {choice(emoji)}"
-
-                            has_error = ['error' in x.lower() for x in results]
-                            if any(has_error):
-                                error_index = [x for x, y in enumerate(has_error) if y == True]
-                                self.error_occurred.emit(results[error_index[0]])
+                            result_list = list(
+                                executor.map(process_directory_wrapper,
+                                             [(d, self.log_queue) for d in leaf_dirs])
+                            )
+                        for d, r in zip(leaf_dirs, result_list):
+                            if _is_bad(r):
+                                all_errors.append(r or "Unknown error")
                             else:
-                                self.detection_done.emit(msg)
-                    except Exception as e:
-                        self.log_queue.put(f"Error processing directory {sub_dir}: {e}")
-                        continue
-                            
+                                any_success = True
+                                self.log_queue.put(f"\u2705 {d.name}\n")
+                    except Exception as exc:
+                        all_errors.append(str(exc))
+                        self.log_queue.put(f"\u274C Error in {station.name}: {exc}\n")
+
+                if any_success:
+                    emoji = ['\U0001F38A', '\U0001F389', '\u2705', '\U0001F917']
+                    self.detection_done.emit(f"Completed successfully {choice(emoji)}")
+                elif all_errors:
+                    self.error_occurred.emit(all_errors[0])
+                else:
+                    self.error_occurred.emit(
+                        "\u274C No processable folders found. Check your directory structure."
+                    )
+
+        except Exception as exc:
+            self.error_occurred.emit(f"Unexpected error: {exc}")
         finally:
             self.log_emitter.stop()
             self.log_emitter.wait()
