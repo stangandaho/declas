@@ -14,6 +14,7 @@ a = Analysis(
     datas=[
         ('icons', './icons'),
         ('sources', './sources'),
+        ('notifications', './notifications'),
         ('ui', './ui'),
         ('model_extensions', './model_extensions'),
     ] + ultralytics_datas,
