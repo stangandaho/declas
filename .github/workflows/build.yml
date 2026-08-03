@@ -56,9 +56,16 @@ jobs:
       - name: Package (Windows - build installer with Inno Setup)
         if: matrix.os == 'windows-latest'
         run: |
-          $version = "${{ github.ref_name }}" -replace '^v', ''
-          if (-not $version) { $version = "0.0.0" }
+          # Strip the leading v from the tag (e.g. v1.2.0 -> 1.2.0) for the filename.
+          # For non-tag test runs, label the build as 0.0.0-dev.
+          if ("${{ github.ref_type }}" -eq "tag") {
+            $version = "${{ github.ref_name }}" -replace '^v', ''
+          } else {
+            $version = "0.0.0-dev"
+          }
           iscc /DMyAppVersion=$version installer\declas.iss
+          # Move the installer to the top level so the artifact has no nested folders
+          Move-Item installer\Output\*.exe .
         shell: pwsh
 
       - name: Package (macOS - make a DMG)
@@ -84,7 +91,7 @@ jobs:
         with:
           name: ${{ matrix.artifact }}
           path: |
-            installer/Output/*.exe
+            Declas_Setup_*.exe
             dist/*.dmg
             dist/*.tar.gz
 
