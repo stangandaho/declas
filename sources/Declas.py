@@ -108,8 +108,10 @@ class Declas(QMainWindow):
         self.action_quit.triggered.connect(self.quit_declas)
         # MODE
         self.action_light.triggered.connect(self.set_light_mode)
-        self.action_dark.triggered.connect(self.set_dark_mode)
-        self.action_system.triggered.connect(self.set_system_mode)
+        if hasattr(self, 'action_dark'):
+            self.action_dark.triggered.connect(self.set_dark_mode)
+        if hasattr(self, 'action_system'):
+            self.action_system.triggered.connect(self.set_system_mode)
         # TOOLBAR
         select_dir = QAction(QIcon(f"{DECLAS_ROOT}/icons/folder.png"), "Select directory", self)
         select_dir.triggered.connect(self.select_folder)

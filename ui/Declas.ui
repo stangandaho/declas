@@ -443,9 +443,10 @@
        <normaloff>../icons/appearance.png</normaloff>../icons/appearance.png</iconset>
      </property>
      <addaction name="action_light"/>
+     <addaction name="action_dark"/>
+     <addaction name="action_system"/>
     </widget>
     <addaction name="action_models_parameter"/>
-    <addaction name="menuAppearance"/>
    </widget>
    <widget class="QMenu" name="menuModels">
     <property name="title">
@@ -532,6 +533,11 @@
   <action name="action_light">
    <property name="text">
     <string>Light</string>
+   </property>
+  </action>
+  <action name="action_system">
+   <property name="text">
+    <string>System</string>
    </property>
   </action>
  </widget>
