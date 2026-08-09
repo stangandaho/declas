@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Declas
+Comment=AI-powered wildlife detection and classification
+Exec=./Declas
+Icon=declas
+Type=Application
+Categories=Science;Education;
+StartupWMClass=Declas

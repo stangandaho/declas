@@ -1,5 +1,6 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+import sys
 from PyInstaller.utils.hooks import collect_data_files
 
 # Collect ultralytics data files (including cfg/default.yaml) automatically,
@@ -55,3 +56,15 @@ coll = COLLECT(
     upx_exclude=[],
     name='Declas',
 )
+
+if sys.platform == 'darwin':
+    app = BUNDLE(
+        coll,
+        name='Declas.app',
+        icon='icons/logo.icns',
+        bundle_identifier='com.declas.app',
+        info_plist={
+            'NSHighResolutionCapable': True,
+            'CFBundleShortVersionString': '1.3.0',
+        }
+    )

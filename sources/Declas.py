@@ -54,11 +54,11 @@ IMG_PATH = []
 SINGLE_DETECTION = {}
 DECLAS_ROOT = Path(__file__).resolve().parent.parent
 
-MESSAGE_DELAY = 10000
+MESSAGE_DELAY = 8000
 
 try:
     from ctypes import windll  # Only exists on Windows.
-    declas_id = 'declas.1.2.0'
+    declas_id = 'com.declas.app'
     windll.shell32.SetCurrentProcessExplicitAppUserModelID(declas_id)
 except ImportError:
     pass
@@ -166,7 +166,7 @@ class Declas(QMainWindow):
         self.icon_file = os.path.normpath( os.path.join(os.path.dirname(__file__), 'icons', 'logo.png') )
         icon_file = self.icon_file.replace("sources", "")
         self.setWindowIcon(QIcon(icon_file))
-        self.setWindowTitle("Declas 1.2.0")
+        self.setWindowTitle("Declas 1.3.0")
 
         # Load a custom font
         font_path = str(Path(DECLAS_ROOT, "sources/styles/Montserrat-Regular.ttf"))
@@ -1268,6 +1268,15 @@ class Declas(QMainWindow):
                         try:
                             with open(tags_path) as tf:
                                 custom_tags_data = json.load(tf)
+                        except Exception:
+                            pass
+
+                    # Video frames are tagged in frames/detections/ — merge those in
+                    frame_tags_path = jsf_folder / "frames" / "detections" / "custom_tags.json"
+                    if frame_tags_path.exists():
+                        try:
+                            with open(frame_tags_path) as tf:
+                                custom_tags_data.update(json.load(tf))
                         except Exception:
                             pass
 
