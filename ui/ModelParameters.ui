@@ -10,19 +10,19 @@
     <x>0</x>
     <y>0</y>
     <width>500</width>
-    <height>520</height>
+    <height>700</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
     <width>500</width>
-    <height>320</height>
+    <height>440</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
     <width>500</width>
-    <height>520</height>
+    <height>700</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -31,19 +31,6 @@
   <property name="modal">
    <bool>false</bool>
   </property>
-  <widget class="Line" name="line">
-   <property name="geometry">
-    <rect>
-     <x>70</x>
-     <y>349</y>
-     <width>371</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="orientation">
-    <enum>Qt::Horizontal</enum>
-   </property>
-  </widget>
   <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
@@ -227,6 +214,19 @@
     </rect>
    </property>
    <layout class="QGridLayout" name="gridLayout_8">
+    <item row="0" column="1">
+     <spacer name="horizontalSpacer">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>40</width>
+        <height>20</height>
+       </size>
+      </property>
+     </spacer>
+    </item>
     <item row="0" column="0">
      <widget class="QCheckBox" name="process_video">
       <property name="toolTip">
@@ -240,14 +240,7 @@
       </property>
      </widget>
     </item>
-    <item row="0" column="1">
-     <widget class="QLabel" name="yolo_device_3">
-      <property name="text">
-       <string>Frame stride:</string>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="2">
+    <item row="0" column="4">
      <spacer name="horizontalSpacer_5">
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
@@ -260,7 +253,7 @@
       </property>
      </spacer>
     </item>
-    <item row="0" column="3">
+    <item row="0" column="5">
      <widget class="QSpinBox" name="yolo_vid_stride">
       <property name="minimum">
        <number>1</number>
@@ -270,13 +263,36 @@
       </property>
      </widget>
     </item>
+    <item row="0" column="3">
+     <widget class="QLabel" name="yolo_device_3">
+      <property name="text">
+       <string>Frame stride:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="2">
+     <widget class="Line" name="line">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Raised</enum>
+      </property>
+      <property name="lineWidth">
+       <number>1</number>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+     </widget>
+    </item>
    </layout>
   </widget>
   <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>40</x>
-     <y>279</y>
+     <y>300</y>
      <width>421</width>
      <height>28</height>
     </rect>
@@ -302,7 +318,7 @@
    <property name="geometry">
     <rect>
      <x>40</x>
-     <y>309</y>
+     <y>340</y>
      <width>421</width>
      <height>30</height>
     </rect>
@@ -333,11 +349,88 @@
     </item>
    </layout>
   </widget>
+  <widget class="QGroupBox" name="dist_group">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>500</y>
+     <width>443</width>
+     <height>151</height>
+    </rect>
+   </property>
+   <property name="title">
+    <string>Distance estimation</string>
+   </property>
+   <widget class="QCheckBox" name="estimate_distance">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>30</y>
+      <width>280</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Estimate</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="depth_model_label">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>57</y>
+      <width>115</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="visible">
+     <bool>false</bool>
+    </property>
+    <property name="text">
+     <string>Depth model:</string>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="depth_model_combo">
+    <property name="geometry">
+     <rect>
+      <x>149</x>
+      <y>54</y>
+      <width>281</width>
+      <height>26</height>
+     </rect>
+    </property>
+    <property name="visible">
+     <bool>false</bool>
+    </property>
+    <property name="frame">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="fov_btn">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>86</y>
+      <width>220</width>
+      <height>26</height>
+     </rect>
+    </property>
+    <property name="visible">
+     <bool>false</bool>
+    </property>
+    <property name="text">
+     <string>Set Field Of View</string>
+    </property>
+   </widget>
+  </widget>
   <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>32</x>
-     <y>480</y>
+     <y>660</y>
      <width>444</width>
      <height>31</height>
     </rect>
@@ -427,7 +520,7 @@
    <property name="geometry">
     <rect>
      <x>130</x>
-     <y>380</y>
+     <y>400</y>
      <width>201</width>
      <height>28</height>
     </rect>
@@ -440,7 +533,7 @@
    <property name="geometry">
     <rect>
      <x>41</x>
-     <y>381</y>
+     <y>401</y>
      <width>71</width>
      <height>30</height>
     </rect>
@@ -459,7 +552,7 @@
    <property name="geometry">
     <rect>
      <x>40</x>
-     <y>420</y>
+     <y>440</y>
      <width>71</width>
      <height>20</height>
     </rect>
@@ -472,7 +565,7 @@
    <property name="geometry">
     <rect>
      <x>130</x>
-     <y>420</y>
+     <y>440</y>
      <width>331</width>
      <height>28</height>
     </rect>
