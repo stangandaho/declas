@@ -296,16 +296,22 @@ class ExtensionManagerDialog(QDialog):
         self._installed = scan_extensions()
         self._inst_list.clear()
         ready = {n: i for n, i in self._installed.items() if i["status"] == "ready"}
+        from PyQt5.QtWidgets import QListWidgetItem
+        from PyQt5.QtGui import QColor
         for name, info in ready.items():
             m = info.get("manifest", {})
+            is_bundled = not m.get("model_file", "")
+            suffix = "  [bundled]" if is_bundled else ""
             text = (
                 f"{m.get('display_name', name)}  "
                 f"v{m.get('version', '?')}  —  "
-                f"{m.get('author', '')}"
+                f"{m.get('author', '')}{suffix}"
             )
-            from PyQt5.QtWidgets import QListWidgetItem
             item = QListWidgetItem(text)
             item.setData(Qt.UserRole, name)
+            item.setData(Qt.UserRole + 1, is_bundled)
+            if is_bundled:
+                item.setForeground(QColor("gray"))
             self._inst_list.addItem(item)
 
         self._tabs.setTabText(0, f"Installed ({len(ready)})")
@@ -313,6 +319,14 @@ class ExtensionManagerDialog(QDialog):
     def _delete_selected(self):
         item = self._inst_list.currentItem()
         if not item:
+            return
+        is_bundled = item.data(Qt.UserRole + 1)
+        if is_bundled:
+            QMessageBox.information(
+                self,
+                "Bundled extension",
+                "This extension is bundled with the app and cannot be removed.",
+            )
             return
         name = item.data(Qt.UserRole)
         reply = QMessageBox.question(

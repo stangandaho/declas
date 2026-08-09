@@ -36,7 +36,7 @@ QTabWidget::pane {
     border: 1px solid #d0d0d0;
 }
 QPushButton {
-    background-color: #ffffff;
+    background-color: #efefef;
     color: #000000;
     border: 1px solid #c0c0c0;
     border-radius: 3px;

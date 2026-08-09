@@ -691,8 +691,20 @@ class Declas(QMainWindow):
         else:
             mp.model_type.setCurrentText(saved_mt)  # built-in: match by text
         
+        # Restore distance settings
+        mp._fov_data = current_set.get("fov_table", {})
+        mp.estimate_distance.setChecked(current_set.get("estimate_distance", False))
+        saved_depth = current_set.get("depth_model", "")
+        if saved_depth:
+            idx = mp.depth_model_combo.findData(saved_depth)
+            if idx >= 0:
+                mp.depth_model_combo.setCurrentIndex(idx)
+        from PyQt5.QtCore import Qt as _Qt
+        mp._toggle_distance_controls(
+            _Qt.Checked if current_set.get("estimate_distance") else _Qt.Unchecked)
+
         mp.setWindowModality(Qt.ApplicationModal)
-        if mp.exec_() == mp.Accepted:  # If the dialog is accepted
+        if mp.exec_() == mp.Accepted:
             self.inference_param = mp.inference_param
             dump_json(dict_obj=self.inference_param)
 
@@ -1157,6 +1169,7 @@ class Declas(QMainWindow):
                     missed_folder()
                     return
                 # Create the worker and pass the folder path
+                self._last_detection_folder = folder_path
                 self.worker = DetectionWorker(folder_path, main_subdir=main_subdir["run_on_main_dir"],
                                                  conf_thres= main_subdir["conf"])
                 self.worker.detection_done.connect(self.on_detection_done)
@@ -1176,13 +1189,45 @@ class Declas(QMainWindow):
 
     def on_detection_done(self, message):
         self.statusbar.showMessage(message, MESSAGE_DELAY)
+
+        if self.inference_param.get("estimate_distance") and getattr(self, "_last_detection_folder", None):
+            fov_table = self.inference_param.get("fov_table", {})
+            if not fov_table:
+                from PyQt5.QtWidgets import QMessageBox
+                QMessageBox.warning(
+                    self, "No FOV configured",
+                    "No Field-Of-View data is set for any station.\n\n"
+                    "Distance will be estimated as raw line-of-sight depth (no angular correction).\n\n"
+                    "To improve accuracy, open Inference Parameters → Set Field Of View per Station."
+                )
+            self._dist_worker = DistanceWorker(self._last_detection_folder, self.inference_param)
+            self._dist_worker.progress.connect(
+                lambda msg: self.statusbar.showMessage(msg))
+            self._dist_worker.distance_done.connect(
+                lambda msg: (
+                    self._stop_spinner(),
+                    self.statusbar.showMessage(msg, MESSAGE_DELAY),
+                    self._play_completion_sound(),
+                ))
+            self._dist_worker.error_occurred.connect(
+                lambda err: (self._stop_spinner(), self._on_distance_error(err)))
+            self._start_spinner()
+            self._dist_worker.start()
+        else:
+            self._play_completion_sound()
+
+    def on_detection_error(self, message):
+        self.statusbar.showMessage(message, MESSAGE_DELAY)
+
+    def _on_distance_error(self, message):
+        self.statusbar.showMessage("Distance estimation failed", MESSAGE_DELAY)
+        general_error(message)
+
+    def _play_completion_sound(self):
         if self._app_settings.value("notification_sound", True, type=bool):
             sound_name = self._app_settings.value("notification_sound_file", "", type=str)
             sound_file = str(DECLAS_ROOT / "notifications" / sound_name) if sound_name else ""
             _play_notification_sound(sound_file)
-
-    def on_detection_error(self, message):
-        self.statusbar.showMessage(message, MESSAGE_DELAY)
 
     def _start_spinner(self):
         self._spinner_idx = 0
@@ -1290,18 +1335,30 @@ class Declas(QMainWindow):
                         if not isinstance(row, dict):
                             continue
 
-                        # Restore species/station columns from folder structure
-                        if not run_on_main_dir:
-                            row["species"] = jsf_folder.name
-                            row["station"] = jsf_folder.parent.name
+                        # Expand individual detections into separate rows (one per animal).
+                        # If distance estimation ran, each bbox has its own distance_m.
+                        # Without distance data, keep the original single row.
+                        det_list = row.pop("detections", None)
+                        has_distances = det_list and any(
+                            isinstance(d.get("distance_m"), (int, float)) for d in det_list
+                        )
+                        if has_distances:
+                            base_rows = []
+                            for det in det_list:
+                                r = dict(row)
+                                r["count"] = 1
+                                r["distance_m"] = det.get("distance_m")
+                                base_rows.append(r)
+                        else:
+                            row.setdefault("distance_m", None)
+                            base_rows = [row]
 
-                        # Look up tag entries (list of dicts) by image filename
+                        # Look up tag entries once per JSON key (shared across all base rows)
                         media_name = Path(row.get("media_path", "")).name
                         tag_entries = custom_tags_data.get(media_name, [])
                         if isinstance(tag_entries, dict):
                             tag_entries = [tag_entries] if tag_entries else []
 
-                        # For video frames fall back to matching by video stem
                         if not tag_entries and row.get("media_type") == "video":
                             frame_stem = Path(row.get("media_path", "")).stem
                             video_stem = frame_stem.rsplit("_f", 1)[0]
@@ -1314,30 +1371,32 @@ class Declas(QMainWindow):
                                 found = [found] if found else []
                             tag_entries = found
 
-                        if tag_entries:
-                            for entry in tag_entries:
-                                row_copy = dict(row)
-                                # Expand predefined text values into binary columns
-                                for title, allowed in binary_cols.items():
-                                    val = entry.get(title, "")
-                                    for v in allowed:
-                                        row_copy[f"{title}_{v}"] = 1 if val == v else 0
-                                # Pass through remaining tag fields as-is
-                                for title, val in entry.items():
-                                    if title not in binary_cols:
-                                        row_copy[title] = val
-                                content_data.append(row_copy)
-                        else:
-                            # No tags: emit row with None for every tag column so
-                            # all columns (binary and non-binary) appear in the CSV
-                            for t in tag_defs:
-                                title = t["title"]
-                                if title in binary_cols:
-                                    for v in binary_cols[title]:
-                                        row[f"{title}_{v}"] = None
-                                else:
-                                    row[title] = None
-                            content_data.append(row)
+                        for base_row in base_rows:
+                            # Restore species/station columns from folder structure
+                            if not run_on_main_dir:
+                                base_row["species"] = jsf_folder.name
+                                base_row["station"] = jsf_folder.parent.name
+
+                            if tag_entries:
+                                for entry in tag_entries:
+                                    row_copy = dict(base_row)
+                                    for title, allowed in binary_cols.items():
+                                        val = entry.get(title, "")
+                                        for v in allowed:
+                                            row_copy[f"{title}_{v}"] = 1 if val == v else 0
+                                    for title, val in entry.items():
+                                        if title not in binary_cols:
+                                            row_copy[title] = val
+                                    content_data.append(row_copy)
+                            else:
+                                for t in tag_defs:
+                                    title = t["title"]
+                                    if title in binary_cols:
+                                        for v in binary_cols[title]:
+                                            base_row[f"{title}_{v}"] = None
+                                    else:
+                                        base_row[title] = None
+                                content_data.append(base_row)
 
                 success_table_build(f"Table built successfully and saved at {folder}")
 
@@ -1466,6 +1525,214 @@ def process_directory(dp, log_queue):
 def process_directory_wrapper(args):
     dp, log_queue = args
     return process_directory(dp, log_queue)
+
+
+class DistanceWorker(QThread):
+    """Run depth estimation on detection results after detection completes."""
+
+    distance_done = pyqtSignal(str)
+    error_occurred = pyqtSignal(str)
+    log_message = pyqtSignal(str)
+    progress = pyqtSignal(str) # short status message for the status bar
+
+    def __init__(self, folder_path, inference_param, parent=None):
+        super().__init__(parent)
+        self.folder_path = Path(folder_path)
+        self.depth_model_name = inference_param.get("depth_model", "")
+        self.fov_table = inference_param.get("fov_table", {})
+        self.run_on_main_dir = inference_param.get("run_on_main_dir", False)
+        self.device = inference_param.get("device", "cpu")
+
+    def run(self):
+        try:
+            import numpy as np
+            from model_extensions._loader import scan_extensions, load_adapter
+
+            exts = scan_extensions()
+            if self.depth_model_name not in exts:
+                self.error_occurred.emit(
+                    f"Depth model '{self.depth_model_name}' not found. "
+                    "Install it via the Extension Manager.")
+                return
+
+            manifest = exts[self.depth_model_name].get("manifest", {})
+            hf_id = manifest.get("model_hf_id", "")
+            if hf_id:
+                self._download_model_with_progress(hf_id)
+            else:
+                self.progress.emit("Distance estimation: loading depth model…")
+            adapter = load_adapter(exts[self.depth_model_name], device=self.device)
+            self.progress.emit("Distance estimation: running…")
+
+            root = self.folder_path
+            if self.run_on_main_dir:
+                json_files = [root / "detections.json"]
+            else:
+                json_files = [p for p in root.rglob("detections.json")
+                              if "frames" not in p.parts]
+            json_files = [p for p in json_files if p.exists()]
+
+            if not json_files:
+                self.error_occurred.emit("No detections.json found for distance estimation.")
+                return
+
+            _BATCH = 4
+            for jsf in json_files:
+                jsf_folder = jsf.parent
+
+                with open(jsf, encoding="utf-8") as f:
+                    detections = json.load(f)
+
+                # Case-insensitive stem → path index for every image in the folder.
+                # Covers JPG, PNG, TIF, BMP so no extension is silently skipped.
+                _IMG_EXTS = {".jpg", ".jpeg", ".png", ".tif", ".tiff", ".bmp"}
+                folder_index: dict = {
+                    p.stem.lower(): p
+                    for p in jsf_folder.iterdir()
+                    if p.is_file() and p.suffix.lower() in _IMG_EXTS
+                }
+
+                def _resolve_image(entry: dict, key: str):
+                    """Return the image Path for this detection entry, or None."""
+                    # 1. media_path points directly to the file
+                    mp = entry.get("media_path", "")
+                    if mp:
+                        mp_path = Path(mp)
+                        if mp_path.exists():
+                            return mp_path
+                        # Path moved but filename unchanged → look in the same folder
+                        local = jsf_folder / mp_path.name
+                        if local.exists():
+                            return local
+
+                    # 2. Strip known category suffix from the JSON key
+                    stem = key
+                    for suffix in ("_animal", "_person", "_vehicle", "_Unknown"):
+                        if stem.endswith(suffix):
+                            stem = stem[: -len(suffix)]
+                            break
+                    else:
+                        # Unknown species suffix: strip everything after the last '_'
+                        if "_" in stem:
+                            stem = stem.rsplit("_", 1)[0]
+
+                    return folder_index.get(stem.lower())
+
+                # Collect (orig_path, entry, det_list); deduplicate images
+                work = []
+                seen: dict = {}
+                unique_paths = []
+                for key, entry in detections.items():
+                    if not isinstance(entry, dict):
+                        continue
+                    det_list = entry.get("detections")
+                    if not det_list:
+                        continue
+                    orig = _resolve_image(entry, key)
+                    if orig is None:
+                        continue
+                    work.append((orig, entry, det_list))
+                    if orig not in seen:
+                        seen[orig] = None
+                        unique_paths.append(orig)
+
+                if not work:
+                    continue
+
+                n = len(unique_paths)
+                station = jsf_folder.name
+
+                import math as _math
+                if self.fov_table:
+                    _sl = station.lower()
+                    fov_deg = next(
+                        (v for k, v in self.fov_table.items() if k.lower() == _sl),
+                        None,
+                    )
+                else:
+                    fov_deg = None
+
+                depth_maps: dict = {}
+                done = 0
+                for i in range(0, n, _BATCH):
+                    batch_paths = unique_paths[i:i + _BATCH]
+                    maps = adapter.predict_depth_batch(
+                        [str(p) for p in batch_paths], fov_deg=fov_deg)
+                    for p, dm in zip(batch_paths, maps):
+                        depth_maps[p] = dm
+                    done += len(batch_paths)
+                    pct = int(done / n * 100)
+                    self.progress.emit(f"Distance estimation: {pct}% for {station}")
+
+                # Assign distances from cached depth maps
+                changed = False
+                for orig, entry, det_list in work:
+                    depth_map = depth_maps.get(orig)
+                    if depth_map is None:
+                        continue
+                    h, w = depth_map.shape[:2]
+                    for det in det_list:
+                        bbox = det.get("bbox")
+                        if not bbox or len(bbox) < 4:
+                            continue
+                        x1, y1, x2, y2 = [int(v) for v in bbox[:4]]
+                        cx_px = int((x1 + x2) / 2)
+                        cy_px = int((y1 + y2) / 2)
+                        raw_depth = float(depth_map[
+                            min(h - 1, cy_px), min(w - 1, cx_px)])
+                        if fov_deg:
+                            # Pinhole model: map pixel position to angle from
+                            # optical axis using the camera's half-FOV.
+                            half_fov_rad = _math.radians(fov_deg / 2.0)
+                            # Normalised position: -1 = left edge, +1 = right edge
+                            pos = (cx_px - w / 2.0) / (w / 2.0)
+                            angle_rad = _math.atan(
+                                pos * _math.tan(half_fov_rad))
+                            cos_a = _math.cos(angle_rad)
+                            distance = raw_depth / cos_a if cos_a > 0 else raw_depth
+                        else:
+                            distance = raw_depth
+                        det["distance_m"] = round(distance, 2)
+                        changed = True
+
+                if changed:
+                    with open(jsf, "w", encoding="utf-8") as f:
+                        json.dump(detections, f, indent=4)
+
+            self.distance_done.emit("Distance estimation complete ✅")
+
+        except Exception as e:
+            import traceback
+            self.error_occurred.emit(
+                f"Distance estimation error: {e}\n{traceback.format_exc()}")
+
+    def _download_model_with_progress(self, repo_id: str) -> None:
+        try:
+            from huggingface_hub import try_to_load_from_cache, snapshot_download
+            import tqdm as _tqdm_mod
+
+            cached = try_to_load_from_cache(repo_id, "config.json")
+            if cached is not None:
+                self.progress.emit("Distance estimation: loading depth model…")
+                return
+
+            _emit = self.progress.emit
+
+            class _ProgressBar(_tqdm_mod.tqdm):
+                def update(self, n=1):
+                    super().update(n)
+                    if self.total and self.total > 0:
+                        mb_done = self.n / 1_048_576
+                        mb_total = self.total / 1_048_576
+                        pct = int(100 * self.n / self.total)
+                        _emit(f"Downloading model: {mb_done:.0f}/{mb_total:.0f} MB  {pct}%")
+
+            _emit("Downloading depth model (first time only)…")
+            snapshot_download(repo_id=repo_id, tqdm_class=_ProgressBar)
+            _emit("Distance estimation: loading depth model…")
+
+        except Exception:
+            self.progress.emit("Distance estimation: loading depth model…")
 
 
 class LogEmitter(QThread):
