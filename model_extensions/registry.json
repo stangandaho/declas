@@ -601,6 +601,32 @@
         "other"
       ],
       "sha256_adapter": ""
+    },
+    {
+      "name": "depth_anything_v2",
+      "display_name": "Depth Anything V2 (Metric Outdoor)",
+      "version": "2.0",
+      "author": "LiheYoung et al.",
+      "email": "",
+      "description": "Monocular metric depth estimation for outdoor scenes. Outputs per-pixel depth in metres (max 80 m). Weights (~97 MB) download automatically from HuggingFace on first use. Requires: pip install transformers>=4.46",
+      "license": "Apache-2.0",
+      "license_url": "https://github.com/DepthAnything/Depth-Anything-V2/blob/main/LICENSE",
+      "citation_url": "https://arxiv.org/abs/2406.09414",
+      "info_url": "https://github.com/DepthAnything/Depth-Anything-V2",
+      "region": "Global",
+      "task": "depth",
+      "framework": "transformers",
+      "model_arch": "depth_anything_v2",
+      "environment": "PyTorch",
+      "input_type": "depth",
+      "model_file": "",
+      "download_url": "",
+      "size_mb": 97,
+      "zip_url": "",
+      "adapter": "adapter.py",
+      "adapter_url": "",
+      "classes": [],
+      "sha256_adapter": ""
     }
   ]
 }
