@@ -20,7 +20,11 @@ jobs:
           - os: windows-latest
             artifact: Declas-Windows
           - os: macos-latest
-            artifact: Declas-macOS
+            artifact: Declas-macOS-arm64
+            dmg_name: Declas-macOS-arm64
+          - os: macos-13
+            artifact: Declas-macOS-x86_64
+            dmg_name: Declas-macOS-x86_64
           - os: ubuntu-latest
             artifact: Declas-Linux
 
@@ -69,18 +73,19 @@ jobs:
         shell: pwsh
 
       - name: Package (macOS - make a DMG)
-        if: matrix.os == 'macos-latest'
+        if: runner.os == 'macOS'
         run: |
           cd dist
-          if [ -d "Declas.app" ]; then
-            hdiutil create -volname Declas -srcfolder Declas.app -ov -format UDZO Declas-macOS.dmg
-          else
-            hdiutil create -volname Declas -srcfolder Declas -ov -format UDZO Declas-macOS.dmg
-          fi
+          hdiutil create -volname Declas \
+            -srcfolder Declas.app \
+            -ov -format UDZO \
+            ${{ matrix.dmg_name }}.dmg
 
       - name: Package (Linux - tarball the onedir build)
         if: matrix.os == 'ubuntu-latest'
         run: |
+          cp icons/logo.png dist/Declas/declas.png
+          cp installer/declas.desktop dist/Declas/declas.desktop
           cd dist
           tar -czf Declas-Linux.tar.gz Declas
 
