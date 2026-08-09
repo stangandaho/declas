@@ -13,21 +13,26 @@ def _summarise_extension_detections(detections: list,
 
     Groups detections by species (counting multiple individuals), then wraps
     each group in a dect_or_clf_dict entry keyed by  <stem>_<species>.
+    Individual detection dicts (with bbox/confidence) are preserved under the
+    'detections' key for downstream use (e.g. distance estimation).
     """
-    class_dict: dict[str, int] = {}
+    class_dict: dict[str, list] = {}
     for det in detections:
         sp = det.get("species", "Unknown")
-        class_dict[sp] = class_dict.get(sp, 0) + 1
+        if sp not in class_dict:
+            class_dict[sp] = []
+        class_dict[sp].append(det)
 
     image_id = Path(image_path).stem
     all_cfl = {}
-    for species, count in class_dict.items():
+    for species, dets in class_dict.items():
         entry = dect_or_clf_dict(image_path=image_path,
                                  image_id=image_id,
-                                 count=count,
+                                 count=len(dets),
                                  source_video=source_video,
                                  category=species)
         entry["species"] = species
+        entry["detections"] = dets
         all_cfl[f"{image_id}_{species}"] = entry
     return all_cfl
 
@@ -117,11 +122,11 @@ def extension_video_classification(video_path: str, adapter,
 
     if not frames:
         if log_queue:
-            log_queue.put("❌ No frames extracted.")
+            log_queue.put("No frames extracted.")
         return {}
 
     if log_queue:
-        log_queue.put(f"✅ Running inference on {len(frames)} frames…")
+        log_queue.put(f"Running inference on {len(frames)} frames…")
 
     to_save: dict = {}
     for fpath in frames:
