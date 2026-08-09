@@ -253,12 +253,12 @@ def time_to_radians(time_str):
 def exif_table(image_path):
     exif = piexif.load(image_path)
 
-    def _decode_tag(raw):
+    def decode_tag(raw):
         if isinstance(raw, bytes):
             return raw.decode("utf-8", errors="ignore").rstrip('\x00').strip()
         return str(raw).rstrip('\x00').strip()
 
-    def _r(rational):
+    def r(rational):
         """Convert a piexif (numerator, denominator) rational to float."""
         num, den = rational
         return num / den if den != 0 else 0.0
@@ -271,8 +271,8 @@ def exif_table(image_path):
             lon = _r(gps_info[4][0]) + _r(gps_info[4][1]) / 60.0 + _r(gps_info[4][2]) / 3600.0
 
             # Apply hemisphere signs (LatitudeRef N/S → lat, LongitudeRef E/W → lon)
-            lat_ref = _decode_tag(gps_info.get(1, b'N'))
-            lon_ref = _decode_tag(gps_info.get(3, b'E'))
+            lat_ref = decode_tag(gps_info.get(1, b'N'))
+            lon_ref = decode_tag(gps_info.get(3, b'E'))
             if 'S' in lat_ref:
                 lat = -lat
             if 'W' in lon_ref:
@@ -284,10 +284,10 @@ def exif_table(image_path):
         except (KeyError, TypeError, ZeroDivisionError, IndexError):
             lon = lat = alti = None
 
-    device_make  = _decode_tag(exif["0th"].get(271, b""))
-    device_model = _decode_tag(exif["0th"].get(272, b""))
+    device_make  = decode_tag(exif["0th"].get(271, b""))
+    device_model = decode_tag(exif["0th"].get(272, b""))
 
-    original_datetime = _decode_tag(exif["Exif"].get(36867, b""))
+    original_datetime = decode_tag(exif["Exif"].get(36867, b""))
     dt_parts = original_datetime.split()
     original_date = dt_parts[0] if dt_parts else ""
     original_time = dt_parts[1] if len(dt_parts) > 1 else ""
@@ -308,7 +308,7 @@ def exif_table(image_path):
 
 # Video datetime helpers
 
-def _get_mp4_creation_datetime(video_path):
+def get_mp4_creation_datetime(video_path):
     """Parse creation_time from an MP4 file's moov/mvhd box.
 
     Returns a naive local datetime, or None if unavailable / unreadable.
@@ -347,7 +347,7 @@ def get_video_start_datetime(video_path):
     """
     video_path = Path(video_path)
     if video_path.suffix.lower() == '.mp4':
-        dt = _get_mp4_creation_datetime(video_path)
+        dt = get_mp4_creation_datetime(video_path)
         if dt and dt.year > 1980:   # sanity-check: reject obviously wrong dates
             return dt
     return datetime.fromtimestamp(video_path.stat().st_mtime)

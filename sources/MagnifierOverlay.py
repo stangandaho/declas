@@ -18,14 +18,14 @@ class MagnifierOverlay(QWidget):
         self.setAttribute(Qt.WA_NoSystemBackground)
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setFixedSize(self.SIZE, self.SIZE)
-        self._patch = None
+        self.patch = None
 
     def set_patch(self, pixmap: QPixmap) -> None:
-        self._patch = pixmap
+        self.patch = pixmap
         self.update()
 
     def paintEvent(self, _event):
-        if self._patch is None:
+        if self.patch is None:
             return
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
@@ -37,7 +37,7 @@ class MagnifierOverlay(QWidget):
             self.RADIUS, self.RADIUS,
         )
         painter.setClipPath(path)
-        painter.drawPixmap(self.rect(), self._patch)
+        painter.drawPixmap(self.rect(), self.patch)
 
         # Subtle border ring
         painter.setClipping(False)
@@ -56,45 +56,45 @@ class MagnifierFilter(QObject):
 
     def __init__(self, label: QWidget, overlay: MagnifierOverlay):
         super().__init__()
-        self._label   = label
-        self._overlay = overlay
-        self._pixmap  = None   # original full-resolution QPixmap
-        self._active  = False
+        self.label   = label
+        self.overlay = overlay
+        self.pixmap  = None   # original full-resolution QPixmap
+        self.active  = False
 
     #  API
 
     def set_active(self, active: bool) -> None:
-        self._active = active
+        self.active = active
         if active:
-            self._label.setCursor(Qt.CrossCursor)
+            self.label.setCursor(Qt.CrossCursor)
         else:
-            self._overlay.hide()
-            self._label.unsetCursor()
+            self.overlay.hide()
+            self.label.unsetCursor()
 
     def set_pixmap(self, pixmap) -> None:
         """Call this with the original (full-res) QPixmap whenever a new image loads."""
-        self._pixmap = pixmap
+        self.pixmap = pixmap
 
     #  event filter
 
     def eventFilter(self, obj, event) -> bool:
-        if not self._active or obj is not self._label:
+        if not self.active or obj is not self.label:
             return False
         t = event.type()
         if t == QEvent.MouseMove:
-            self._update(event.pos())
+            self.update(event.pos())
         elif t in (QEvent.Leave, QEvent.Hide):
-            self._overlay.hide()
+            self.overlay.hide()
         return False   # never consume events
 
     # impl
 
-    def _update(self, cursor_pos) -> None:
-        pix = self._pixmap
+    def update(self, cursor_pos) -> None:
+        pix = self.pixmap
         if pix is None or pix.isNull():
             return
 
-        lw, lh = self._label.width(), self._label.height()
+        lw, lh = self.label.width(), self.label.height()
         pw, ph = pix.width(), pix.height()
 
         # KeepAspectRatio scale factor and letterbox offsets (label is centred)
@@ -107,7 +107,7 @@ class MagnifierFilter(QObject):
 
         # Hide if cursor is in the letterbox area
         if rel_x < 0 or rel_y < 0 or rel_x >= sw or rel_y >= sh:
-            self._overlay.hide()
+            self.overlay.hide()
             return
 
         # Map to original-pixmap coordinates
@@ -126,11 +126,11 @@ class MagnifierFilter(QObject):
             MagnifierOverlay.SIZE, MagnifierOverlay.SIZE,
             Qt.IgnoreAspectRatio, Qt.SmoothTransformation,
         )
-        self._overlay.set_patch(patch)
+        self.overlay.set_patch(patch)
 
         # Position the overlay to the bottom-right of cursor; flip near edges
-        gpos   = self._label.mapToGlobal(cursor_pos)
-        screen = QApplication.desktop().screenGeometry(self._label)
+        gpos   = self.label.mapToGlobal(cursor_pos)
+        screen = QApplication.desktop().screenGeometry(self.label)
         ox = gpos.x() + 24
         oy = gpos.y() + 24
         if ox + MagnifierOverlay.SIZE > screen.right():
@@ -138,6 +138,6 @@ class MagnifierFilter(QObject):
         if oy + MagnifierOverlay.SIZE > screen.bottom():
             oy = gpos.y() - MagnifierOverlay.SIZE - 24
 
-        self._overlay.move(ox, oy)
-        if not self._overlay.isVisible():
-            self._overlay.show()
+        self.overlay.move(ox, oy)
+        if not self.overlay.isVisible():
+            self.overlay.show()

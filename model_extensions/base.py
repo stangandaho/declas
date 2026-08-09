@@ -48,25 +48,11 @@ class ModelAdapter:
         conf_thres: float,
         extension: str = ".JPG"
     ) -> dict:
-        """Run inference on all matching images in image_dir."""
-
-        results = {}
-
+        """Run inference on all image files in image_dir."""
         image_dir = Path(image_dir)
-        files = sorted(image_dir.glob(f"*{extension}"))
-
-        if not files:
-            files = sorted(
-                image_dir.glob(
-                    f"*{extension.upper()}" if extension.islower() else f"*{extension.lower()}"
-                )
-            )
-
-        for img in files:
-
-            results[img.stem] = self.predict_single(
-                str(img),
-                conf_thres
-            )
-
-        return results
+        img_exts = {".jpg", ".jpeg", ".png", ".tif", ".tiff", ".bmp"}
+        files = sorted(
+            p for p in image_dir.iterdir()
+            if p.is_file() and p.suffix.lower() in img_exts
+        )
+        return {img.stem: self.predict_single(str(img), conf_thres) for img in files}

@@ -1,4 +1,4 @@
-from model_extensions._base import ModelAdapter
+from model_extensions.base import ModelAdapter
 
 class DeepFauneClfV11Adapter(ModelAdapter):
     """DeepFaune ViT-Large/DINOv2 species classifier. Requires: pip install timm."""
