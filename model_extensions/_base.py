@@ -49,6 +49,14 @@ class ModelAdapter:
         """
         raise NotImplementedError(f"{type(self).__name__} must implement predict_single()")
 
+    def predict_depth(self, image_path: str):
+        """Estimate a per-pixel depth map for image_path.
+
+        Returns a 2-D numpy array (H×W) with depth values in metres.
+        Override in depth-estimation adapters; the default raises NotImplementedError.
+        """
+        raise NotImplementedError(f"{type(self).__name__} does not support depth estimation")
+
     def predict_batch(self, image_dir: str, conf_thres: float,
                       extension: str = ".JPG") -> dict:
         """Run inference on all matching images in image_dir.

@@ -64,6 +64,9 @@ def scan_extensions() -> dict:
             if candidate.exists():
                 weights_file  = candidate
                 weights_ready = True
+        else:
+            # Adapter-only extension (e.g. uses HuggingFace cache) — always ready
+            weights_ready = True
 
         installed[name] = {
             "manifest":     manifest,

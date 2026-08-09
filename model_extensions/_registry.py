@@ -31,19 +31,51 @@ def _download_with_progress(url: str, dest: Path, bytes_cb=None) -> None:
                     bytes_cb(downloaded, total)
 
 
-def fetch_registry() -> dict:
-    """Fetch the online registry JSON.
+def _load_local_registry() -> list:
+    """Load models from the bundled registry.json (shipped with the app)."""
+    local_path = _BUNDLED_DIR / "registry.json"
+    try:
+        with open(local_path, "r", encoding="utf-8") as f:
+            return json.load(f).get("models", [])
+    except Exception:
+        return []
 
-    Returns the parsed dict on success, or {"models": [], "error": "<msg>"} on
-    failure so callers can always iterate over registry["models"] safely.
+
+def fetch_registry() -> dict:
+    """Fetch the online registry JSON, merged with the local bundled registry.
+
+    Online entries take precedence; local-only entries (e.g. bundled
+    adapter-only extensions not yet pushed to GitHub) are appended so they
+    always appear in the Available tab.
+
+    Returns {"models": [...], "error": "<msg>"} — callers can always iterate
+    over registry["models"] safely.
     """
+    local_models = _load_local_registry()
+    error = None
+
     try:
         with urllib.request.urlopen(REGISTRY_URL, timeout=_TIMEOUT_SEC) as resp:
-            return json.loads(resp.read().decode("utf-8"))
+            online = json.loads(resp.read().decode("utf-8"))
+            online_models = online.get("models", [])
     except urllib.error.URLError as exc:
-        return {"models": [], "error": f" {exc.reason}"}
+        online_models = []
+        error = f" {exc.reason}"
     except Exception as exc:
-        return {"models": [], "error": str(exc)}
+        online_models = []
+        error = str(exc)
+
+    # Merge: online first, then local entries whose name isn't already online
+    online_names = {m.get("name") for m in online_models}
+    extra = [m for m in local_models if m.get("name") not in online_names]
+    merged = online_models + extra
+
+    result: dict = {"models": merged}
+    if error and not merged:
+        result["error"] = error
+    elif error:
+        result["warning"] = error
+    return result
 
 
 def download_extension(manifest: dict,
@@ -99,11 +131,14 @@ def remove_extension(name: str) -> bool:
         with open(manifest_path, "r", encoding="utf-8") as f:
             manifest = json.load(f)
         model_file = manifest.get("model_file", "")
-        if model_file:
-            weights = ext_dir / model_file
-            if weights.exists():
-                weights.unlink()
-                return True
+        if not model_file:
+            # Adapter-only extension (weights live in external cache, e.g. HuggingFace).
+            # Nothing to delete from disk — treat as success.
+            return True
+        weights = ext_dir / model_file
+        if weights.exists():
+            weights.unlink()
+            return True
     except Exception:
         pass
     return False
