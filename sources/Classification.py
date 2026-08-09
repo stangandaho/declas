@@ -6,7 +6,7 @@ from Bases import (extract_video_frames, save_detection_json, dect_or_clf_dict)
 
 # Model-extension inference
 
-def _summarise_extension_detections(detections: list,
+def summarise_extension_detections(detections: list,
                                      image_path: str,
                                      source_video=None) -> dict:
     """Convert an adapter's detection list into the Declas JSON format.
@@ -37,13 +37,13 @@ def _summarise_extension_detections(detections: list,
     return all_cfl
 
 
-def _draw_and_save_annotated(image_path: str, detections: list) -> None:
+def draw_and_save_annotated(image_path: str, detections: list) -> None:
     """Draw bounding boxes from an adapter's output and save the annotated image."""
     import cv2
     import numpy as np
-    from PIL import Image as _Image
+    from PIL import Image
 
-    img = np.array(_Image.open(image_path).convert("RGB"))
+    img = np.array(Image.open(image_path).convert("RGB"))
     for det in detections:
         bbox = det.get("bbox")
         if bbox:
@@ -73,9 +73,9 @@ def extension_single_classification(image_path: str, adapter,
     detections = adapter.predict_single(image_path, conf_thres)
     if class_filter:
         detections = [d for d in detections if d.get("species") in class_filter]
-    _draw_and_save_annotated(image_path, detections)
+    draw_and_save_annotated(image_path, detections)
 
-    result = _summarise_extension_detections(detections, image_path,
+    result = summarise_extension_detections(detections, image_path,
                                               source_video=source_video)
     if source_video is None:
         save_detection_json(save_dir=Path(image_path).parent, to_save=result)
@@ -102,9 +102,19 @@ def extension_batch_classification(data_path: str, adapter,
             continue
         if class_filter:
             detections = [d for d in detections if d.get("species") in class_filter]
-        _draw_and_save_annotated(img_path, detections)
-        entry = _summarise_extension_detections(detections, img_path,
+        try:
+            draw_and_save_annotated(img_path, detections)
+        except Exception:
+            pass
+        entry = summarise_extension_detections(detections, img_path,
                                                  source_video="__batch__")
+        if not entry:
+            image_id = Path(img_path).stem
+            empty = dect_or_clf_dict(image_path=img_path, image_id=image_id,
+                                     count=0, source_video="__batch__", category="Empty")
+            empty["species"] = "Empty"
+            empty["detections"] = []
+            entry = {image_id: empty}
         to_save.update(entry)
 
     save_detection_json(save_dir=data_path, to_save=to_save)
@@ -133,8 +143,8 @@ def extension_video_classification(video_path: str, adapter,
         detections = adapter.predict_single(fpath, conf_thres)
         if class_filter:
             detections = [d for d in detections if d.get("species") in class_filter]
-        _draw_and_save_annotated(fpath, detections)
-        result = _summarise_extension_detections(detections, fpath,
+        draw_and_save_annotated(fpath, detections)
+        result = summarise_extension_detections(detections, fpath,
                                                   source_video=str(video_path))
         to_save.update(result)
 

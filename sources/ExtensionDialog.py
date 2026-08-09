@@ -11,24 +11,24 @@ from PyQt5.QtWidgets import (
     QTextEdit, QListWidget, QMessageBox, QTextBrowser, QProgressBar,
 )
 
-_DECLAS_ROOT = Path(__file__).resolve().parent.parent
-if str(_DECLAS_ROOT) not in sys.path:
-    sys.path.insert(0, str(_DECLAS_ROOT))
+DECLAS_ROOT = Path(__file__).resolve().parent.parent
+if str(DECLAS_ROOT) not in sys.path:
+    sys.path.insert(0, str(DECLAS_ROOT))
 
-from model_extensions._registry import fetch_registry, download_extension, remove_extension
-from model_extensions._loader   import scan_extensions
+from model_extensions.registry import fetch_registry, download_extension, remove_extension
+from model_extensions.loader import scan_extensions
 
 
 # Background workers
 
-class _FetchWorker(QThread):
+class FetchWorker(QThread):
     done = pyqtSignal(dict)
 
     def run(self):
         self.done.emit(fetch_registry())
 
 
-class _DownloadWorker(QThread):
+class DownloadWorker(QThread):
     progress       = pyqtSignal(str)
     bytes_progress = pyqtSignal(int, int)   # (downloaded_bytes, total_bytes)
     finished       = pyqtSignal(bool)
@@ -65,87 +65,87 @@ class ExtensionManagerDialog(QDialog):
             | Qt.WindowMinimizeButtonHint
         )
 
-        icon_path = str(_DECLAS_ROOT / "icons" / "logo.png")
+        icon_path = str(DECLAS_ROOT / "icons" / "logo.png")
         if Path(icon_path).exists():
             self.setWindowIcon(QIcon(icon_path))
 
-        self._registry: dict = {}
-        self._installed: dict = {}
-        self._workers: list = []
+        self.registry: dict = {}
+        self.installed: dict = {}
+        self.workers: list = []
 
         root = QVBoxLayout(self)
         root.setSpacing(6)
 
-        self._tabs = QTabWidget()
-        root.addWidget(self._tabs)
+        self.tabs = QTabWidget()
+        root.addWidget(self.tabs)
 
-        self._build_installed_tab()
-        self._build_available_tab()
+        self.build_installed_tab()
+        self.build_available_tab()
 
         # Download progress bar (hidden until a download starts)
-        self._progress_bar = QProgressBar()
-        self._progress_bar.setMaximumHeight(18)
-        self._progress_bar.setVisible(False)
-        root.addWidget(self._progress_bar)
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setMaximumHeight(18)
+        self.progress_bar.setVisible(False)
+        root.addWidget(self.progress_bar)
 
         # Log / progress area
-        self._log = QTextEdit()
-        self._log.setReadOnly(True)
-        self._log.setMaximumHeight(90)
-        self._log.setPlaceholderText("Activity log …")
-        root.addWidget(self._log)
+        self.log = QTextEdit()
+        self.log.setReadOnly(True)
+        self.log.setMaximumHeight(90)
+        self.log.setPlaceholderText("Activity log …")
+        root.addWidget(self.log)
 
-        self._refresh_installed()
-        self._start_fetch()
+        self.refresh_installed()
+        self.start_fetch()
 
     # Available tab
 
-    def _build_available_tab(self):
+    def build_available_tab(self):
         container = QWidget()
         layout = QVBoxLayout(container)
         layout.setContentsMargins(6, 6, 6, 6)
 
-        self._status_lbl = QLabel("Fetching registry …")
-        self._status_lbl.setAlignment(Qt.AlignCenter)
-        layout.addWidget(self._status_lbl)
+        self.status_lbl = QLabel("Fetching registry …")
+        self.status_lbl.setAlignment(Qt.AlignCenter)
+        layout.addWidget(self.status_lbl)
 
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        self._cards_widget = QWidget()
-        self._cards_layout = QVBoxLayout(self._cards_widget)
-        self._cards_layout.setAlignment(Qt.AlignTop)
-        self._cards_layout.setSpacing(8)
-        scroll.setWidget(self._cards_widget)
+        self.cards_widget = QWidget()
+        self.cards_layout = QVBoxLayout(self.cards_widget)
+        self.cards_layout.setAlignment(Qt.AlignTop)
+        self.cards_layout.setSpacing(8)
+        scroll.setWidget(self.cards_widget)
         layout.addWidget(scroll)
 
-        self._tabs.addTab(container, "Available")
+        self.tabs.addTab(container, "Available")
 
-    def _start_fetch(self):
-        self._fetch_worker = _FetchWorker()
-        self._fetch_worker.done.connect(self._on_registry_fetched)
-        self._fetch_worker.start()
+    def start_fetch(self):
+        self.fetch_worker = FetchWorker()
+        self.fetch_worker.done.connect(self.on_registry_fetched)
+        self.fetch_worker.start()
 
-    def _on_registry_fetched(self, registry: dict):
-        self._registry = registry
+    def on_registry_fetched(self, registry: dict):
+        self.registry = registry
         error = registry.get("error")
         models = registry.get("models", [])
 
         # Clear old cards
-        while self._cards_layout.count():
-            item = self._cards_layout.takeAt(0)
+        while self.cards_layout.count():
+            item = self.cards_layout.takeAt(0)
             if item.widget():
                 item.widget().deleteLater()
 
         if error:
-            self._status_lbl.setText(f"⚠  Could not reach registry: {error}")
+            self.status_lbl.setText(f"⚠  Could not reach registry: {error}")
         elif not models:
-            self._status_lbl.setText("No models found in registry.")
+            self.status_lbl.setText("No models found in registry.")
         else:
-            self._status_lbl.setText(f"{len(models)} model(s) available.")
+            self.status_lbl.setText(f"{len(models)} model(s) available.")
             for m in models:
-                self._cards_layout.addWidget(self._make_card(m))
+                self.cards_layout.addWidget(self.make_card(m))
 
-    def _make_card(self, m: dict) -> QFrame:
+    def make_card(self, m: dict) -> QFrame:
         frame = QFrame()
         frame.setFrameShape(QFrame.StyledPanel)
         frame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
@@ -223,51 +223,51 @@ class ExtensionManagerDialog(QDialog):
         # Download button
         bottom = QHBoxLayout()
         bottom.addStretch()
-        _info = self._installed.get(m.get("name"), {})
-        is_ready = _info.get("status") == "ready"
+        info = self.installed.get(m.get("name"), {})
+        is_ready = info.get("status") == "ready"
         btn = QPushButton("Installed ✓" if is_ready else "Download")
         btn.setEnabled(not is_ready)
         btn.setFixedWidth(120)
         btn.clicked.connect(
-            lambda _, manifest=m, b=btn: self._start_download(manifest, b)
+            lambda _, manifest=m, b=btn: self.start_download(manifest, b)
         )
         bottom.addWidget(btn)
         layout.addLayout(bottom)
 
         return frame
 
-    def _start_download(self, manifest: dict, btn: QPushButton):
+    def start_download(self, manifest: dict, btn: QPushButton):
         btn.setEnabled(False)
         btn.setText(" Downloading …")
-        self._progress_bar.setValue(0)
-        self._progress_bar.setFormat("%p%")
-        self._progress_bar.setVisible(True)
-        worker = _DownloadWorker(manifest)
-        worker.progress.connect(self._log.append)
-        worker.bytes_progress.connect(self._on_bytes_progress)
+        self.progress_bar.setValue(0)
+        self.progress_bar.setFormat("%p%")
+        self.progress_bar.setVisible(True)
+        worker = DownloadWorker(manifest)
+        worker.progress.connect(self.log.append)
+        worker.bytes_progress.connect(self.on_bytes_progress)
         worker.finished.connect(
-            lambda ok, b=btn, m=manifest: self._on_download_done(ok, b, m)
+            lambda ok, b=btn, m=manifest: self.on_download_done(ok, b, m)
         )
-        self._workers.append(worker)
+        self.workers.append(worker)
         worker.start()
 
-    def _on_bytes_progress(self, downloaded: int, total: int):
+    def on_bytes_progress(self, downloaded: int, total: int):
         if total > 0:
-            self._progress_bar.setMaximum(total)
-            self._progress_bar.setValue(downloaded)
+            self.progress_bar.setMaximum(total)
+            self.progress_bar.setValue(downloaded)
             mb_done  = downloaded / 1_048_576
             mb_total = total / 1_048_576
-            self._progress_bar.setFormat(f"{mb_done:.1f} / {mb_total:.1f} MB  (%p%)")
+            self.progress_bar.setFormat(f"{mb_done:.1f} / {mb_total:.1f} MB  (%p%)")
         else:
-            self._progress_bar.setMaximum(0)
+            self.progress_bar.setMaximum(0)
             mb_done = downloaded / 1_048_576
-            self._progress_bar.setFormat(f"{mb_done:.1f} MB …")
+            self.progress_bar.setFormat(f"{mb_done:.1f} MB …")
 
-    def _on_download_done(self, ok: bool, btn: QPushButton, manifest: dict):
-        self._progress_bar.setVisible(False)
+    def on_download_done(self, ok: bool, btn: QPushButton, manifest: dict):
+        self.progress_bar.setVisible(False)
         if ok:
             btn.setText("Installed ✓")
-            self._refresh_installed()
+            self.refresh_installed()
             self.extension_changed.emit()
         else:
             btn.setEnabled(True)
@@ -275,27 +275,27 @@ class ExtensionManagerDialog(QDialog):
 
     # Installed tab
 
-    def _build_installed_tab(self):
+    def build_installed_tab(self):
         container = QWidget()
         layout = QVBoxLayout(container)
         layout.setContentsMargins(6, 6, 6, 6)
 
-        self._inst_list = QListWidget()
-        layout.addWidget(self._inst_list)
+        self.inst_list = QListWidget()
+        layout.addWidget(self.inst_list)
 
         row = QHBoxLayout()
         row.addStretch()
-        self._del_btn = QPushButton("Delete selected")
-        self._del_btn.clicked.connect(self._delete_selected)
-        row.addWidget(self._del_btn)
+        self.del_btn = QPushButton("Delete selected")
+        self.del_btn.clicked.connect(self.delete_selected)
+        row.addWidget(self.del_btn)
         layout.addLayout(row)
 
-        self._tabs.addTab(container, "Installed")
+        self.tabs.addTab(container, "Installed")
 
-    def _refresh_installed(self):
-        self._installed = scan_extensions()
-        self._inst_list.clear()
-        ready = {n: i for n, i in self._installed.items() if i["status"] == "ready"}
+    def refresh_installed(self):
+        self.installed = scan_extensions()
+        self.inst_list.clear()
+        ready = {n: i for n, i in self.installed.items() if i["status"] == "ready"}
         from PyQt5.QtWidgets import QListWidgetItem
         from PyQt5.QtGui import QColor
         for name, info in ready.items():
@@ -312,12 +312,12 @@ class ExtensionManagerDialog(QDialog):
             item.setData(Qt.UserRole + 1, is_bundled)
             if is_bundled:
                 item.setForeground(QColor("gray"))
-            self._inst_list.addItem(item)
+            self.inst_list.addItem(item)
 
-        self._tabs.setTabText(0, f"Installed ({len(ready)})")
+        self.tabs.setTabText(0, f"Installed ({len(ready)})")
 
-    def _delete_selected(self):
-        item = self._inst_list.currentItem()
+    def delete_selected(self):
+        item = self.inst_list.currentItem()
         if not item:
             return
         is_bundled = item.data(Qt.UserRole + 1)
@@ -338,16 +338,16 @@ class ExtensionManagerDialog(QDialog):
         if reply == QMessageBox.Yes:
             ok = remove_extension(name)
             if ok:
-                self._log.append(f"Removed {name}.")
-                self._refresh_installed()
+                self.log.append(f"Removed {name}.")
+                self.refresh_installed()
                 self.extension_changed.emit()
             else:
-                self._log.append(f"Could not remove {name} — directory not found.")
+                self.log.append(f"Could not remove {name} — directory not found.")
 
 
 # Publish guidelines
 
-_PUBLISH_HTML = """
+PUBLISH_HTML = """
 <html><body style="font-family:sans-serif; font-size:15px; margin:16px;">
 
 <h2>Publishing a Model Extension</h2>
@@ -394,7 +394,7 @@ model_extensions/
 <h3>3. adapter.py</h3>
 <p>Your adapter must inherit from <code>ModelAdapter</code> and implement two methods:</p>
 <pre style="background:#f4f4f4;padding:8px;border-radius:4px;font-size:15px">
-from model_extensions._base import ModelAdapter
+from model_extensions.base import ModelAdapter
 
 class MyModelAdapter(ModelAdapter):
 
@@ -451,14 +451,14 @@ class PublishGuidelinesDialog(QDialog):
             | Qt.WindowMaximizeButtonHint
         )
 
-        icon_path = str(_DECLAS_ROOT / "icons" / "logo.png")
+        icon_path = str(DECLAS_ROOT / "icons" / "logo.png")
         if Path(icon_path).exists():
             self.setWindowIcon(QIcon(icon_path))
 
         layout = QVBoxLayout(self)
         browser = QTextBrowser()
         browser.setOpenExternalLinks(True)
-        browser.setHtml(_PUBLISH_HTML)
+        browser.setHtml(PUBLISH_HTML)
         layout.addWidget(browser)
 
         close_btn = QPushButton("Close")

@@ -5,24 +5,24 @@ import urllib.request
 import urllib.error
 from pathlib import Path
 
-from model_extensions._loader import _BUNDLED_DIR
+from model_extensions.loader import BUNDLED_DIR
 
 REGISTRY_URL = (
     "https://raw.githubusercontent.com/stangandaho/declas/main"
     "/model_extensions/registry.json"
 )
-_TIMEOUT_SEC = 10
-_CHUNK_SIZE  = 256 * 1024   # 256 KB per read
+TIMEOUT_SEC = 10
+CHUNK_SIZE  = 256 * 1024   # 256 KB per read
 
 
-def _download_with_progress(url: str, dest: Path, bytes_cb=None) -> None:
+def download_with_progress(url: str, dest: Path, bytes_cb=None) -> None:
     """Stream *url* to *dest*, calling bytes_cb(downloaded, total) after each chunk."""
     with urllib.request.urlopen(url, timeout=600) as resp:
         total      = int(resp.headers.get("Content-Length") or 0)
         downloaded = 0
         with open(dest, "wb") as fout:
             while True:
-                chunk = resp.read(_CHUNK_SIZE)
+                chunk = resp.read(CHUNK_SIZE)
                 if not chunk:
                     break
                 fout.write(chunk)
@@ -31,9 +31,9 @@ def _download_with_progress(url: str, dest: Path, bytes_cb=None) -> None:
                     bytes_cb(downloaded, total)
 
 
-def _load_local_registry() -> list:
+def load_local_registry() -> list:
     """Load models from the bundled registry.json (shipped with the app)."""
-    local_path = _BUNDLED_DIR / "registry.json"
+    local_path = BUNDLED_DIR / "registry.json"
     try:
         with open(local_path, "r", encoding="utf-8") as f:
             return json.load(f).get("models", [])
@@ -51,11 +51,11 @@ def fetch_registry() -> dict:
     Returns {"models": [...], "error": "<msg>"} — callers can always iterate
     over registry["models"] safely.
     """
-    local_models = _load_local_registry()
+    local_models = load_local_registry()
     error = None
 
     try:
-        with urllib.request.urlopen(REGISTRY_URL, timeout=_TIMEOUT_SEC) as resp:
+        with urllib.request.urlopen(REGISTRY_URL, timeout=TIMEOUT_SEC) as resp:
             online = json.loads(resp.read().decode("utf-8"))
             online_models = online.get("models", [])
     except urllib.error.URLError as exc:
@@ -88,7 +88,7 @@ def download_extension(manifest: dict,
     runtime and stored alongside the bundled adapter in _internal/model_extensions/<name>/.
     """
     name    = manifest.get("name", "unknown")
-    ext_dir = _BUNDLED_DIR / name
+    ext_dir = BUNDLED_DIR / name
     ext_dir.mkdir(parents=True, exist_ok=True)
 
     def report(msg: str):
@@ -101,7 +101,7 @@ def download_extension(manifest: dict,
         if weights_url and model_file:
             dest = ext_dir / model_file
             report(f"Downloading weights {model_file}")
-            _download_with_progress(weights_url, dest, bytes_cb=bytes_callback)
+            download_with_progress(weights_url, dest, bytes_cb=bytes_callback)
             report(f"Weights saved → {dest.name}")
 
         # Refresh the manifest so the local copy stays in sync with the registry.
@@ -123,7 +123,7 @@ def remove_extension(name: str) -> bool:
     shows as 'missing_weights' — ready to be re-downloaded.
     Returns True if a weights file was found and deleted.
     """
-    ext_dir      = _BUNDLED_DIR / name
+    ext_dir      = BUNDLED_DIR / name
     manifest_path = ext_dir / "manifest.json"
     if not manifest_path.exists():
         return False

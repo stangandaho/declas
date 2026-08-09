@@ -1,4 +1,4 @@
-from model_extensions._base import ModelAdapter
+from model_extensions.base import ModelAdapter
 
 _CLASSES = {0: "animal", 1: "person", 2: "vehicle"}
 

@@ -1,4 +1,4 @@
-from model_extensions._base import ModelAdapter
+from model_extensions.base import ModelAdapter
 
 _IMG_SIZE = (224, 224)
 

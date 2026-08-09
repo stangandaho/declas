@@ -9,15 +9,15 @@ import sys, torch, csv
 
 from sources.Bases import get_unique
 
-_DECLAS_ROOT = Path(__file__).resolve().parent.parent
-if str(_DECLAS_ROOT) not in sys.path:
-    sys.path.insert(0, str(_DECLAS_ROOT))
+DECLAS_ROOT = Path(__file__).resolve().parent.parent
+if str(DECLAS_ROOT) not in sys.path:
+    sys.path.insert(0, str(DECLAS_ROOT))
 
 try:
-    from model_extensions._loader import scan_extensions as _scan_extensions
-    _INSTALLED_EXTENSIONS = _scan_extensions()
+    from model_extensions.loader import scan_extensions
+    INSTALLED_EXTENSIONS = scan_extensions()
 except Exception:
-    _INSTALLED_EXTENSIONS = {}
+    INSTALLED_EXTENSIONS = {}
 
 
 DECLAS_ROOT = Path(__file__).resolve().parent.parent
@@ -50,9 +50,9 @@ class FovDialog(QDialog):
         btn_bar = QHBoxLayout()
 
         add_btn = QPushButton(QIcon("icons/add.png"), "Add")
-        add_btn.clicked.connect(lambda: self._add_row())
+        add_btn.clicked.connect(lambda: self.add_row())
         rm_btn = QPushButton(QIcon("icons/minus.png"), "Remove")
-        rm_btn.clicked.connect(self._remove_row)
+        rm_btn.clicked.connect(self.remove_row)
         btn_bar.addWidget(add_btn)
         btn_bar.addWidget(rm_btn)
         layout.addLayout(btn_bar)
@@ -60,7 +60,7 @@ class FovDialog(QDialog):
         btn_bar.addStretch()
         upload_btn = QPushButton(QIcon("icons/publish.png"), "Upload CSV")
         btn_bar.addWidget(upload_btn)
-        upload_btn.clicked.connect(self._upload_csv) 
+        upload_btn.clicked.connect(self.upload_csv) 
 
         note_bar = QHBoxLayout()
         from PyQt5.QtWidgets import QLabel
@@ -75,20 +75,20 @@ class FovDialog(QDialog):
         layout.addWidget(box)
 
         for station, fov in fov_data.items():
-            self._add_row(str(station), str(fov))
+            self.add_row(str(station), str(fov))
 
-    def _add_row(self, station: str = "", fov: str = "") -> None:
+    def add_row(self, station: str = "", fov: str = "") -> None:
         row = self.table.rowCount()
         self.table.insertRow(row)
         self.table.setItem(row, 0, QTableWidgetItem(station))
         self.table.setItem(row, 1, QTableWidgetItem(fov))
 
-    def _remove_row(self) -> None:
+    def remove_row(self) -> None:
         rows = sorted({i.row() for i in self.table.selectedItems()}, reverse=True)
         for r in rows:
             self.table.removeRow(r)
 
-    def _upload_csv(self) -> None:
+    def upload_csv(self) -> None:
         path, _ = QFileDialog.getOpenFileName(self, "Open CSV", "", "CSV files (*.csv *.txt)")
         if not path:
             return
@@ -120,7 +120,7 @@ class FovDialog(QDialog):
                         if len(vals) > 1:
                             fov = str(vals[1]).strip()
                     if station:
-                        self._add_row(station, fov)
+                        self.add_row(station, fov)
                         imported += 1
             if imported:
                 QMessageBox.information(self, "CSV imported",
@@ -151,15 +151,15 @@ class ModelParameter(QDialog):
    def __init__(self) -> None:
       super(ModelParameter, self).__init__()
       loadUi(f"{DECLAS_ROOT}/ui/ModelParameters.ui", self)
-      global _INSTALLED_EXTENSIONS
-      _INSTALLED_EXTENSIONS = _scan_extensions()
+      global INSTALLED_EXTENSIONS
+      INSTALLED_EXTENSIONS = scan_extensions()
       icon_file = str(Path( Path(__file__).parent.parent, 'icons', 'logo.png'))
       self.setWindowIcon(QIcon(icon_file))
       self.setWindowFlags(Qt.WindowCloseButtonHint)
       self.setWindowTitle("Inference parameters")
 
       self.inference_param = None
-      self._fov_data: dict = {}
+      self.fov_data: dict = {}
 
       # TASK
       self.task.addItems(["Detection", "Classification"])
@@ -170,8 +170,8 @@ class ModelParameter(QDialog):
 
       # CLASSIF OR DETECTION MODEL
       self.model_type.setDuplicatesEnabled(False)
-      self._populate_model_type(self.task.currentText())
-      self.task.currentTextChanged.connect(self._on_task_changed)
+      self.populate_model_type(self.task.currentText())
+      self.task.currentTextChanged.connect(self.on_task_changed)
       self.model_type.setCurrentIndex(0)
 
       self.select_det_model.setDuplicatesEnabled(False)
@@ -188,16 +188,16 @@ class ModelParameter(QDialog):
           self.yolo_device.addItem("cpu")
           self.yolo_device.addItem("cuda")
 
-      self._populate_classes(self.model_type.currentData())
+      self.populate_classes(self.model_type.currentData())
       self.model_type.currentIndexChanged.connect(
-          lambda _: self._populate_classes(self.model_type.currentData())
+          lambda _: self.populate_classes(self.model_type.currentData())
       )
 
       # DISTANCE ESTIMATION
-      self._populate_depth_models()
-      self.estimate_distance.stateChanged.connect(self._toggle_distance_controls)
-      self._toggle_distance_controls(Qt.Unchecked)
-      self.fov_btn.clicked.connect(self._open_fov_dialog)
+      self.populate_depth_models()
+      self.estimate_distance.stateChanged.connect(self.toggle_distance_controls)
+      self.toggle_distance_controls(Qt.Unchecked)
+      self.fov_btn.clicked.connect(self.open_fov_dialog)
 
 
    def yolo_imgsz_parse(self):
@@ -211,11 +211,11 @@ class ModelParameter(QDialog):
           except:
              return(640)
 
-   def _populate_model_type(self, task: str) -> None:
+   def populate_model_type(self, task: str) -> None:
        self.model_type.blockSignals(True)
        self.model_type.clear()
        task_key = task.lower()
-       for ext_name, ext_info in _INSTALLED_EXTENSIONS.items():
+       for ext_name, ext_info in INSTALLED_EXTENSIONS.items():
            if ext_info.get("status") != "ready":
                continue
            m = ext_info.get("manifest", {})
@@ -227,9 +227,9 @@ class ModelParameter(QDialog):
            self.model_type.addItem("No models installed")
        self.model_type.blockSignals(False)
 
-   def _populate_depth_models(self) -> None:
+   def populate_depth_models(self) -> None:
        self.depth_model_combo.clear()
-       for ext_name, ext_info in _INSTALLED_EXTENSIONS.items():
+       for ext_name, ext_info in INSTALLED_EXTENSIONS.items():
            if ext_info.get("status") != "ready":
                continue
            if ext_info.get("manifest", {}).get("task", "").lower() == "depth":
@@ -238,26 +238,26 @@ class ModelParameter(QDialog):
        if self.depth_model_combo.count() == 0:
            self.depth_model_combo.addItem("No depth models installed")
 
-   def _toggle_distance_controls(self, state) -> None:
+   def toggle_distance_controls(self, state) -> None:
        visible = (state == Qt.Checked)
        self.depth_model_label.setVisible(visible)
        self.depth_model_combo.setVisible(visible)
        self.fov_btn.setVisible(visible)
 
-   def _open_fov_dialog(self) -> None:
-       dlg = FovDialog(self._fov_data, parent=self)
+   def open_fov_dialog(self) -> None:
+       dlg = FovDialog(self.fov_data, parent=self)
        if dlg.exec_() == QDialog.Accepted:
-           self._fov_data = dlg.get_fov_data()
+           self.fov_data = dlg.get_fov_data()
 
-   def _on_task_changed(self, task: str) -> None:
-       self._populate_model_type(task)
+   def on_task_changed(self, task: str) -> None:
+       self.populate_model_type(task)
        self.model_type.setCurrentIndex(0)
-       self._populate_classes(self.model_type.currentData())
+       self.populate_classes(self.model_type.currentData())
 
-   def _populate_classes(self, ext_name: str | None) -> None:
+   def populate_classes(self, ext_name: str | None) -> None:
        classes = []
-       if ext_name and ext_name in _INSTALLED_EXTENSIONS:
-           classes = _INSTALLED_EXTENSIONS[ext_name].get("manifest", {}).get("classes", [])
+       if ext_name and ext_name in INSTALLED_EXTENSIONS:
+           classes = INSTALLED_EXTENSIONS[ext_name].get("manifest", {}).get("classes", [])
        if not classes:
            classes = ["animal", "person", "vehicle"]
        self.yolo_classes.clear()
@@ -327,7 +327,7 @@ class ModelParameter(QDialog):
           "select_det_model": get_unique(select_det_model),
           "estimate_distance": estimate_distance,
           "depth_model": depth_model,
-          "fov_table": self._fov_data,
+          "fov_table": self.fov_data,
       }
 
       self.accept()

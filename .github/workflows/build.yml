@@ -22,6 +22,9 @@ jobs:
           - os: macos-latest
             artifact: Declas-macOS-arm64
             dmg_name: Declas-macOS-arm64
+          - os: macos-13
+            artifact: Declas-macOS-Intel
+            dmg_name: Declas-macOS-Intel
           - os: ubuntu-latest
             artifact: Declas-Linux
 

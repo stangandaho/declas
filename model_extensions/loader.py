@@ -8,19 +8,19 @@ from pathlib import Path
 # In a packaged build sys._MEIPASS points to _internal/; adapters and weights
 # both live under _internal/model_extensions/<name>/.
 if getattr(sys, 'frozen', False):
-    _BUNDLED_DIR = Path(sys._MEIPASS) / "model_extensions"
+    BUNDLED_DIR = Path(sys._MEIPASS) / "model_extensions"
 else:
-    _BUNDLED_DIR = Path(__file__).parent
+    BUNDLED_DIR = Path(__file__).parent
 
-_DECLAS_ROOT = _BUNDLED_DIR.parent
-if str(_DECLAS_ROOT) not in sys.path:
-    sys.path.insert(0, str(_DECLAS_ROOT))
+DECLAS_ROOT = BUNDLED_DIR.parent
+if str(DECLAS_ROOT) not in sys.path:
+    sys.path.insert(0, str(DECLAS_ROOT))
 
 
 def scan_extensions() -> dict:
     """Return metadata for every installed extension.
 
-    Scans _BUNDLED_DIR for manifest.json files. Weights are expected in the
+    Scans BUNDLED_DIR for manifest.json files. Weights are expected in the
     same directory (downloaded there by download_extension).
 
     Returns
@@ -35,12 +35,12 @@ def scan_extensions() -> dict:
     """
     installed = {}
 
-    for manifest_path in sorted(_BUNDLED_DIR.glob("*/manifest.json")):
+    for manifest_path in sorted(BUNDLED_DIR.glob("*/manifest.json")):
         name = manifest_path.parent.name
         if name.startswith("_"):
             continue
 
-        ext_dir = _BUNDLED_DIR / name
+        ext_dir = BUNDLED_DIR / name
 
         try:
             with open(manifest_path, "r", encoding="utf-8") as f:
@@ -90,13 +90,13 @@ def load_adapter(extension_info: dict, device: str = "cpu"):
     -------
     ModelAdapter instance with load() already called.
     """
-    from model_extensions._base import ModelAdapter
+    from model_extensions.base import ModelAdapter
 
     adapter_path = extension_info["adapter_path"]
     weights_path = extension_info["weights_path"]
     manifest     = extension_info["manifest"]
 
-    spec   = importlib.util.spec_from_file_location("_ext_adapter", adapter_path)
+    spec   = importlib.util.spec_from_file_location("ext_adapter", adapter_path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
 

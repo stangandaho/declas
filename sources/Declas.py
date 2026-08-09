@@ -39,8 +39,8 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Scan installed model extensions at startup
 try:
-    from model_extensions._loader import scan_extensions as _scan_extensions, load_adapter as _load_adapter
-    INSTALLED_EXTENSIONS = _scan_extensions()
+    from model_extensions.loader import scan_extensions, load_adapter
+    INSTALLED_EXTENSIONS = scan_extensions()
 except Exception:
     INSTALLED_EXTENSIONS = {}
 
@@ -64,7 +64,7 @@ except ImportError:
     pass
 
 
-def _play_notification_sound(sound_file=""):
+def play_notification_sound(sound_file=""):
     path = (sound_file or "").strip()
     if not path or not Path(path).exists():
         default = DECLAS_ROOT / "notifications" / "bell-notification-933.wav"
@@ -81,7 +81,7 @@ def _play_notification_sound(sound_file=""):
 class GeneralSettingsDialog(QDialog):
     def __init__(self, app_settings, notifications_dir, parent=None):
         super().__init__(parent)
-        self._notifications_dir = Path(notifications_dir)
+        self.notifications_dir = Path(notifications_dir)
         self.setWindowTitle("General Settings")
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self.setMinimumWidth(440)
@@ -101,13 +101,13 @@ class GeneralSettingsDialog(QDialog):
         sound_row.addWidget(QLabel("Sound:"))
         self.sound_combo = QComboBox()
         saved = app_settings.value("notification_sound_file", "", type=str)
-        if self._notifications_dir.exists():
-            for wav in sorted(self._notifications_dir.glob("*.wav")):
+        if self.notifications_dir.exists():
+            for wav in sorted(self.notifications_dir.glob("*.wav")):
                 label = wav.stem.replace("-", " ").replace("_", " ").title()
                 self.sound_combo.addItem(label, wav.name)
         idx = self.sound_combo.findData(saved)
         self.sound_combo.setCurrentIndex(idx if idx >= 0 else 0)
-        self.sound_combo.currentIndexChanged.connect(self._preview_sound)
+        self.sound_combo.currentIndexChanged.connect(self.preview_sound)
         sound_row.addWidget(self.sound_combo, 1)
         notif_layout.addLayout(sound_row)
         layout.addWidget(notif_group)
@@ -144,10 +144,10 @@ class GeneralSettingsDialog(QDialog):
         btn_row.addWidget(ok_btn)
         layout.addLayout(btn_row)
 
-    def _preview_sound(self):
+    def preview_sound(self):
         name = self.sound_combo.currentData()
         if name:
-            _play_notification_sound(str(self._notifications_dir / name))
+            play_notification_sound(str(self.notifications_dir / name))
 
     def get_settings(self):
         return {
@@ -216,9 +216,9 @@ class Declas(QMainWindow):
         select_image.setToolTip("Select a single image or video")
         select_image.triggered.connect(self.select_an_image)
 
-        self._zoom_action = QAction(QIcon(f"{DECLAS_ROOT}/icons/zoom.png"), "Zoom lens", self)
-        self._zoom_action.setToolTip("Hover over the image to magnify")
-        self._zoom_action.setCheckable(True)
+        self.zoom_action = QAction(QIcon(f"{DECLAS_ROOT}/icons/zoom.png"), "Zoom lens", self)
+        self.zoom_action.setToolTip("Hover over the image to magnify")
+        self.zoom_action.setCheckable(True)
 
         globe = QAction(QIcon(f"{DECLAS_ROOT}/icons/globe.png"), "Show on map", self)
         globe.triggered.connect(self.show_on_map)
@@ -245,15 +245,15 @@ class Declas(QMainWindow):
         self.tool_bar1.addAction(buil_tables)
         self.tool_bar1.addSeparator()
         self.tool_bar1.addAction(split_detection)
-        self.tool_bar1.addAction(self._zoom_action)
+        self.tool_bar1.addAction(self.zoom_action)
 
 
         # MAGNIFIER ZOOM LENS
-        self._mag_overlay = MagnifierOverlay()
-        self._mag_filter  = MagnifierFilter(self.image_display, self._mag_overlay)
+        self.mag_overlay = MagnifierOverlay()
+        self.mag_filter  = MagnifierFilter(self.image_display, self.mag_overlay)
         self.image_display.setMouseTracking(True)
-        self.image_display.installEventFilter(self._mag_filter)
-        self._zoom_action.toggled.connect(self._mag_filter.set_active)
+        self.image_display.installEventFilter(self.mag_filter)
+        self.zoom_action.toggled.connect(self.mag_filter.set_active)
 
         # FOLDER TREE VIEW
         self.file_model = QFileSystemModel()
@@ -280,7 +280,7 @@ class Declas(QMainWindow):
         self.current_selected_media = None
 
         # VIDEO PLAYER
-        self._slider_dragging = False
+        self.slider_dragging = False
         self.media_player = QMediaPlayer(self, QMediaPlayer.VideoSurface)
         self.media_player.setVideoOutput(self.video_display)
 
@@ -288,14 +288,14 @@ class Declas(QMainWindow):
         self.jump_back_btn.clicked.connect(self.jump_backward)
         self.jump_forward_btn.clicked.connect(self.jump_forward)
 
-        self.media_player.positionChanged.connect(self._on_position_changed)
-        self.media_player.durationChanged.connect(self._on_duration_changed)
-        self.media_player.stateChanged.connect(self._on_player_state_changed)
+        self.media_player.positionChanged.connect(self.on_position_changed)
+        self.media_player.durationChanged.connect(self.on_duration_changed)
+        self.media_player.stateChanged.connect(self.on_player_state_changed)
 
-        self.video_seek_slider.sliderPressed.connect(self._on_slider_pressed)
-        self.video_seek_slider.sliderReleased.connect(self._on_slider_released)
+        self.video_seek_slider.sliderPressed.connect(self.on_slider_pressed)
+        self.video_seek_slider.sliderReleased.connect(self.on_slider_released)
 
-        self._set_video_controls_visible(False)
+        self.set_video_controls_visible(False)
 
         # Ensure image page is shown at startup and video area is never black
         self.media_stack.setCurrentIndex(0)
@@ -333,14 +333,14 @@ class Declas(QMainWindow):
         self.statusbar = self.statusBar
 
         # SPINNER (bottom-left, shown during batch detection)
-        self._spinner_label = QLabel("")
-        self._spinner_label.setVisible(False)
-        self.statusbar.addWidget(self._spinner_label)
-        self._spinner_chars = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
-        self._spinner_idx = 0
-        self._spinner_timer = QTimer(self)
-        self._spinner_timer.setInterval(100)
-        self._spinner_timer.timeout.connect(self._tick_spinner)
+        self.spinner_label = QLabel("")
+        self.spinner_label.setVisible(False)
+        self.statusbar.addWidget(self.spinner_label)
+        self.spinner_chars = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+        self.spinner_idx = 0
+        self.spinner_timer = QTimer(self)
+        self.spinner_timer.setInterval(100)
+        self.spinner_timer.timeout.connect(self.tick_spinner)
 
         # LOG
         self.batch_detection_log.setReadOnly(True)
@@ -364,13 +364,13 @@ class Declas(QMainWindow):
         self.menuSetting.addAction(tags_action)
 
         # GENERAL SETTINGS
-        self._app_settings = QSettings("Declas", "Declas")
+        self.app_settings = QSettings("Declas", "Declas")
         general_action = QAction(QIcon(f"{DECLAS_ROOT}/icons/general_settings.png"), "General", self)
         general_action.triggered.connect(self.open_general_settings)
         self.menuSetting.addAction(general_action)
 
         # Apply saved theme at startup
-        saved_theme = self._app_settings.value("theme", "System", type=str)
+        saved_theme = self.app_settings.value("theme", "System", type=str)
         if saved_theme == "Light":
             self.set_light_mode()
         elif saved_theme == "Dark":
@@ -379,34 +379,34 @@ class Declas(QMainWindow):
             self.set_system_mode()
 
         # CUSTOM TAGS — tab next to Inference
-        self._tags_tab = QWidget()
-        self._tag_cards = [] # list of (card_widget, widgets_dict)
-        self._tag_definitions = [] # list of tag defs
-        self._updating_tags = False # guard: suppress auto-save during load
+        self.tags_tab = QWidget()
+        self.tag_cards = [] # list of (card_widget, widgets_dict)
+        self.tag_definitions = [] # list of tag defs
+        self.updating_tags = False # guard: suppress auto-save during load
 
-        self._tags_container = QWidget()
-        self._tags_vbox = QVBoxLayout(self._tags_container)
-        self._tags_vbox.setContentsMargins(4, 4, 4, 4)
-        self._tags_vbox.setSpacing(6)
+        self.tags_container = QWidget()
+        self.tags_vbox = QVBoxLayout(self.tags_container)
+        self.tags_vbox.setContentsMargins(4, 4, 4, 4)
+        self.tags_vbox.setSpacing(6)
 
         tags_scroll = QScrollArea()
         tags_scroll.setWidgetResizable(True)
         tags_scroll.setFrameShape(tags_scroll.NoFrame)
-        tags_scroll.setWidget(self._tags_container)
+        tags_scroll.setWidget(self.tags_container)
 
         add_entry_btn = QPushButton(" Add Entry ")
         add_entry_btn.setFixedWidth(110)
-        add_entry_btn.clicked.connect(lambda: self._add_tag_card())
+        add_entry_btn.clicked.connect(lambda: self.add_tag_card())
 
         btn_row = QHBoxLayout()
         btn_row.addWidget(add_entry_btn)
         btn_row.addStretch()
 
-        tab_layout = QVBoxLayout(self._tags_tab)
+        tab_layout = QVBoxLayout(self.tags_tab)
         tab_layout.addWidget(tags_scroll)
         tab_layout.addLayout(btn_row)
 
-        self.tabWidget.addTab(self._tags_tab, "Custom Tags")
+        self.tabWidget.addTab(self.tags_tab, "Custom Tags")
         self.build_tags_form()
 
         ## BUILD DETECTION TABLE
@@ -414,14 +414,14 @@ class Declas(QMainWindow):
 
     def open_general_settings(self):
         dlg = GeneralSettingsDialog(
-            self._app_settings,
+            self.app_settings,
             DECLAS_ROOT / "notifications",
             parent=self
         )
         if dlg.exec_() == dlg.Accepted:
             s = dlg.get_settings()
             for key, val in s.items():
-                self._app_settings.setValue(key, val)
+                self.app_settings.setValue(key, val)
             theme = s["theme"]
             if theme == "Light":
                 self.set_light_mode()
@@ -437,34 +437,34 @@ class Declas(QMainWindow):
             self.build_tags_form()
             # Reload values for whatever media is currently displayed
             try:
-                self._update_custom_tags(IMG_PATH[-1])
+                self.update_custom_tags(IMG_PATH[-1])
             except IndexError:
                 pass
 
     def build_tags_form(self):
-        self._updating_tags = True
-        while self._tags_vbox.count():
-            item = self._tags_vbox.takeAt(0)
+        self.updating_tags = True
+        while self.tags_vbox.count():
+            item = self.tags_vbox.takeAt(0)
             if item.widget():
                 item.widget().deleteLater()
-        self._tag_cards = []
+        self.tag_cards = []
 
-        self._tag_definitions = load_tag_definitions()
-        if not self._tag_definitions:
+        self.tag_definitions = load_tag_definitions()
+        if not self.tag_definitions:
             lbl = QLabel("No tags defined. Go to Setting > Tags to add some.")
-            self._tags_vbox.addWidget(lbl)
-            self._updating_tags = False
+            self.tags_vbox.addWidget(lbl)
+            self.updating_tags = False
             return
 
-        self._tags_vbox.addStretch()
-        self._updating_tags = False
-        self._add_tag_card()
+        self.tags_vbox.addStretch()
+        self.updating_tags = False
+        self.add_tag_card()
 
-    def _add_tag_card(self, values=None):
+    def add_tag_card(self, values=None):
         from PyQt5.QtGui import QDoubleValidator, QIntValidator
         from PyQt5.QtCore import QDate
 
-        if not self._tag_definitions:
+        if not self.tag_definitions:
             return
 
         card = QFrame()
@@ -474,20 +474,20 @@ class Declas(QMainWindow):
         card_layout.setSpacing(4)
 
         header = QHBoxLayout()
-        header.addWidget(QLabel(f"Entry {len(self._tag_cards) + 1}"))
+        header.addWidget(QLabel(f"Entry {len(self.tag_cards) + 1}"))
         header.addStretch()
         rm_btn = QPushButton("−")
         rm_btn.setFixedSize(22, 22)
         rm_btn.setStyleSheet("padding: 0;")
         rm_btn.setToolTip("Remove this entry")
-        rm_btn.clicked.connect(lambda: self._remove_tag_card(card))
+        rm_btn.clicked.connect(lambda: self.remove_tag_card(card))
         header.addWidget(rm_btn)
         card_layout.addLayout(header)
 
         form = QFormLayout()
         form.setContentsMargins(0, 0, 0, 0)
         widgets = {}
-        for tag in self._tag_definitions:
+        for tag in self.tag_definitions:
             title  = tag["title"]
             type_  = tag["type"]
             predef = tag.get("values", [])
@@ -498,45 +498,45 @@ class Declas(QMainWindow):
                 w.addItems(predef)
                 if raw in predef:
                     w.setCurrentText(str(raw))
-                w.currentIndexChanged.connect(self._auto_save_tags)
+                w.currentIndexChanged.connect(self.auto_save_tags)
             elif type_ == "boolean":
                 w = QCheckBox()
                 w.setChecked(bool(raw))
-                w.stateChanged.connect(self._auto_save_tags)
+                w.stateChanged.connect(self.auto_save_tags)
             elif type_ == "date":
                 w = QDateEdit()
                 w.setCalendarPopup(True)
                 w.setDate(QDate.fromString(str(raw), "yyyy-MM-dd") if raw
                           else QDate.currentDate())
-                w.dateChanged.connect(self._auto_save_tags)
+                w.dateChanged.connect(self.auto_save_tags)
             elif type_ in ("float", "double"):
                 w = QLineEdit(str(raw) if raw is not None else "")
                 w.setValidator(QDoubleValidator())
-                w.textChanged.connect(self._auto_save_tags)
+                w.textChanged.connect(self.auto_save_tags)
             elif type_ == "integer":
                 w = QLineEdit(str(raw) if raw is not None else "")
                 w.setValidator(QIntValidator())
-                w.textChanged.connect(self._auto_save_tags)
+                w.textChanged.connect(self.auto_save_tags)
             else:
                 w = QLineEdit(str(raw) if raw is not None else "")
-                w.textChanged.connect(self._auto_save_tags)
+                w.textChanged.connect(self.auto_save_tags)
 
             form.addRow(title + ":", w)
             widgets[title] = w
 
         card_layout.addLayout(form)
 
-        insert_pos = max(0, self._tags_vbox.count() - 1)
-        self._tags_vbox.insertWidget(insert_pos, card)
-        self._tag_cards.append((card, widgets))
+        insert_pos = max(0, self.tags_vbox.count() - 1)
+        self.tags_vbox.insertWidget(insert_pos, card)
+        self.tag_cards.append((card, widgets))
 
-    def _remove_tag_card(self, card):
-        self._tags_vbox.removeWidget(card)
-        self._tag_cards = [(c, w) for c, w in self._tag_cards if c is not card]
+    def remove_tag_card(self, card):
+        self.tags_vbox.removeWidget(card)
+        self.tag_cards = [(c, w) for c, w in self.tag_cards if c is not card]
         card.deleteLater()
-        self._auto_save_tags()
+        self.auto_save_tags()
 
-    def _det_folder(self, file_path):
+    def det_folder(self, file_path):
         """Return the detections/ folder for a given media path.
         Works whether file_path points to the original or to an image already
         inside a detections/ subfolder."""
@@ -545,25 +545,25 @@ class Declas(QMainWindow):
             return p.parent # already inside detections/
         return p.parent / "detections"
 
-    def _update_custom_tags(self, file_path):
-        if not self._tag_definitions:
+    def update_custom_tags(self, file_path):
+        if not self.tag_definitions:
             return
-        self._updating_tags = True
-        for card, _ in self._tag_cards:
-            self._tags_vbox.removeWidget(card)
+        self.updating_tags = True
+        for card, _ in self.tag_cards:
+            self.tags_vbox.removeWidget(card)
             card.deleteLater()
-        self._tag_cards = []
-        det_folder = self._det_folder(file_path)
+        self.tag_cards = []
+        det_folder = self.det_folder(file_path)
         entries = load_media_tags(det_folder, Path(file_path).name)
-        self._updating_tags = False
+        self.updating_tags = False
         if not entries:
-            self._add_tag_card()
+            self.add_tag_card()
         else:
             for entry in entries:
-                self._add_tag_card(values=entry)
+                self.add_tag_card(values=entry)
 
-    def _auto_save_tags(self, *args):
-        if self._updating_tags:
+    def auto_save_tags(self, *args):
+        if self.updating_tags:
             return
         self.save_current_media_tags(silent=True)
 
@@ -572,15 +572,15 @@ class Declas(QMainWindow):
             file_path = IMG_PATH[-1]
         except IndexError:
             return
-        if not self._tag_definitions:
+        if not self.tag_definitions:
             return
 
         from PyQt5.QtCore import QDate
 
         entries = []
-        for card, widgets in self._tag_cards:
+        for card, widgets in self.tag_cards:
             entry = {}
-            for tag in self._tag_definitions:
+            for tag in self.tag_definitions:
                 title  = tag["title"]
                 type_  = tag["type"]
                 predef = tag.get("values", [])
@@ -609,7 +609,7 @@ class Declas(QMainWindow):
             if any(v is not None and v != "" for v in entry.values()):
                 entries.append(entry)
 
-        det_folder = self._det_folder(file_path)
+        det_folder = self.det_folder(file_path)
         save_media_tags(det_folder, Path(file_path).name, entries)
         if not silent:
             self.statusbar.showMessage("Tags saved", MESSAGE_DELAY)
@@ -699,9 +699,8 @@ class Declas(QMainWindow):
             idx = mp.depth_model_combo.findData(saved_depth)
             if idx >= 0:
                 mp.depth_model_combo.setCurrentIndex(idx)
-        from PyQt5.QtCore import Qt as _Qt
-        mp._toggle_distance_controls(
-            _Qt.Checked if current_set.get("estimate_distance") else _Qt.Unchecked)
+                mp.toggle_distance_controls(
+            Qt.Checked if current_set.get("estimate_distance") else Qt.Unchecked)
 
         mp.setWindowModality(Qt.ApplicationModal)
         if mp.exec_() == mp.Accepted:
@@ -715,8 +714,9 @@ class Declas(QMainWindow):
             IMG_PATH.clear()
             self.image_or_dir = selected_folder
             self.file_model.setRootPath('.')
-            self.dir_tree_view.setRootIndex(self.file_model.index(selected_folder))
-            self.dir_tree_view.expandAll()
+            root_index = self.file_model.index(selected_folder)
+            self.dir_tree_view.setRootIndex(root_index)
+            self.dir_tree_view.expand(root_index)
 
         return selected_folder
     
@@ -758,10 +758,19 @@ class Declas(QMainWindow):
         )
         if selected_media:
             self.image_or_dir = selected_media
-            self._display_media(selected_media)
-            self._update_metadata(selected_media)
-            self._update_inference_result(selected_media)
-            self._update_custom_tags(selected_media)
+            # Reset the tree to the image's parent folder
+            parent_dir = str(Path(selected_media).parent)
+            global selected_folder
+            selected_folder = parent_dir
+            self.file_model.setRootPath('.')
+            root_index = self.file_model.index(parent_dir)
+            self.dir_tree_view.setRootIndex(root_index)
+            self.dir_tree_view.expand(root_index)
+            self.dir_tree_view.setCurrentIndex(self.file_model.index(selected_media))
+            self.display_media(selected_media)
+            self.update_metadata(selected_media)
+            self.update_inference_result(selected_media)
+            self.update_custom_tags(selected_media)
             # Show nav buttons so the user can browse siblings
             self.previous_media.show()
             self.next_media.show()
@@ -787,10 +796,10 @@ class Declas(QMainWindow):
             self.play_media.show()
 
             if not self.file_model.isDir(index):
-                self._display_media(file_path)
-                self._update_metadata(file_path)
-                self._update_inference_result(file_path)
-                self._update_custom_tags(file_path)
+                self.display_media(file_path)
+                self.update_metadata(file_path)
+                self.update_inference_result(file_path)
+                self.update_custom_tags(file_path)
 
                 IMG_PATH.append(file_path)
                 return file_path
@@ -801,9 +810,9 @@ class Declas(QMainWindow):
         if pixmap.isNull():
             self.image_display.setText(message)
             self.view_detection.setEnabled(False)
-            self._mag_filter.set_pixmap(None)
+            self.mag_filter.set_pixmap(None)
         else:
-            self._mag_filter.set_pixmap(pixmap)
+            self.mag_filter.set_pixmap(pixmap)
             self.image_display.setPixmap(pixmap.scaled(self.image_display.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
 
 
@@ -832,10 +841,10 @@ class Declas(QMainWindow):
             if self.current_selected_media > 0:
                 self.current_selected_media -= 1
                 path = all_files[self.current_selected_media]
-                self._display_media(path)
-                self._update_metadata(path)
-                self._update_inference_result(path)
-                self._update_custom_tags(path)
+                self.display_media(path)
+                self.update_metadata(path)
+                self.update_inference_result(path)
+                self.update_custom_tags(path)
                 IMG_PATH.append(path)
         except:
             pass
@@ -845,18 +854,18 @@ class Declas(QMainWindow):
             if self.current_selected_media >= 0 and self.current_selected_media < (len(all_files) - 1):
                 self.current_selected_media += 1
                 path = all_files[self.current_selected_media]
-                self._display_media(path)
-                self._update_metadata(path)
-                self._update_inference_result(path)
-                self._update_custom_tags(path)
+                self.display_media(path)
+                self.update_metadata(path)
+                self.update_inference_result(path)
+                self.update_custom_tags(path)
                 IMG_PATH.append(path)
         except:
             pass
 
 
     # Media helpers 
-    def _update_metadata(self, path):
-        if self._is_video(path):
+    def update_metadata(self, path):
+        if self.is_video(path):
             self.metadata_text.setText(get_video_metadata(path))
         else:
             try:
@@ -865,7 +874,7 @@ class Declas(QMainWindow):
             except:
                 self.metadata_text.setText(str(get_metadata(path)))
 
-    def _update_inference_result(self, file_path):
+    def update_inference_result(self, file_path):
         """Show detection/classification results specific to file_path, or clear if none."""
         fp = Path(file_path)
         candidates = [
@@ -884,6 +893,7 @@ class Declas(QMainWindow):
                 if txt is not None:
                     self.inference_result.setText(str(txt))
                     self.edit_inference.setEnabled(True)
+                    self.view_detection.setEnabled(True)
                     return
             except Exception:
                 pass
@@ -892,10 +902,10 @@ class Declas(QMainWindow):
         self.inference_result.clear()
         self.edit_inference.setEnabled(False)
 
-    def _is_video(self, path):
+    def is_video(self, path):
         return Path(path).suffix.lower() in ['.mp4', '.avi', '.mov', '.mkv']
 
-    def _set_video_controls_visible(self, visible):
+    def set_video_controls_visible(self, visible):
         self.video_seek_slider.setVisible(visible)
         self.video_current_time.setVisible(visible)
         self.video_total_time.setVisible(visible)
@@ -903,24 +913,24 @@ class Declas(QMainWindow):
         self.jump_back_btn.setVisible(visible)
         self.jump_forward_btn.setVisible(visible)
 
-    def _display_media(self, path):
-        if self._is_video(path):
-            self._enter_video_mode(path)
+    def display_media(self, path):
+        if self.is_video(path):
+            self.enter_video_mode(path)
         else:
-            self._enter_image_mode()
+            self.enter_image_mode()
             self.display_image(path)
 
-    def _enter_image_mode(self):
+    def enter_image_mode(self):
         self.media_player.stop()
         self.media_stack.setCurrentIndex(0)
         self.play_media.setEnabled(False)
-        self._set_video_controls_visible(False)
+        self.set_video_controls_visible(False)
 
-    def _enter_video_mode(self, video_path):
-        self._mag_overlay.hide()   # lens irrelevant while video plays
+    def enter_video_mode(self, video_path):
+        self.mag_overlay.hide()   # lens irrelevant while video plays
         self.media_stack.setCurrentIndex(1)
         self.play_media.setEnabled(True)
-        self._set_video_controls_visible(True)
+        self.set_video_controls_visible(True)
         self.media_player.setMedia(QMediaContent(QUrl.fromLocalFile(video_path)))
         self.media_player.play()
 
@@ -942,23 +952,23 @@ class Declas(QMainWindow):
             min(self.media_player.duration(), self.media_player.position() + 10000)
         )
 
-    def _on_slider_pressed(self):
-        self._slider_dragging = True
+    def on_slider_pressed(self):
+        self.slider_dragging = True
 
-    def _on_slider_released(self):
-        self._slider_dragging = False
+    def on_slider_released(self):
+        self.slider_dragging = False
         self.media_player.setPosition(self.video_seek_slider.value())
 
-    def _on_position_changed(self, position):
-        if not self._slider_dragging:
+    def on_position_changed(self, position):
+        if not self.slider_dragging:
             self.video_seek_slider.setValue(position)
-        self.video_current_time.setText(self._format_time(position))
+        self.video_current_time.setText(self.format_time(position))
 
-    def _on_duration_changed(self, duration):
+    def on_duration_changed(self, duration):
         self.video_seek_slider.setRange(0, duration)
-        self.video_total_time.setText(self._format_time(duration))
+        self.video_total_time.setText(self.format_time(duration))
 
-    def _on_player_state_changed(self, state):
+    def on_player_state_changed(self, state):
         if state == QMediaPlayer.PlayingState:
             self.play_media.setIcon(
                 self.style().standardIcon(self.style().SP_MediaPause)
@@ -967,7 +977,7 @@ class Declas(QMainWindow):
             self.play_media.setIcon(QIcon(f"{DECLAS_ROOT}/icons/play.png"))
 
     @staticmethod
-    def _format_time(ms):
+    def format_time(ms):
         s = ms // 1000
         return f"{s // 60:02d}:{s % 60:02d}"
 
@@ -1005,13 +1015,13 @@ class Declas(QMainWindow):
                 return
 
             # Extensions are self-contained
-            _mt = parameters.get("model_type", "")
-            _is_ext = _mt in INSTALLED_EXTENSIONS
-            if not _is_ext:
+            mt = parameters.get("model_type", "")
+            is_ext = mt in INSTALLED_EXTENSIONS
+            if not is_ext:
                 no_weight()
                 return
 
-            is_vid = self._is_video(media_path)
+            is_vid = self.is_video(media_path)
             vid_stride = parameters.get("vid_stride", 5)
             to_save = None
 
@@ -1024,13 +1034,13 @@ class Declas(QMainWindow):
 
             if parameters["task"] == "Detection":
                 # Detection-extension path
-                if _is_ext:
-                    ext_info = INSTALLED_EXTENSIONS[_mt]
+                if is_ext:
+                    ext_info = INSTALLED_EXTENSIONS[mt]
                     if ext_info["status"] != "ready":
                         self.statusbar.showMessage(
-                            f"Extension '{_mt}' weights not downloaded.", MESSAGE_DELAY)
+                            f"Extension '{mt}' weights not downloaded.", MESSAGE_DELAY)
                         return
-                    adapter = _load_adapter(ext_info, device=parameters["device"])
+                    adapter = load_adapter(ext_info, device=parameters["device"])
                     if is_vid:
                         result_dict = extension_video_classification(
                             video_path=media_path,
@@ -1059,7 +1069,7 @@ class Declas(QMainWindow):
                         self.statusbar.showMessage(
                             f"Extension '{model_type}' weights not downloaded.", MESSAGE_DELAY)
                         return
-                    adapter = _load_adapter(ext_info, device=parameters["device"])
+                    adapter = load_adapter(ext_info, device=parameters["device"])
                     if is_vid:
                         result_dict = extension_video_classification(
                             video_path=media_path,
@@ -1096,7 +1106,7 @@ class Declas(QMainWindow):
             missed_path()
             return
         image_path = Path(Path(image_path).parent, "detections", Path(image_path).name)
-        self._enter_image_mode()  # annotated result is always a JPEG, show image page
+        self.enter_image_mode()  # annotated result is always a JPEG, show image page
         self.display_image(str(image_path), message="Run detection or classification before to click 'View'")
 
 
@@ -1151,9 +1161,9 @@ class Declas(QMainWindow):
         try:
             parameters   = load_json()
             model_weight = load_weight()
-            _mt = parameters.get("model_type", "")
-            _is_ext = _mt in INSTALLED_EXTENSIONS
-            if not _is_ext and (model_weight == "" or not Path(model_weight).exists()):
+            mt = parameters.get("model_type", "")
+            is_ext = mt in INSTALLED_EXTENSIONS
+            if not is_ext and (model_weight == "" or not Path(model_weight).exists()):
                 no_weight()
                 return
         except Exception as e:
@@ -1169,15 +1179,14 @@ class Declas(QMainWindow):
                     missed_folder()
                     return
                 # Create the worker and pass the folder path
-                self._last_detection_folder = folder_path
+                self.last_detection_folder = folder_path
                 self.worker = DetectionWorker(folder_path, main_subdir=main_subdir["run_on_main_dir"],
                                                  conf_thres= main_subdir["conf"])
                 self.worker.detection_done.connect(self.on_detection_done)
-                self.worker.detection_done.connect(self._stop_spinner)
                 self.worker.error_occurred.connect(self.on_detection_error)
-                self.worker.error_occurred.connect(self._stop_spinner)
+                self.worker.error_occurred.connect(self.stop_spinner)
                 self.worker.log_message.connect(self.update_log)
-                self._start_spinner()
+                self.start_spinner()
                 self.worker.start()
             else:
                 missed_folder()
@@ -1190,7 +1199,7 @@ class Declas(QMainWindow):
     def on_detection_done(self, message):
         self.statusbar.showMessage(message, MESSAGE_DELAY)
 
-        if self.inference_param.get("estimate_distance") and getattr(self, "_last_detection_folder", None):
+        if self.inference_param.get("estimate_distance") and getattr(self, "last_detection_folder", None):
             fov_table = self.inference_param.get("fov_table", {})
             if not fov_table:
                 from PyQt5.QtWidgets import QMessageBox
@@ -1200,77 +1209,78 @@ class Declas(QMainWindow):
                     "Distance will be estimated as raw line-of-sight depth (no angular correction).\n\n"
                     "To improve accuracy, open Inference Parameters → Set Field Of View per Station."
                 )
-            self._dist_worker = DistanceWorker(self._last_detection_folder, self.inference_param)
-            self._dist_worker.progress.connect(
+            self.dist_worker = DistanceWorker(self.last_detection_folder, self.inference_param)
+            self.dist_worker.progress.connect(
                 lambda msg: self.statusbar.showMessage(msg))
-            self._dist_worker.distance_done.connect(
+            self.dist_worker.distance_done.connect(
                 lambda msg: (
-                    self._stop_spinner(),
+                    self.stop_spinner(),
                     self.statusbar.showMessage(msg, MESSAGE_DELAY),
-                    self._play_completion_sound(),
+                    self.play_completion_sound(),
                 ))
-            self._dist_worker.error_occurred.connect(
-                lambda err: (self._stop_spinner(), self._on_distance_error(err)))
-            self._start_spinner()
-            self._dist_worker.start()
+            self.dist_worker.error_occurred.connect(
+                lambda err: (self.stop_spinner(), self.on_distance_error(err)))
+            self.start_spinner()
+            self.dist_worker.start()
         else:
-            self._play_completion_sound()
+            self.stop_spinner()
+            self.play_completion_sound()
 
     def on_detection_error(self, message):
         self.statusbar.showMessage(message, MESSAGE_DELAY)
 
-    def _on_distance_error(self, message):
+    def on_distance_error(self, message):
         self.statusbar.showMessage("Distance estimation failed", MESSAGE_DELAY)
         general_error(message)
 
-    def _play_completion_sound(self):
-        if self._app_settings.value("notification_sound", True, type=bool):
-            sound_name = self._app_settings.value("notification_sound_file", "", type=str)
+    def play_completion_sound(self):
+        if self.app_settings.value("notification_sound", True, type=bool):
+            sound_name = self.app_settings.value("notification_sound_file", "", type=str)
             sound_file = str(DECLAS_ROOT / "notifications" / sound_name) if sound_name else ""
-            _play_notification_sound(sound_file)
+            play_notification_sound(sound_file)
 
-    def _start_spinner(self):
-        self._spinner_idx = 0
-        self._spinner_label.setVisible(True)
-        self._spinner_timer.start()
+    def start_spinner(self):
+        self.spinner_idx = 0
+        self.spinner_label.setVisible(True)
+        self.spinner_timer.start()
 
-    def _stop_spinner(self):
-        self._spinner_timer.stop()
-        self._spinner_label.setVisible(False)
+    def stop_spinner(self):
+        self.spinner_timer.stop()
+        self.spinner_label.setVisible(False)
 
-    def _tick_spinner(self):
-        self._spinner_label.setText(self._spinner_chars[self._spinner_idx % len(self._spinner_chars)])
-        self._spinner_idx += 1
+    def tick_spinner(self):
+        self.spinner_label.setText(self.spinner_chars[self.spinner_idx % len(self.spinner_chars)])
+        self.spinner_idx += 1
 
     def open_extensions(self):
         """Open the Extension Manager dialog (non-modal — Declas stays interactive)."""
         # Re-use an already-open dialog instead of stacking multiple instances.
-        if hasattr(self, "_ext_dlg") and self._ext_dlg.isVisible():
-            self._ext_dlg.raise_()
-            self._ext_dlg.activateWindow()
+        if hasattr(self, "ext_dlg") and self.ext_dlg.isVisible():
+            self.ext_dlg.raise_()
+            self.ext_dlg.activateWindow()
             return
-        self._ext_dlg = ExtensionManagerDialog(parent=self)
-        self._ext_dlg.extension_changed.connect(self._reload_extensions)
-        self._ext_dlg.show()
-        self._ext_dlg.raise_()
-        self._ext_dlg.activateWindow()
+        self.ext_dlg = ExtensionManagerDialog(parent=self)
+        self.ext_dlg.extension_changed.connect(self.reload_extensions)
+        self.ext_dlg.show()
+        self.ext_dlg.raise_()
+        self.ext_dlg.activateWindow()
 
     def open_publish_guidelines(self):
         """Open the Publish guidelines dialog."""
-        if hasattr(self, "_pub_dlg") and self._pub_dlg.isVisible():
-            self._pub_dlg.raise_()
-            self._pub_dlg.activateWindow()
+        if hasattr(self, "pub_dlg") and self.pub_dlg.isVisible():
+            self.pub_dlg.raise_()
+            self.pub_dlg.activateWindow()
             return
-        self._pub_dlg = PublishGuidelinesDialog(parent=self)
-        self._pub_dlg.show()
-        self._pub_dlg.raise_()
-        self._pub_dlg.activateWindow()
+        self.pub_dlg = PublishGuidelinesDialog(parent=self)
+        self.pub_dlg.show()
+        self.pub_dlg.raise_()
+        self.pub_dlg.activateWindow()
 
-    def _reload_extensions(self):
+    def reload_extensions(self):
         """Refresh the global extension registry after install / remove."""
         global INSTALLED_EXTENSIONS
         try:
-            INSTALLED_EXTENSIONS = _scan_extensions()
+            INSTALLED_EXTENSIONS = scan_extensions()
         except Exception:
             INSTALLED_EXTENSIONS = {}
         self.statusbar.showMessage("Extensions reloaded.", MESSAGE_DELAY)
@@ -1410,7 +1420,7 @@ class Declas(QMainWindow):
 
 
 ## QThread
-def _collect_leaf_dirs(root: Path, skip: frozenset) -> list:
+def collect_leaf_dirs(root: Path, skip: frozenset) -> list:
     """Return all dirs under root (excluding skip names) that directly contain media."""
     result = []
     try:
@@ -1428,7 +1438,7 @@ def _collect_leaf_dirs(root: Path, skip: frozenset) -> list:
         if has_media:
             result.append(child)
         else:
-            result.extend(_collect_leaf_dirs(child, skip))
+            result.extend(collect_leaf_dirs(child, skip))
     return result
 
 
@@ -1436,9 +1446,9 @@ def process_directory(dp, log_queue):
     parameters  = load_json()
     model_weight = load_weight()
 
-    _mt = parameters.get("model_type", "")
-    _is_ext = _mt in INSTALLED_EXTENSIONS
-    if not _is_ext:
+    mt = parameters.get("model_type", "")
+    is_ext = mt in INSTALLED_EXTENSIONS
+    if not is_ext:
         no_weight()
         return
 
@@ -1460,13 +1470,13 @@ def process_directory(dp, log_queue):
     try:
         if parameters["task"] == "Detection":
             # Detection-extension path
-            if _is_ext:
-                ext_info = INSTALLED_EXTENSIONS[_mt]
+            if is_ext:
+                ext_info = INSTALLED_EXTENSIONS[mt]
                 if ext_info["status"] != "ready":
                     if log_queue:
-                        log_queue.put(f"Extension '{_mt}' weights not downloaded.")
+                        log_queue.put(f"Extension '{mt}' weights not downloaded.")
                     return "Extension weights missing."
-                adapter = _load_adapter(ext_info, device=parameters["device"])
+                adapter = load_adapter(ext_info, device=parameters["device"])
                 if image_files:
                     ext_suffix = image_files[0].suffix
                     extension_batch_classification(data_path=dp,
@@ -1494,7 +1504,7 @@ def process_directory(dp, log_queue):
                     if log_queue:
                         log_queue.put(f"❌ Extension '{model_type}' weights not downloaded.")
                     return "Extension weights missing."
-                adapter = _load_adapter(ext_info, device=parameters["device"])
+                adapter = load_adapter(ext_info, device=parameters["device"])
 
                 if image_files:
                     extension = image_files[0].suffix
@@ -1546,7 +1556,7 @@ class DistanceWorker(QThread):
     def run(self):
         try:
             import numpy as np
-            from model_extensions._loader import scan_extensions, load_adapter
+            from model_extensions.loader import scan_extensions, load_adapter
 
             exts = scan_extensions()
             if self.depth_model_name not in exts:
@@ -1558,7 +1568,7 @@ class DistanceWorker(QThread):
             manifest = exts[self.depth_model_name].get("manifest", {})
             hf_id = manifest.get("model_hf_id", "")
             if hf_id:
-                self._download_model_with_progress(hf_id)
+                self.download_model_with_progress(hf_id)
             else:
                 self.progress.emit("Distance estimation: loading depth model…")
             adapter = load_adapter(exts[self.depth_model_name], device=self.device)
@@ -1576,7 +1586,7 @@ class DistanceWorker(QThread):
                 self.error_occurred.emit("No detections.json found for distance estimation.")
                 return
 
-            _BATCH = 4
+            BATCH = 4
             for jsf in json_files:
                 jsf_folder = jsf.parent
 
@@ -1585,14 +1595,14 @@ class DistanceWorker(QThread):
 
                 # Case-insensitive stem → path index for every image in the folder.
                 # Covers JPG, PNG, TIF, BMP so no extension is silently skipped.
-                _IMG_EXTS = {".jpg", ".jpeg", ".png", ".tif", ".tiff", ".bmp"}
+                IMG_EXTS = {".jpg", ".jpeg", ".png", ".tif", ".tiff", ".bmp"}
                 folder_index: dict = {
                     p.stem.lower(): p
                     for p in jsf_folder.iterdir()
-                    if p.is_file() and p.suffix.lower() in _IMG_EXTS
+                    if p.is_file() and p.suffix.lower() in IMG_EXTS
                 }
 
-                def _resolve_image(entry: dict, key: str):
+                def resolve_image(entry: dict, key: str):
                     """Return the image Path for this detection entry, or None."""
                     # 1. media_path points directly to the file
                     mp = entry.get("media_path", "")
@@ -1628,7 +1638,7 @@ class DistanceWorker(QThread):
                     det_list = entry.get("detections")
                     if not det_list:
                         continue
-                    orig = _resolve_image(entry, key)
+                    orig = resolve_image(entry, key)
                     if orig is None:
                         continue
                     work.append((orig, entry, det_list))
@@ -1642,11 +1652,11 @@ class DistanceWorker(QThread):
                 n = len(unique_paths)
                 station = jsf_folder.name
 
-                import math as _math
+                import math
                 if self.fov_table:
-                    _sl = station.lower()
+                    sl = station.lower()
                     fov_deg = next(
-                        (v for k, v in self.fov_table.items() if k.lower() == _sl),
+                        (v for k, v in self.fov_table.items() if k.lower() == sl),
                         None,
                     )
                 else:
@@ -1654,8 +1664,8 @@ class DistanceWorker(QThread):
 
                 depth_maps: dict = {}
                 done = 0
-                for i in range(0, n, _BATCH):
-                    batch_paths = unique_paths[i:i + _BATCH]
+                for i in range(0, n, BATCH):
+                    batch_paths = unique_paths[i:i + BATCH]
                     maps = adapter.predict_depth_batch(
                         [str(p) for p in batch_paths], fov_deg=fov_deg)
                     for p, dm in zip(batch_paths, maps):
@@ -1683,12 +1693,12 @@ class DistanceWorker(QThread):
                         if fov_deg:
                             # Pinhole model: map pixel position to angle from
                             # optical axis using the camera's half-FOV.
-                            half_fov_rad = _math.radians(fov_deg / 2.0)
+                            half_fov_rad = math.radians(fov_deg / 2.0)
                             # Normalised position: -1 = left edge, +1 = right edge
                             pos = (cx_px - w / 2.0) / (w / 2.0)
-                            angle_rad = _math.atan(
-                                pos * _math.tan(half_fov_rad))
-                            cos_a = _math.cos(angle_rad)
+                            angle_rad = math.atan(
+                                pos * math.tan(half_fov_rad))
+                            cos_a = math.cos(angle_rad)
                             distance = raw_depth / cos_a if cos_a > 0 else raw_depth
                         else:
                             distance = raw_depth
@@ -1706,30 +1716,30 @@ class DistanceWorker(QThread):
             self.error_occurred.emit(
                 f"Distance estimation error: {e}\n{traceback.format_exc()}")
 
-    def _download_model_with_progress(self, repo_id: str) -> None:
+    def download_model_with_progress(self, repo_id: str) -> None:
         try:
             from huggingface_hub import try_to_load_from_cache, snapshot_download
-            import tqdm as _tqdm_mod
+            import tqdm as tqdm_mod
 
             cached = try_to_load_from_cache(repo_id, "config.json")
             if cached is not None:
                 self.progress.emit("Distance estimation: loading depth model…")
                 return
 
-            _emit = self.progress.emit
+            emit = self.progress.emit
 
-            class _ProgressBar(_tqdm_mod.tqdm):
+            class ProgressBar(tqdm_mod.tqdm):
                 def update(self, n=1):
                     super().update(n)
                     if self.total and self.total > 0:
                         mb_done = self.n / 1_048_576
                         mb_total = self.total / 1_048_576
                         pct = int(100 * self.n / self.total)
-                        _emit(f"Downloading model: {mb_done:.0f}/{mb_total:.0f} MB  {pct}%")
+                        emit(f"Downloading model: {mb_done:.0f}/{mb_total:.0f} MB  {pct}%")
 
-            _emit("Downloading depth model (first time only)…")
-            snapshot_download(repo_id=repo_id, tqdm_class=_ProgressBar)
-            _emit("Distance estimation: loading depth model…")
+            emit("Downloading depth model (first time only)…")
+            snapshot_download(repo_id=repo_id, tqdm_class=ProgressBar)
+            emit("Distance estimation: loading depth model…")
 
         except Exception:
             self.progress.emit("Distance estimation: loading depth model…")
@@ -1773,9 +1783,9 @@ class DetectionWorker(QThread):
     def run(self):
         self.log_emitter.start()
 
-        _SKIP = {"detections", "frames"}
+        SKIP = {"detections", "frames"}
 
-        def _is_bad(r):
+        def is_bad(r):
             if r is None:
                 return True
             rl = r.lower()
@@ -1787,16 +1797,16 @@ class DetectionWorker(QThread):
             if self.main_subdir:
                 self.log_queue.put(f"\U0001F504 Processing: {dir_path.name}\n")
                 result = process_directory(dir_path, self.log_queue)
-                if _is_bad(result):
+                if is_bad(result):
                     self.error_occurred.emit(result or "No media found or error occurred")
                 else:
                     self.detection_done.emit(result)
 
             else:
-                _SKIP_FS = frozenset(_SKIP)
+                SKIP_FS = frozenset(SKIP)
                 station_dirs = [
                     d for d in dir_path.iterdir()
-                    if d.is_dir() and d.name not in _SKIP_FS
+                    if d.is_dir() and d.name not in SKIP_FS
                 ]
                 if not station_dirs:
                     self.error_occurred.emit(
@@ -1809,7 +1819,7 @@ class DetectionWorker(QThread):
                 any_success = False
 
                 for station in station_dirs:
-                    leaf_dirs = _collect_leaf_dirs(station, _SKIP_FS)
+                    leaf_dirs = collect_leaf_dirs(station, SKIP_FS)
                     if not leaf_dirs:
                         self.log_queue.put(
                             f"\u26A0\uFE0F  Skipping '{station.name}': no media found\n"
@@ -1825,7 +1835,7 @@ class DetectionWorker(QThread):
                                              [(d, self.log_queue) for d in leaf_dirs])
                             )
                         for d, r in zip(leaf_dirs, result_list):
-                            if _is_bad(r):
+                            if is_bad(r):
                                 all_errors.append(r or "Unknown error")
                             else:
                                 any_success = True
