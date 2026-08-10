@@ -19,12 +19,15 @@ jobs:
         include:
           - os: windows-latest
             artifact: Declas-Windows
+
           - os: macos-latest
             artifact: Declas-macOS-arm64
             dmg_name: Declas-macOS-arm64
-          - os: macos-13
+
+          - os: macos-15-intel
             artifact: Declas-macOS-Intel
             dmg_name: Declas-macOS-Intel
+
           - os: ubuntu-latest
             artifact: Declas-Linux
 
@@ -36,6 +39,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          cache: 'pip'
 
       - name: Install Linux system libs
         if: matrix.os == 'ubuntu-latest'
