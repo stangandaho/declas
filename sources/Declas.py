@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import (QMainWindow, QAction, QFileDialog, QFileSystemModel
                              QApplication, QWidget, QDialog, QLineEdit, QComboBox, QCheckBox,
                              QDateEdit, QScrollArea, QPushButton, QVBoxLayout, QHBoxLayout,
                              QLabel, QFrame, QFormLayout, QGroupBox, QMenu,
-                             QTableWidget, QHeaderView)
+                             QTableWidget, QHeaderView, QSpinBox)
 from PyQt5.QtWebEngineWidgets import QWebEngineProfile, QWebEngineSettings, QWebEnginePage
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
@@ -158,6 +158,43 @@ class GeneralSettingsDialog(QDialog):
         }
 
 
+class SpeciesCard(QFrame):
+    """One editable card showing species name + count for an inference result entry."""
+    def __init__(self, json_key, species, count, entry=None, parent=None):
+        super().__init__(parent)
+        self.json_key = json_key
+        self.entry = entry or {}
+        self.setFrameShape(QFrame.StyledPanel)
+
+        outer = QHBoxLayout(self)
+        outer.setContentsMargins(8, 6, 8, 6)
+        outer.setSpacing(8)
+
+        sp_col = QVBoxLayout()
+        sp_col.setSpacing(2)
+        sp_col.addWidget(QLabel("Species"))
+        self.species_edit = QLineEdit(str(species))
+        self.species_edit.setPlaceholderText("Species name")
+        sp_col.addWidget(self.species_edit)
+
+        cnt_col = QVBoxLayout()
+        cnt_col.setSpacing(2)
+        cnt_col.addWidget(QLabel("Count"))
+        self.count_spin = QSpinBox()
+        self.count_spin.setRange(0, 9999)
+        self.count_spin.setValue(int(count))
+        cnt_col.addWidget(self.count_spin)
+
+        outer.addLayout(sp_col, 2)
+        outer.addLayout(cnt_col, 1)
+
+        self.rm_btn = QPushButton("−")
+        self.rm_btn.setFixedSize(22, 22)
+        self.rm_btn.setStyleSheet("padding: 0;")
+        self.rm_btn.setToolTip("Remove this entry")
+        outer.addWidget(self.rm_btn, 0, Qt.AlignTop)
+
+
 class Declas(QMainWindow):
     def __init__(self) -> None:
         super(Declas, self).__init__()
@@ -299,8 +336,8 @@ class Declas(QMainWindow):
 
         # Ensure image page is shown at startup and video area is never black
         self.media_stack.setCurrentIndex(0)
-        self.video_page.setStyleSheet("background-color: white;")
-        self.video_display.setStyleSheet("background-color: white;")
+        self.video_page.setStyleSheet("background-color: black;")
+        self.video_display.setStyleSheet("background-color: black;")
 
         # DISPLAY IMAGE METADATA
         self.metadata_text.setReadOnly(True)
@@ -328,6 +365,32 @@ class Declas(QMainWindow):
         self.view_detection.clicked.connect(self.show_detection)
         self.edit_inference.clicked.connect(self.edit_detection_result)
         self.apply_inference_edit.clicked.connect(self.save_inference_edit)
+
+        self.apply_inference_edit.hide()
+
+        # Replace the plain QTextEdit with a scrollable cards form
+        self.updating_inference = False
+        self.inference_cards = []
+        self.current_json_path = None
+        self.current_image_path_for_form = None
+
+        inference_inner = QWidget()
+        self.inference_form_vlay = QVBoxLayout(inference_inner)
+        self.inference_form_vlay.setAlignment(Qt.AlignTop)
+        self.inference_form_vlay.setContentsMargins(4, 4, 4, 4)
+        self.inference_form_vlay.setSpacing(6)
+
+        self.inference_scroll = QScrollArea()
+        self.inference_scroll.setWidgetResizable(True)
+        self.inference_scroll.setFrameShape(QFrame.NoFrame)
+        self.inference_scroll.setWidget(inference_inner)
+
+        tab_grid = self.inference_result.parent().layout()
+        tab_grid.removeWidget(self.inference_result)
+        self.inference_result.hide()
+        tab_grid.addWidget(self.inference_scroll, 0, 0, 1, 4)
+
+        self.edit_inference.setText("Add species")
 
         # STATUS BAR
         self.statusbar = self.statusBar
@@ -394,8 +457,7 @@ class Declas(QMainWindow):
         tags_scroll.setFrameShape(tags_scroll.NoFrame)
         tags_scroll.setWidget(self.tags_container)
 
-        add_entry_btn = QPushButton(" Add Entry ")
-        add_entry_btn.setFixedWidth(110)
+        add_entry_btn = QPushButton(QIcon("icons/add.png"), " Add entry ")
         add_entry_btn.clicked.connect(lambda: self.add_tag_card())
 
         btn_row = QHBoxLayout()
@@ -670,6 +732,7 @@ class Declas(QMainWindow):
         current_set = load_json()
 
         mp = ModelParameter()
+        mp.setStyleSheet(self.styleSheet())
         mp.yolo_conf.setValue(current_set["conf"])
 
         imgsz = [str(i) for i in current_set["imgsz"]]
@@ -692,7 +755,7 @@ class Declas(QMainWindow):
             mp.model_type.setCurrentText(saved_mt)  # built-in: match by text
         
         # Restore distance settings
-        mp._fov_data = current_set.get("fov_table", {})
+        mp.fov_data = current_set.get("fov_table", {})
         mp.estimate_distance.setChecked(current_set.get("estimate_distance", False))
         saved_depth = current_set.get("depth_model", "")
         if saved_depth:
@@ -732,18 +795,18 @@ class Declas(QMainWindow):
                     dfile = load_json(fp = _)
                     for d in dfile:
                         
-                        if dfile[d]['Count'] > 0:
+                        if dfile[d]['count'] > 0:
                             has_target_path = dfile[d]['Image path']
                             has_target_des_path = Path(Path(has_target_path).parent, 
                                                         "has_target", Path(has_target_path).name)
                             shutil.copy(has_target_path, str(has_target_des_path))
                         else:
                             no_target_path = dfile[d]['Image path']
-                            no_target_des_path = Path(Path(has_target_path).parent, 
-                                                        "no_target", Path(has_target_path).name)
+                            no_target_des_path = Path(Path(no_target_path).parent,
+                                                        "no_target", Path(no_target_path).name)
                             shutil.copy(no_target_path, str(no_target_des_path))
                 except Exception as e:
-                    f"ERROR: {e}"
+                    self.statusbar.showMessage(f"Error: {e}", 3000)
 
         self.statusbar.showMessage("Split applied \u2705", 1000)
 
@@ -874,33 +937,85 @@ class Declas(QMainWindow):
             except:
                 self.metadata_text.setText(str(get_metadata(path)))
 
+    def clear_inference_form(self):
+        for i in reversed(range(self.inference_form_vlay.count())):
+            item = self.inference_form_vlay.itemAt(i)
+            w = item.widget() if item else None
+            if w:
+                w.deleteLater()
+        self.inference_cards.clear()
+
     def update_inference_result(self, file_path):
-        """Show detection/classification results specific to file_path, or clear if none."""
         fp = Path(file_path)
         candidates = [
             fp.parent / "detections.json",
             fp.parent.parent / "detections.json",
         ]
-        # Annotated video frames live inside frames/detections/
-        # to reach <video_dir>/detections.json.
         if fp.parent.name == "detections":
             candidates.append(fp.parent.parent.parent / "detections.json")
         json_path = next((str(p) for p in candidates if p.exists()), None)
 
+        self.clear_inference_form()
+        self.current_json_path = None
+        self.current_image_path_for_form = None
+
         if json_path:
             try:
-                txt = split_json_from_path(json_path=json_path, image_path=file_path)
-                if txt is not None:
-                    self.inference_result.setText(str(txt))
-                    self.edit_inference.setEnabled(True)
-                    self.view_detection.setEnabled(True)
-                    return
+                with open(json_path, "r", encoding="utf-8") as f:
+                    all_detections = json.load(f)
+
+                stem = fp.stem
+                if "media_path" in all_detections:
+                    # Legacy flat-dict format
+                    if Path(all_detections.get("media_path", "")) == fp:
+                        self.updating_inference = True
+                        card = SpeciesCard(
+                            json_key="",
+                            species=all_detections.get("species", ""),
+                            count=int(all_detections.get("count", 0)),
+                            entry=all_detections,
+                        )
+                        self.inference_form_vlay.addWidget(card)
+                        self.inference_cards.append(card)
+                        self.updating_inference = False
+                        self.connect_inference_card(card)
+                        self.current_json_path = json_path
+                        self.current_image_path_for_form = str(file_path)
+                        self.edit_inference.setEnabled(True)
+                        self.view_detection.setEnabled(True)
+                        return
+                else:
+                    entries = {
+                        k: v for k, v in all_detections.items()
+                        if isinstance(v, dict) and (
+                            k == stem
+                            or k.startswith(stem + "_")
+                            or k.startswith(stem + "-")
+                        )
+                    }
+                    if entries:
+                        self.updating_inference = True
+                        self.current_json_path = json_path
+                        self.current_image_path_for_form = str(file_path)
+                        for key, entry in entries.items():
+                            species = entry.get("species", "")
+                            count = int(entry.get("count", 0))
+                            card = SpeciesCard(json_key=key, species=str(species),
+                                               count=count, entry=entry)
+                            self.inference_form_vlay.addWidget(card)
+                            self.inference_cards.append(card)
+                        self.updating_inference = False
+                        for card in self.inference_cards:
+                            self.connect_inference_card(card)
+                        self.edit_inference.setEnabled(True)
+                        self.view_detection.setEnabled(True)
+                        return
             except Exception:
                 pass
 
-        # No result found for this specific media
-        self.inference_result.clear()
+        self.updating_inference = False
         self.edit_inference.setEnabled(False)
+        self.view_detection.setEnabled(False)
 
     def is_video(self, path):
         return Path(path).suffix.lower() in ['.mp4', '.avi', '.mov', '.mkv']
@@ -1091,9 +1206,11 @@ class Declas(QMainWindow):
                 # Built-in YoloV5 / YoloV8/9 path
             self.statusbar.showMessage("Done ✅", MESSAGE_DELAY)
             if to_save:
-                self.view_detection.setEnabled(True)
-                self.edit_inference.setEnabled(True)
-                self.inference_result.setText(to_save)
+                if not is_vid:
+                    self.update_inference_result(media_path)
+                else:
+                    self.view_detection.setEnabled(True)
+                    self.edit_inference.setEnabled(True)
 
         except Exception as e:
             general_error(e)
@@ -1110,52 +1227,67 @@ class Declas(QMainWindow):
         self.display_image(str(image_path), message="Run detection or classification before to click 'View'")
 
 
+    def connect_inference_card(self, card):
+        card.species_edit.editingFinished.connect(self.auto_save_inference)
+        card.count_spin.valueChanged.connect(self.auto_save_inference)
+        card.rm_btn.clicked.connect(lambda: self.remove_inference_card(card))
+
+    def remove_inference_card(self, card):
+        self.inference_form_vlay.removeWidget(card)
+        self.inference_cards = [c for c in self.inference_cards if c is not card]
+        card.deleteLater()
+        self.auto_save_inference()
+
+    def auto_save_inference(self, *args):
+        if self.updating_inference:
+            return
+        self.save_inference_edit(silent=True)
+
     def edit_detection_result(self):
-        self.inference_result.setReadOnly(False)
-        self.apply_inference_edit.setEnabled(True)
+        card = SpeciesCard(json_key="", species="", count=0)
+        self.inference_form_vlay.addWidget(card)
+        self.inference_cards.append(card)
+        self.connect_inference_card(card)
 
 
-    def save_inference_edit(self):
-        new_value = self.inference_result.toPlainText()
-        try:
-            image_path = IMG_PATH[-1]
-        except:
-            missed_path()
+    def save_inference_edit(self, silent=False):
+        json_path = self.current_json_path
+        image_path = self.current_image_path_for_form
+        if not json_path or not image_path or not self.inference_cards:
             return
 
-        try:#if is_valid_dict(new_value):
-            fpath = [Path(Path(image_path).parent, "detections.json"),
-                            Path(Path(image_path).parent.parent, "detections.json")]
-                
-            fpath_exist = [Path(Path(image_path).parent, "detections.json").exists(),
-                        Path(Path(image_path).parent.parent, "detections.json").exists()]
-            
-            if any(fpath_exist):
-                json_path = str(Path(fpath[fpath_exist.index(True)].parent, "detections.json"))
+        try:
+            with open(json_path, "r", encoding="utf-8") as f:
+                all_detections = json.load(f)
 
-                #json_path = str(Path(Path(image_path).parent, "detections.json"))
-                with open(json_path, "r") as det:
-                    detections = json.load(fp=det)
-                    right_key = [ky for _, ky in enumerate(list(detections.keys())) if ky.startswith(Path(image_path).stem)]
-                    
-                    if right_key == []: # single detection
-                        detections = ast.literal_eval(new_value)
-                    elif len(right_key) > 1: #classification
-                        txt_split = new_value.split("\n\n###\n\n")
-                
-                        for ky, txt in zip(right_key, txt_split):
-                            detections[ky] = ast.literal_eval(txt)
-                    else:
-                        keys = right_key[0]
-                        detections[keys] = ast.literal_eval(new_value)
+            stem = Path(image_path).stem
 
-                with open(json_path, "w") as out_file:
-                    json.dump(obj=detections, fp=out_file, indent=4)
+            # Remove old keys for the cards we are about to rewrite
+            for card in self.inference_cards:
+                if card.json_key and card.json_key in all_detections:
+                    all_detections.pop(card.json_key)
 
-            self.statusbar.showMessage("Change applied \u2705", MESSAGE_DELAY)
+            for card in self.inference_cards:
+                new_species = card.species_edit.text().strip()
+                new_count = card.count_spin.value()
+                if not new_species:
+                    continue
+                entry = dict(card.entry)
+                entry["species"] = new_species
+                entry["count"] = new_count
+                new_key = f"{stem}_{new_species}"
+                all_detections[new_key] = entry
+                card.json_key = new_key
 
-        except:#else:
-            invalid_edit()
+            with open(json_path, "w", encoding="utf-8") as f:
+                json.dump(all_detections, f, indent=4)
+
+            if not silent:
+                self.statusbar.showMessage("Change applied \u2705", MESSAGE_DELAY)
+
+        except Exception:
+            if not silent:
+                invalid_edit()
 
     def multiple_detection(self):
         try:
