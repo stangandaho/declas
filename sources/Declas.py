@@ -74,7 +74,15 @@ def play_notification_sound(sound_file=""):
     try:
         import winsound
         winsound.PlaySound(path, winsound.SND_FILENAME | winsound.SND_ASYNC)
-    except (ImportError, Exception):
+    except ImportError:
+        import subprocess
+        try:
+            subprocess.Popen(["afplay", path],
+                             stdout=subprocess.DEVNULL,
+                             stderr=subprocess.DEVNULL)
+        except Exception:
+            pass
+    except Exception:
         pass
 
 
@@ -706,16 +714,30 @@ class Declas(QMainWindow):
     def quit_declas(self):
             sys.exit()
 
+    def _apply_macos_appearance(self, dark) -> None:
+        try:
+            from AppKit import NSApp, NSAppearance
+            if dark is None:
+                NSApp.setAppearance_(None)
+            else:
+                name = "NSAppearanceNameDarkAqua" if dark else "NSAppearanceNameAqua"
+                NSApp.setAppearance_(NSAppearance.appearanceNamed_(name))
+        except Exception:
+            pass
+
     def set_light_mode(self):
         styles_dir = str(DECLAS_ROOT / "sources" / "styles").replace("\\", "/")
         with open(f"{DECLAS_ROOT}/sources/styles/light.qss", "r") as file:
             self.setStyleSheet(file.read().replace("{STYLES_DIR}", styles_dir))
+        self._apply_macos_appearance(False)
 
     def set_dark_mode(self):
         with open(f"{DECLAS_ROOT}/sources/styles/dark.qss", "r") as file:
             self.setStyleSheet(file.read())
+        self._apply_macos_appearance(True)
 
     def set_system_mode(self):
+        # Windows: check registry
         try:
             import winreg
             key = winreg.OpenKey(winreg.HKEY_CURRENT_USER,
@@ -723,6 +745,21 @@ class Declas(QMainWindow):
             value, _ = winreg.QueryValueEx(key, "AppsUseLightTheme")
             if value == 0:
                 self.set_dark_mode()
+            else:
+                self.set_light_mode()
+            return
+        except Exception:
+            pass
+        # macOS: check system preference
+        try:
+            import subprocess
+            result = subprocess.run(
+                ["defaults", "read", "-g", "AppleInterfaceStyle"],
+                capture_output=True, text=True
+            )
+            if result.stdout.strip().lower() == "dark":
+                self.set_dark_mode()
+                self._apply_macos_appearance(None)
                 return
         except Exception:
             pass

@@ -1,6 +1,7 @@
 """Fetch the online model registry and install / remove extensions."""
 
 import json
+import ssl
 import urllib.request
 import urllib.error
 from pathlib import Path
@@ -15,9 +16,17 @@ TIMEOUT_SEC = 10
 CHUNK_SIZE  = 256 * 1024   # 256 KB per read
 
 
+def ssl_context() -> ssl.SSLContext:
+    try:
+        import certifi
+        return ssl.create_default_context(cafile=certifi.where())
+    except Exception:
+        return ssl.create_default_context()
+
+
 def download_with_progress(url: str, dest: Path, bytes_cb=None) -> None:
     """Stream *url* to *dest*, calling bytes_cb(downloaded, total) after each chunk."""
-    with urllib.request.urlopen(url, timeout=600) as resp:
+    with urllib.request.urlopen(url, timeout=600, context=ssl_context()) as resp:
         total      = int(resp.headers.get("Content-Length") or 0)
         downloaded = 0
         with open(dest, "wb") as fout:
@@ -55,7 +64,7 @@ def fetch_registry() -> dict:
     error = None
 
     try:
-        with urllib.request.urlopen(REGISTRY_URL, timeout=TIMEOUT_SEC) as resp:
+        with urllib.request.urlopen(REGISTRY_URL, timeout=TIMEOUT_SEC, context=ssl_context()) as resp:
             online = json.loads(resp.read().decode("utf-8"))
             online_models = online.get("models", [])
     except urllib.error.URLError as exc:
