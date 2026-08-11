@@ -49,11 +49,20 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install pyinstaller
-          # On Linux, install CPU-only torch first so the huge CUDA build is not pulled in
           if [ "${{ runner.os }}" = "Linux" ]; then
+            # CPU-only torch to avoid pulling in the massive CUDA build
             pip install torch==2.4.1 torchvision==0.19.1 torchaudio==2.4.1 --index-url https://download.pytorch.org/whl/cpu
+            pip install -r requirements.txt
+          elif [ "${{ matrix.os }}" = "macos-15-intel" ]; then
+            # PyTorch dropped Intel macOS wheels after 2.2.x; install the last
+            # compatible versions first, then install the rest of requirements.txt
+            # with torch/torchvision/torchaudio filtered out to avoid downgrade conflicts.
+            pip install torch==2.2.2 torchvision==0.17.2 torchaudio==2.2.2
+            grep -vE "^torch(vision|audio)?==" requirements.txt > /tmp/req_no_torch.txt
+            pip install -r /tmp/req_no_torch.txt
+          else
+            pip install -r requirements.txt
           fi
-          pip install -r requirements.txt
         shell: bash
 
       - name: Build with PyInstaller

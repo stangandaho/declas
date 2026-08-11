@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import (QDialog, QListWidgetItem, QVBoxLayout, QHBoxLayout,
                               QTableWidget, QTableWidgetItem, QHeaderView,
                               QPushButton, QDialogButtonBox, QFileDialog, QMessageBox)
 from PyQt5.uic import loadUi
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QIcon
 from pathlib import Path
 import sys, torch, csv
@@ -197,7 +197,11 @@ class ModelParameter(QDialog):
       self.populate_depth_models()
       self.estimate_distance.stateChanged.connect(self.toggle_distance_controls)
       self.toggle_distance_controls(Qt.Unchecked)
+      self.fov_btn.setIcon(QIcon("icons/table2.png"))
       self.fov_btn.clicked.connect(self.open_fov_dialog)
+      self.fov_btn.setFixedWidth(200)
+      self.fov_btn.setMinimumWidth(0)
+      self.fov_btn.setMaximumWidth(16777215)
 
 
    def yolo_imgsz_parse(self):

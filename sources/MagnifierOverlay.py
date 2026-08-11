@@ -24,7 +24,7 @@ class MagnifierOverlay(QWidget):
         self.patch = pixmap
         self.update()
 
-    def paintEvent(self, _event):
+    def paintEvent(self, event):
         if self.patch is None:
             return
         painter = QPainter(self)

@@ -21,9 +21,16 @@ QTabBar::tab {
 QPushButton {
     background-color: #555555;
     color: #ffffff;
+    border: 1px solid #777777;
+    border-radius: 3px;
+    padding: 3px 10px;
 }
 QPushButton:hover {
     background-color: #777777;
+    border-color: #aaaaaa;
+}
+QPushButton:pressed {
+    background-color: #444444;
 }
 QToolButton {
     background-color: transparent;

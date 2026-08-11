@@ -267,8 +267,8 @@ def exif_table(image_path):
     lon = lat = alti = None
     if gps_info:
         try:
-            lat = _r(gps_info[2][0]) + _r(gps_info[2][1]) / 60.0 + _r(gps_info[2][2]) / 3600.0
-            lon = _r(gps_info[4][0]) + _r(gps_info[4][1]) / 60.0 + _r(gps_info[4][2]) / 3600.0
+            lat = r(gps_info[2][0]) + r(gps_info[2][1]) / 60.0 + r(gps_info[2][2]) / 3600.0
+            lon = r(gps_info[4][0]) + r(gps_info[4][1]) / 60.0 + r(gps_info[4][2]) / 3600.0
 
             # Apply hemisphere signs (LatitudeRef N/S → lat, LongitudeRef E/W → lon)
             lat_ref = decode_tag(gps_info.get(1, b'N'))
@@ -280,7 +280,7 @@ def exif_table(image_path):
 
             lat = round(lat, 7)
             lon = round(lon, 7)
-            alti = round(_r(gps_info[6]), 1) if 6 in gps_info else None
+            alti = round(r(gps_info[6]), 1) if 6 in gps_info else None
         except (KeyError, TypeError, ZeroDivisionError, IndexError):
             lon = lat = alti = None
 
@@ -362,7 +362,7 @@ def get_video_gps(video_path):
 
     Returns (lat, lon, alt) — floats, or (None, None, None) on failure.
     """
-    import re as _re
+    import re
     try:
         video_path = Path(video_path)
         if not video_path.exists():
@@ -376,7 +376,7 @@ def get_video_gps(video_path):
             # Atom payload: skip 2-byte data-length + 2-byte language code
             chunk = data[idx + len(marker) + 4: idx + len(marker) + 4 + 64]
             text  = chunk.split(b'\x00')[0].decode('ascii', errors='ignore')
-            m = _re.match(r'([+-]\d+(?:\.\d+)?)([+-]\d+(?:\.\d+)?)([+-]\d+(?:\.\d+)?)?', text)
+            m = re.match(r'([+-]\d+(?:\.\d+)?)([+-]\d+(?:\.\d+)?)([+-]\d+(?:\.\d+)?)?', text)
             if m:
                 lat = float(m.group(1))
                 lon = float(m.group(2))
