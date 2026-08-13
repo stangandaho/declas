@@ -64,11 +64,13 @@ async function loadRelease() {
 
 document.getElementById('download-btn').addEventListener('click', () => {
   const url = downloadLinks[selectedOS];
-  if (url) {
-    window.location.href = url;
-  } else {
-    window.open(`https://github.com/${REPO}/releases/latest`, '_blank');
-  }
+  const a = document.createElement('a');
+  a.href = url || `https://github.com/${REPO}/releases/latest`;
+  if (url) a.download = '';
+  else a.target = '_blank';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 });
 
 /* Video Docs button */
