@@ -32,6 +32,15 @@ QPushButton:hover {
 QPushButton:pressed {
     background-color: #444444;
 }
+QHeaderView::section {
+    background-color: #3b3b3b;
+    color: #ffffff;
+    border: 1px solid #555555;
+    padding: 4px 6px;
+}
+QHeaderView::section:hover {
+    background-color: #505050;
+}
 QToolButton {
     background-color: transparent;
     border: 1px solid transparent;

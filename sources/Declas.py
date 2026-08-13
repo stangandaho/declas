@@ -3,7 +3,7 @@ import shutil
 from turtle import st
 from PyQt5.uic import loadUi
 from PyQt5.QtCore import Qt, QDir, QThread, pyqtSignal, QUrl, QTimer, QSettings
-from PyQt5.QtGui import QIcon, QPixmap, QFontDatabase
+from PyQt5.QtGui import QIcon, QPixmap, QFontDatabase, QPainter, QColor
 from PyQt5.QtWidgets import (QMainWindow, QAction, QFileDialog, QFileSystemModel,
                              QApplication, QWidget, QDialog, QLineEdit, QComboBox, QCheckBox,
                              QDateEdit, QScrollArea, QPushButton, QVBoxLayout, QHBoxLayout,
@@ -55,6 +55,30 @@ SINGLE_DETECTION = {}
 DECLAS_ROOT = Path(__file__).resolve().parent.parent
 
 MESSAGE_DELAY = 8000
+
+
+def themed_icon(name: str, dark: bool) -> QIcon:
+    """Return a QIcon for *name*, white-tinted when *dark* is True.
+
+    Looks for icons/svg/<name>.svg first; falls back to icons/<name>.png.
+    White tinting uses SourceIn composition so the alpha channel is preserved
+    and only the colour of each pixel changes.
+    """
+    png = DECLAS_ROOT / "icons" / f"{name}.png"
+    path = str(png)
+    if not dark:
+        return QIcon(path)
+    px = QPixmap(path)
+    if px.isNull():
+        return QIcon()
+    out = QPixmap(px.size())
+    out.fill(Qt.transparent)
+    p = QPainter(out)
+    p.drawPixmap(0, 0, px)
+    p.setCompositionMode(QPainter.CompositionMode_SourceIn)
+    p.fillRect(out.rect(), QColor(255, 255, 255))
+    p.end()
+    return QIcon(out)
 
 try:
     from ctypes import windll  # Only exists on Windows.
@@ -254,42 +278,45 @@ class Declas(QMainWindow):
         if hasattr(self, 'action_system'):
             self.action_system.triggered.connect(self.set_system_mode)
         # TOOLBAR
-        select_dir = QAction(QIcon(f"{DECLAS_ROOT}/icons/folder.png"), "Select directory", self)
-        select_dir.triggered.connect(self.select_folder)
+        self._dark_mode = False  # updated by set_light/dark_mode; used by refresh_icons
+        self.add_entry_btn = None  # created later during tags-tab setup
 
-        select_image = QAction(QIcon(f"{DECLAS_ROOT}/icons/image.png"), "Select media", self)
-        select_image.setToolTip("Select a single image or video")
-        select_image.triggered.connect(self.select_an_image)
+        self.action_select_dir = QAction(themed_icon("folder", False), "Select directory", self)
+        self.action_select_dir.triggered.connect(self.select_folder)
 
-        self.zoom_action = QAction(QIcon(f"{DECLAS_ROOT}/icons/zoom.png"), "Zoom lens", self)
+        self.action_select_image = QAction(themed_icon("image", False), "Select media", self)
+        self.action_select_image.setToolTip("Select a single image or video")
+        self.action_select_image.triggered.connect(self.select_an_image)
+
+        self.zoom_action = QAction(themed_icon("zoom", False), "Zoom lens", self)
         self.zoom_action.setToolTip("Hover over the image to magnify")
         self.zoom_action.setCheckable(True)
 
-        globe = QAction(QIcon(f"{DECLAS_ROOT}/icons/globe.png"), "Show on map", self)
-        globe.triggered.connect(self.show_on_map)
+        self.action_globe = QAction(themed_icon("globe", False), "Show on map", self)
+        self.action_globe.triggered.connect(self.show_on_map)
 
-        run_inference = QAction(QIcon(f"{DECLAS_ROOT}/icons/run.png"), "Run on current media", self)
-        run_inference.triggered.connect(self.single_detection)
+        self.action_run = QAction(themed_icon("run", False), "Run on current media", self)
+        self.action_run.triggered.connect(self.single_detection)
 
-        batch_inference = QAction(QIcon(f"{DECLAS_ROOT}/icons/batch.png"), "Run folder(s)", self)
-        batch_inference.triggered.connect(self.multiple_detection)
+        self.action_batch = QAction(themed_icon("batch", False), "Run folder(s)", self)
+        self.action_batch.triggered.connect(self.multiple_detection)
 
-        buil_tables = QAction(QIcon(f"{DECLAS_ROOT}/icons/table.png"), "Build table from detection/classification", self)
-        buil_tables.triggered.connect(self.build_table)
+        self.action_build_tables = QAction(themed_icon("table", False), "Build table from detection/classification", self)
+        self.action_build_tables.triggered.connect(self.build_table)
 
-        split_detection = QAction(QIcon(f"{DECLAS_ROOT}/icons/split.png"), "Target or No target split", self)
-        split_detection.triggered.connect(self.filter_detection)
+        self.action_split = QAction(themed_icon("split", False), "Target or No target split", self)
+        self.action_split.triggered.connect(self.filter_detection)
 
-        self.tool_bar1.addAction(select_dir)
-        self.tool_bar1.addAction(select_image)
+        self.tool_bar1.addAction(self.action_select_dir)
+        self.tool_bar1.addAction(self.action_select_image)
         self.tool_bar1.addSeparator()
-        self.tool_bar1.addAction(globe)
-        self.tool_bar1.addAction(run_inference)
-        self.tool_bar1.addAction(batch_inference)
+        self.tool_bar1.addAction(self.action_globe)
+        self.tool_bar1.addAction(self.action_run)
+        self.tool_bar1.addAction(self.action_batch)
         self.tool_bar1.addSeparator()
-        self.tool_bar1.addAction(buil_tables)
+        self.tool_bar1.addAction(self.action_build_tables)
         self.tool_bar1.addSeparator()
-        self.tool_bar1.addAction(split_detection)
+        self.tool_bar1.addAction(self.action_split)
         self.tool_bar1.addAction(self.zoom_action)
 
 
@@ -417,28 +444,28 @@ class Declas(QMainWindow):
         self.batch_detection_log.setReadOnly(True)
 
         # MODEL EXTENSIONS
-        ext_action = QAction(QIcon(f"{DECLAS_ROOT}/icons/extensions.png"), "Extensions", self)
-        ext_action.setToolTip("Browse and install model extensions from the online registry")
-        ext_action.triggered.connect(self.open_extensions)
-        self.menuModels.addAction(ext_action)
+        self.action_ext = QAction(themed_icon("extensions", False), "Extensions", self)
+        self.action_ext.setToolTip("Browse and install model extensions from the online registry")
+        self.action_ext.triggered.connect(self.open_extensions)
+        self.menuModels.addAction(self.action_ext)
 
         # PUBLISH GUIDELINES
-        pub_action = QAction(QIcon(f"{DECLAS_ROOT}/icons/publish.png"), "Publish", self)
-        pub_action.setToolTip("Learn how to publish your own model extension")
-        pub_action.triggered.connect(self.open_publish_guidelines)
-        self.menuModels.addAction(pub_action)
+        self.action_pub = QAction(themed_icon("publish", False), "Publish", self)
+        self.action_pub.setToolTip("Learn how to publish your own model extension")
+        self.action_pub.triggered.connect(self.open_publish_guidelines)
+        self.menuModels.addAction(self.action_pub)
 
         # CUSTOM TAGS — settings menu entry
-        tags_action = QAction(QIcon(f"{DECLAS_ROOT}/icons/tags.png"), "Tags", self)
-        tags_action.setToolTip("Define custom tags")
-        tags_action.triggered.connect(self.open_tags_dialog)
-        self.menuSetting.addAction(tags_action)
+        self.action_tags = QAction(themed_icon("tags", False), "Tags", self)
+        self.action_tags.setToolTip("Define custom tags")
+        self.action_tags.triggered.connect(self.open_tags_dialog)
+        self.menuSetting.addAction(self.action_tags)
 
         # GENERAL SETTINGS
         self.app_settings = QSettings("Declas", "Declas")
-        general_action = QAction(QIcon(f"{DECLAS_ROOT}/icons/general_settings.png"), "General", self)
-        general_action.triggered.connect(self.open_general_settings)
-        self.menuSetting.addAction(general_action)
+        self.action_general = QAction(themed_icon("general_settings", False), "General", self)
+        self.action_general.triggered.connect(self.open_general_settings)
+        self.menuSetting.addAction(self.action_general)
 
         # Apply saved theme at startup
         saved_theme = self.app_settings.value("theme", "System", type=str)
@@ -465,11 +492,11 @@ class Declas(QMainWindow):
         tags_scroll.setFrameShape(tags_scroll.NoFrame)
         tags_scroll.setWidget(self.tags_container)
 
-        add_entry_btn = QPushButton(QIcon("icons/add.png"), " Add entry ")
-        add_entry_btn.clicked.connect(lambda: self.add_tag_card())
+        self.add_entry_btn = QPushButton(themed_icon("add", self._dark_mode), " Add entry ")
+        self.add_entry_btn.clicked.connect(lambda: self.add_tag_card())
 
         btn_row = QHBoxLayout()
-        btn_row.addWidget(add_entry_btn)
+        btn_row.addWidget(self.add_entry_btn)
         btn_row.addStretch()
 
         tab_layout = QVBoxLayout(self.tags_tab)
@@ -714,6 +741,38 @@ class Declas(QMainWindow):
     def quit_declas(self):
             sys.exit()
 
+    def refresh_icons(self, dark: bool) -> None:
+        self._dark_mode = dark
+        # Toolbar actions (Python-created)
+        self.action_select_dir.setIcon(themed_icon("folder", dark))
+        self.action_select_image.setIcon(themed_icon("image", dark))
+        self.zoom_action.setIcon(themed_icon("zoom", dark))
+        self.action_globe.setIcon(themed_icon("globe", dark))
+        self.action_run.setIcon(themed_icon("run", dark))
+        self.action_batch.setIcon(themed_icon("batch", dark))
+        self.action_build_tables.setIcon(themed_icon("table", dark))
+        self.action_split.setIcon(themed_icon("split", dark))
+        self.action_ext.setIcon(themed_icon("extensions", dark))
+        self.action_pub.setIcon(themed_icon("publish", dark))
+        self.action_tags.setIcon(themed_icon("tags", dark))
+        self.action_general.setIcon(themed_icon("general_settings", dark))
+        # Menu/toolbar actions loaded from .ui file
+        self.action_models_parameter.setIcon(themed_icon("inference", dark))
+        self.action_import_dc_file.setIcon(themed_icon("upload", dark))
+        self.action_quit.setIcon(themed_icon("quit", dark))
+        self.menuAppearance.setIcon(themed_icon("appearance", dark))
+        # Buttons loaded from .ui file
+        self.previous_media.setIcon(themed_icon("previous", dark))
+        self.next_media.setIcon(themed_icon("next", dark))
+        self.view_detection.setIcon(themed_icon("view", dark))
+        self.edit_inference.setIcon(themed_icon("edit", dark))
+        self.apply_inference_edit.setIcon(themed_icon("apply", dark))
+        # Buttons created in Python (may not exist yet during startup theme apply)
+        if self.add_entry_btn:
+            self.add_entry_btn.setIcon(themed_icon("add", dark))
+        if self.media_player.state() != QMediaPlayer.PlayingState:
+            self.play_media.setIcon(themed_icon("play", dark))
+
     def _apply_macos_appearance(self, dark) -> None:
         try:
             from AppKit import NSApp, NSAppearance
@@ -730,11 +789,13 @@ class Declas(QMainWindow):
         with open(f"{DECLAS_ROOT}/sources/styles/light.qss", "r") as file:
             self.setStyleSheet(file.read().replace("{STYLES_DIR}", styles_dir))
         self._apply_macos_appearance(False)
+        self.refresh_icons(dark=False)
 
     def set_dark_mode(self):
         with open(f"{DECLAS_ROOT}/sources/styles/dark.qss", "r") as file:
             self.setStyleSheet(file.read())
         self._apply_macos_appearance(True)
+        self.refresh_icons(dark=True)
 
     def set_system_mode(self):
         # Windows: check registry
@@ -1126,7 +1187,7 @@ class Declas(QMainWindow):
                 self.style().standardIcon(self.style().SP_MediaPause)
             )
         else:
-            self.play_media.setIcon(QIcon(f"{DECLAS_ROOT}/icons/play.png"))
+            self.play_media.setIcon(themed_icon("play", self._dark_mode))
 
     @staticmethod
     def format_time(ms):

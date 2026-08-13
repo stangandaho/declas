@@ -492,7 +492,7 @@
   <action name="action_language">
    <property name="icon">
     <iconset>
-     <normaloff>C:/Users/ganda/.designer/icons/language.png</normaloff>C:/Users/ganda/.designer/icons/language.png</iconset>
+     <normaloff>../icons/language.png</normaloff>../icons/language.png</iconset>
    </property>
    <property name="text">
     <string>Language</string>
@@ -519,7 +519,7 @@
   <action name="action_build_table">
    <property name="icon">
     <iconset>
-     <normaloff>C:/Users/ganda/.designer/icons/table.png</normaloff>C:/Users/ganda/.designer/icons/table.png</iconset>
+     <normaloff>../icons/table.png</normaloff>../icons/table.png</iconset>
    </property>
    <property name="text">
     <string>Build table</string>

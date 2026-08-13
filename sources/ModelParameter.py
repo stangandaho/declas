@@ -38,11 +38,10 @@ class FovDialog(QDialog):
 
         self.table = QTableWidget(0, 2)
         self.table.setHorizontalHeaderLabels(["Station", "FOV (degrees)"])
-        
         header = self.table.horizontalHeader()
-
-        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
-        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(QHeaderView.Interactive)
+        header.setStretchLastSection(True)
+        self.table.setColumnWidth(0, 380)
         self.table.setAlternatingRowColors(True)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         layout.addWidget(self.table)
