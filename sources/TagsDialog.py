@@ -71,9 +71,11 @@ class TagsDialog(QDialog):
         self.table.setHorizontalHeaderLabels(
             ["Tag Title", "Data Type", "Predefined Values (comma-separated)"]
         )
-        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
+        header = self.table.horizontalHeader()
+        header.setSectionResizeMode(QHeaderView.Interactive)
+        header.setStretchLastSection(True)
+        self.table.setColumnWidth(0, 130)
+        self.table.setColumnWidth(1, 110)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         layout.addWidget(self.table)
 
