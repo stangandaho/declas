@@ -1,7 +1,9 @@
-from PyQt5.QtWidgets import (QDialog, QListWidgetItem, QVBoxLayout, QHBoxLayout,
+from PyQt5.QtWidgets import (QDialog, QListWidgetItem, QListWidget,
+                              QVBoxLayout, QHBoxLayout, QFormLayout,
                               QTableWidget, QTableWidgetItem, QHeaderView,
-                              QPushButton, QDialogButtonBox, QFileDialog, QMessageBox)
-from PyQt5.uic import loadUi
+                              QPushButton, QDialogButtonBox, QFileDialog, QMessageBox,
+                              QLabel, QLineEdit, QDoubleSpinBox, QSpinBox, QCheckBox,
+                              QComboBox, QGroupBox, QFrame, QWidget, QSizePolicy)
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QIcon
 from pathlib import Path
@@ -59,10 +61,9 @@ class FovDialog(QDialog):
         btn_bar.addStretch()
         upload_btn = QPushButton(QIcon("icons/publish.png"), "Upload CSV")
         btn_bar.addWidget(upload_btn)
-        upload_btn.clicked.connect(self.upload_csv) 
+        upload_btn.clicked.connect(self.upload_csv)
 
         note_bar = QHBoxLayout()
-        from PyQt5.QtWidgets import QLabel
         note = QLabel("CSV format with one row per station.")
         note.setStyleSheet("color: gray; font-size: 14px; text-align:right;")
         note_bar.addWidget(note)
@@ -92,26 +93,21 @@ class FovDialog(QDialog):
         if not path:
             return
         try:
-            # utf-8-sig strips the Windows BOM (﻿) automatically
             with open(path, newline="", encoding="utf-8-sig") as f:
                 sample = f.read(4096)
-            # Auto-detect delimiter (comma or semicolon)
             try:
                 dialect = csv.Sniffer().sniff(sample, delimiters=",;\t")
             except csv.Error:
-                dialect = csv.excel  # default comma
+                dialect = csv.excel
             imported = 0
             with open(path, newline="", encoding="utf-8-sig") as f:
                 reader = csv.DictReader(f, dialect=dialect)
-                # Normalize header names to lowercase for matching
                 for raw_row in reader:
                     row = {k.strip().lower(): v for k, v in raw_row.items() if k}
-                    # Named column matching (case-insensitive)
                     station = (row.get("station") or row.get("site") or
                                row.get("camera") or "").strip()
                     fov = (row.get("fov") or row.get("fov_degrees") or
                            row.get("field_of_view") or row.get("hfov") or "").strip()
-                    # Positional fallback: col 0 = station, col 1 = fov
                     if not station:
                         vals = list(raw_row.values())
                         if vals:
@@ -148,8 +144,8 @@ class FovDialog(QDialog):
 
 class ModelParameter(QDialog):
    def __init__(self) -> None:
-      super(ModelParameter, self).__init__()
-      loadUi(f"{DECLAS_ROOT}/ui/ModelParameters.ui", self)
+      super().__init__()
+      self._build_ui()
       global INSTALLED_EXTENSIONS
       INSTALLED_EXTENSIONS = scan_extensions()
       icon_file = str(Path( Path(__file__).parent.parent, 'icons', 'logo.png'))
@@ -202,6 +198,133 @@ class ModelParameter(QDialog):
       self.fov_btn.setMinimumWidth(0)
       self.fov_btn.setMaximumWidth(16777215)
 
+   def _build_ui(self) -> None:
+      self.setMinimumSize(460, 440)
+
+      outer = QVBoxLayout(self)
+      outer.setContentsMargins(14, 12, 14, 10)
+      outer.setSpacing(6)
+
+      form = QFormLayout()
+      form.setLabelAlignment(Qt.AlignLeft)
+      form.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
+      form.setHorizontalSpacing(14)
+      form.setVerticalSpacing(8)
+      outer.addLayout(form)
+
+      # Image size
+      self.label_2 = QLabel("Image size:")
+      self.yolo_imgsz = QLineEdit("1920 1440")
+      self.yolo_imgsz.setPlaceholderText("1200 1080")
+      self.yolo_imgsz.setClearButtonEnabled(True)
+      form.addRow(self.label_2, self.yolo_imgsz)
+
+      # Confidence threshold
+      tt = "Objects detected with confidence below this threshold will be disregarded"
+      self.label = QLabel("Confidence threshold:")
+      self.label.setToolTip(tt)
+      self.yolo_conf = QDoubleSpinBox()
+      self.yolo_conf.setToolTip(tt)
+      self.yolo_conf.setMinimum(0.01)
+      self.yolo_conf.setMaximum(1.0)
+      self.yolo_conf.setSingleStep(0.01)
+      self.yolo_conf.setValue(0.55)
+      form.addRow(self.label, self.yolo_conf)
+
+      # Maximum detection
+      self.yolo_device_2 = QLabel("Maximum detection:")
+      self.yolo_max_det = QSpinBox()
+      self.yolo_max_det.setMinimum(1)
+      self.yolo_max_det.setMaximum(5000)
+      self.yolo_max_det.setValue(300)
+      form.addRow(self.yolo_device_2, self.yolo_max_det)
+
+      # Classes of interest
+      self.yolo_device_4 = QLabel("Classes of interest:")
+      self.yolo_classes = QListWidget()
+      self.yolo_classes.setMinimumHeight(75)
+      self.yolo_classes.setMaximumHeight(120)
+      form.addRow(self.yolo_device_4, self.yolo_classes)
+
+      # Process video + frame stride (single row)
+      vid_w = QWidget()
+      vid_h = QHBoxLayout(vid_w)
+      vid_h.setContentsMargins(0, 0, 0, 0)
+      vid_h.setSpacing(8)
+      self.process_video = QCheckBox("Process video")
+      self.process_video.setChecked(True)
+      self.process_video.setToolTip("When checked, video files will be processed alongside images.")
+      vid_h.addWidget(self.process_video)
+      self.line = QFrame()
+      self.line.setFrameShape(QFrame.VLine)
+      self.line.setFrameShadow(QFrame.Raised)
+      vid_h.addWidget(self.line)
+      self.yolo_device_3 = QLabel("Frame stride:")
+      vid_h.addWidget(self.yolo_device_3)
+      self.yolo_vid_stride = QSpinBox()
+      self.yolo_vid_stride.setMinimum(1)
+      self.yolo_vid_stride.setMaximum(100)
+      vid_h.addWidget(self.yolo_vid_stride)
+      vid_h.addStretch()
+      form.addRow(vid_w)
+
+      # Half-precision + Run on main directory
+      opts_w = QWidget()
+      opts_h = QHBoxLayout(opts_w)
+      opts_h.setContentsMargins(0, 0, 0, 0)
+      opts_h.setSpacing(16)
+      self.yolo_half = QCheckBox("Half-precision")
+      self.run_on_main_dir = QCheckBox("Run on main directory")
+      opts_h.addWidget(self.yolo_half)
+      opts_h.addWidget(self.run_on_main_dir)
+      opts_h.addStretch()
+      form.addRow(opts_w)
+
+      # Device
+      self.device = QLabel("Device:")
+      self.yolo_device = QComboBox()
+      form.addRow(self.device, self.yolo_device)
+
+      # Task
+      self.task_label = QLabel("Task:")
+      self.task = QComboBox()
+      form.addRow(self.task_label, self.task)
+
+      # Model
+      self.model_type_label = QLabel("Model:")
+      self.model_type = QComboBox()
+      form.addRow(self.model_type_label, self.model_type)
+
+      # Hidden combos kept for code compatibility (were off-screen in the .ui)
+      self.select_clf_model = QComboBox()
+      self.clf_model_label = QLabel()
+      self.select_det_model = QComboBox()
+      self.det_model_label = QLabel()
+
+      # Distance estimation group
+      self.dist_group = QGroupBox("Distance estimation")
+      dist_v = QVBoxLayout(self.dist_group)
+      dist_v.setSpacing(6)
+      self.estimate_distance = QCheckBox("Estimate")
+      dist_v.addWidget(self.estimate_distance)
+
+      depth_row_w = QWidget()
+      depth_row_h = QHBoxLayout(depth_row_w)
+      depth_row_h.setContentsMargins(0, 0, 0, 0)
+      depth_row_h.setSpacing(8)
+      self.depth_model_label = QLabel("Depth model:")
+      depth_row_h.addWidget(self.depth_model_label)
+      self.depth_model_combo = QComboBox()
+      depth_row_h.addWidget(self.depth_model_combo, 1)
+      dist_v.addWidget(depth_row_w)
+
+      self.fov_btn = QPushButton("Set Field Of View")
+      dist_v.addWidget(self.fov_btn)
+      outer.addWidget(self.dist_group)
+
+      # Save / Cancel
+      self.buttonBox = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel)
+      outer.addWidget(self.buttonBox)
 
    def yolo_imgsz_parse(self):
           yolo_imgsz = self.yolo_imgsz.text().split()
