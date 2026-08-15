@@ -227,7 +227,7 @@ class ExtensionManagerDialog(QDialog):
         is_ready = info.get("status") == "ready"
         btn = QPushButton("Installed ✓" if is_ready else "Download")
         btn.setEnabled(not is_ready)
-        btn.setFixedWidth(120)
+        btn.setMinimumWidth(110)
         btn.clicked.connect(
             lambda _, manifest=m, b=btn: self.start_download(manifest, b)
         )

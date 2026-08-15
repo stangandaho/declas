@@ -919,20 +919,23 @@ class Declas(QMainWindow):
         )
         if selected_media:
             self.image_or_dir = selected_media
-            # Reset the tree to the image's parent folder
-            parent_dir = str(Path(selected_media).parent)
-            global selected_folder
-            selected_folder = parent_dir
-            self.file_model.setRootPath('.')
-            root_index = self.file_model.index(parent_dir)
-            self.dir_tree_view.setRootIndex(root_index)
-            self.dir_tree_view.expand(root_index)
-            self.dir_tree_view.setCurrentIndex(self.file_model.index(selected_media))
+            global selected_file_path
+            selected_file_path = selected_media
+            self.get_next_and_previous_media()
+
+            # Clear the tree view — a file node has no children so the tree
+            # renders empty, matching the state at app start.
+            sm = self.dir_tree_view.selectionModel()
+            sm.blockSignals(True)
+            sm.clearSelection()
+            self.file_model.setRootPath(str(Path(selected_media).parent))
+            self.dir_tree_view.setRootIndex(self.file_model.index(selected_media))
+            sm.blockSignals(False)
+
             self.display_media(selected_media)
             self.update_metadata(selected_media)
             self.update_inference_result(selected_media)
             self.update_custom_tags(selected_media)
-            # Show nav buttons so the user can browse siblings
             self.previous_media.show()
             self.next_media.show()
             self.play_media.show()
@@ -980,19 +983,13 @@ class Declas(QMainWindow):
     def get_next_and_previous_media(self):
 
         try:
-            if selected_folder:
-                if selected_file_path:
-                    sf = str(Path(selected_file_path).parent)
-                    global all_files
-                    all_files = [str(fl) for fl in Path(sf).iterdir() if not fl.is_dir() and fl.suffix in MEDIA_EXT]
-                    
-                else:
-                    sf = selected_folder
-
-                idx = all_files.index(str(Path(selected_file_path)))# selected_file_path from on_image_selected()
+            if selected_file_path:
+                sf = str(Path(selected_file_path).parent)
+                global all_files
+                all_files = [str(fl) for fl in Path(sf).iterdir() if not fl.is_dir() and fl.suffix in MEDIA_EXT]
+                idx = all_files.index(str(Path(selected_file_path)))
                 self.current_selected_media = idx
                 return idx, all_files
-                
         except:
             pass
 
