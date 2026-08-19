@@ -9,12 +9,13 @@ Declas is a free, open-source desktop application for AI-powered detection and s
 ## Features
 
 - Process images and videos on one or multiples directories
-- Built-in support for MegaDetector v6 and YOLOv8-based classifiers
-- Install community-contributed, region- or taxon-specific classifiers as plug-in extensions from within the application
-- Attach typed fields (numeric, text, date, boolean) to individual media files and export them alongside detection results
+- Install detection or classification models as plug-in extensions from within Declas
+- Add customized tags to media and export them alongside detection results
 - GPS tagged images are plotted on an interactive map
 - Merge detection results and custom tags into a single analysis-ready CSV
 - Separate images with detections from blank triggers
+- Automate estimate of distance between camera trap and animal (usefull for Distance Sampling method to estimate density/abundance)
+- etc.
 
 ## Installation
 
@@ -25,9 +26,6 @@ Declas provides installers for Windows, macOS, and Linux. Download the file for 
 1. Download `Declas_Setup_1.2.0.exe` from the [latest release](https://github.com/stangandaho/declas/releases/latest).
 2. Double-click the downloaded file and follow the installation wizard.
 3. Once installed, launch Declas from the Start Menu or the Desktop shortcut.
-
-To open Declas without install it, [download this zip](https://zenodo.org/records/21755286/files/Declas_020826.zip?download=1) file, unzip and double-click on the executable file (.exe)
-
 
 > **Note:** Because the installer is not code-signed, Windows SmartScreen may show an "unknown publisher" warning the first time you run it. Click **More info**, then **Run anyway** to continue.
 
