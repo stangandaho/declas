@@ -300,6 +300,8 @@ class ModelParameter(QDialog):
       self.clf_model_label = QLabel()
       self.select_det_model = QComboBox()
       self.det_model_label = QLabel()
+      self.select_det_model.hide()
+      self.det_model_label.hide()
 
       # Distance estimation group
       self.dist_group = QGroupBox("Distance estimation")
@@ -400,13 +402,8 @@ class ModelParameter(QDialog):
            item.setCheckState(state)
 
    def update_model_type_show(self):
-       task = self.task.currentText()
-       if task == "Classification":
-           self.select_det_model.hide()
-           self.det_model_label.hide()
-       else:
-           self.select_det_model.show()
-           self.det_model_label.show()
+       self.select_det_model.hide()
+       self.det_model_label.hide()
 
    def move_to_first_position(self, lst, selected_item):
       if selected_item in lst:

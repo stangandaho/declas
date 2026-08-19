@@ -1,8 +1,8 @@
-const ZENODO_COUNT = 264;
+const ZENODO_COUNT = 270;
 const REPO = 'stangandaho/declas';
 
 // Replace with your actual YouTube video URL
-const VIDEO_URL = 'https://youtu.be/GyZ35xu2-UQ';
+const VIDEO_URL = 'https://youtu.be/6sAMYketcKs';
 
 const OS_LABELS = {
   'windows': 'Windows',
@@ -19,8 +19,8 @@ let selectedOS = detectOS();
 function detectOS() {
   const ua = navigator.userAgent;
   if (/Windows/i.test(ua)) return 'windows';
-  if (/Mac/i.test(ua))     return 'macos-arm';   // default ARM; user can switch to Intel
-  if (/Linux/i.test(ua))   return 'linux';
+  if (/Mac/i.test(ua)) return 'macos-arm';   // default ARM; user can switch to Intel
+  if (/Linux/i.test(ua)) return 'linux';
   return 'windows';
 }
 
