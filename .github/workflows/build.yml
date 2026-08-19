@@ -131,9 +131,15 @@ jobs:
         with:
           path: artifacts
 
+      - name: Extract release notes for this tag
+        run: |
+          VERSION="${GITHUB_REF_NAME}"
+          awk "/^## ${VERSION}/{found=1; next} found && /^## v/{exit} found" CHANGELOG.md \
+            > release_notes.md
+
       - name: Create Release and upload files
         uses: softprops/action-gh-release@v2
         with:
           files: artifacts/**/*
-          body_path: CHANGELOG.md
+          body_path: release_notes.md
           generate_release_notes: false
