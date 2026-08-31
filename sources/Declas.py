@@ -1,6 +1,5 @@
 from random import choice
 import shutil
-from turtle import st
 from PyQt5.uic import loadUi
 from PyQt5.QtCore import Qt, QDir, QThread, pyqtSignal, QUrl, QTimer, QSettings
 from PyQt5.QtGui import QIcon, QPixmap, QFontDatabase, QPainter, QColor
