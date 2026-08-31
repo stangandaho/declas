@@ -16,14 +16,6 @@ def general_error(error):
     msgBox.setStandardButtons(QMessageBox.Ok)
     msgBox.exec()
 
-def missed_path():
-    msgBox = QMessageBox()
-    msgBox.setIcon(QMessageBox.Critical)
-    msgBox.setText("Choose an image")
-    msgBox.setWindowTitle("Missed image")
-    msgBox.setWindowIcon(QIcon(icon_file))
-    msgBox.setStandardButtons(QMessageBox.Ok)
-    msgBox.exec()
 
 def missed_folder():
     msgBox = QMessageBox()
