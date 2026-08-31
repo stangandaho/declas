@@ -25,6 +25,16 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+config/
+media/
+model/
+models.json
+
+# Model weight files — downloaded at runtime via Extension Manager, never committed
+model_extensions/**/*.pt
+model_extensions/**/*.pth
+model_extensions/**/*.ckpt
+model_extensions/**/*.h5
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

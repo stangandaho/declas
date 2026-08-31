@@ -44,7 +44,7 @@ try:
 except Exception:
     INSTALLED_EXTENSIONS = {}
 
-IMAGE_EXT  = {".JPG", ".JPEG", ".jpg", ".jpeg"}
+IMAGE_EXT  = {".JPG", ".JPEG", ".jpg", ".jpeg", ".PNG", ".png"}
 VIDEO_EXT  = {".mp4", ".avi", ".mov", ".mkv", ".MP4", ".AVI", ".MOV", ".MKV"}
 
 MEDIA_SUFFIX = [f"*{ext}" for ext in IMAGE_EXT | VIDEO_EXT] #["*.JPG", "*.JPEG", "*.jpg", "*.jpeg", "*.mp4", "*.avi"]
@@ -235,7 +235,7 @@ class Declas(QMainWindow):
         self.icon_file = os.path.normpath( os.path.join(os.path.dirname(__file__), 'icons', 'logo.png') )
         icon_file = self.icon_file.replace("sources", "")
         self.setWindowIcon(QIcon(icon_file))
-        self.setWindowTitle("Declas 1.3.0")
+        self.setWindowTitle("Declas 1.3.1")
 
         # Load a custom font
         font_path = str(Path(DECLAS_ROOT, "sources/styles/Montserrat-Regular.ttf"))
@@ -303,6 +303,8 @@ class Declas(QMainWindow):
 
         self.action_build_tables = QAction(themed_icon("table", False), "Build table from detection/classification", self)
         self.action_build_tables.triggered.connect(self.build_table)
+        self.action_clear_reports = QAction(themed_icon("remove", False), "Clear all detection/classification reports", self)
+        self.action_clear_reports.triggered.connect(self.clear_reports)
 
         self.action_split = QAction(themed_icon("split", False), "Target or No target split", self)
         self.action_split.triggered.connect(self.filter_detection)
@@ -315,6 +317,7 @@ class Declas(QMainWindow):
         self.tool_bar1.addAction(self.action_batch)
         self.tool_bar1.addSeparator()
         self.tool_bar1.addAction(self.action_build_tables)
+        self.tool_bar1.addAction(self.action_clear_reports)
         self.tool_bar1.addSeparator()
         self.tool_bar1.addAction(self.action_split)
         self.tool_bar1.addAction(self.zoom_action)
@@ -751,6 +754,7 @@ class Declas(QMainWindow):
         self.action_run.setIcon(themed_icon("run", dark))
         self.action_batch.setIcon(themed_icon("batch", dark))
         self.action_build_tables.setIcon(themed_icon("table", dark))
+        self.action_clear_reports.setIcon(themed_icon("remove", dark))
         self.action_split.setIcon(themed_icon("split", dark))
         self.action_ext.setIcon(themed_icon("extensions", dark))
         self.action_pub.setIcon(themed_icon("publish", dark))
@@ -1307,6 +1311,22 @@ class Declas(QMainWindow):
                     self.view_detection.setEnabled(True)
                     self.edit_inference.setEnabled(True)
 
+            if to_save and self.inference_param.get("estimate_distance"):
+                folder_path = Path(media_path).parent
+                self.last_detection_folder = str(folder_path)
+                self.dist_worker = DistanceWorker(folder_path, self.inference_param)
+                self.dist_worker.progress.connect(lambda msg: self.statusbar.showMessage(msg))
+                self.dist_worker.distance_done.connect(
+                    lambda msg: (
+                        self.stop_spinner(),
+                        self.statusbar.showMessage(msg, MESSAGE_DELAY),
+                        self.play_completion_sound(),
+                    ))
+                self.dist_worker.error_occurred.connect(
+                    lambda err: (self.stop_spinner(), self.on_distance_error(err)))
+                self.start_spinner()
+                self.dist_worker.start()
+
         except Exception as e:
             general_error(e)
 
@@ -1405,6 +1425,20 @@ class Declas(QMainWindow):
                 if len(media_inside) == 0 and main_subdir["run_on_main_dir"]:
                     missed_folder()
                     return
+                # If distance estimation is requested and detections already exist,
+                # skip re-detection and jump straight to distance estimation.
+                if self.inference_param.get("estimate_distance"):
+                    fp = Path(folder_path)
+                    if main_subdir["run_on_main_dir"]:
+                        existing = [(fp / "detections.json").exists()]
+                    else:
+                        existing = [p.exists() for p in fp.rglob("detections.json")
+                                    if "frames" not in p.parts]
+                    if any(existing):
+                        self.last_detection_folder = folder_path
+                        self.on_detection_done("Detections found – running distance estimation…")
+                        return
+
                 # Create the worker and pass the folder path
                 self.last_detection_folder = folder_path
                 self.worker = DetectionWorker(folder_path, main_subdir=main_subdir["run_on_main_dir"],
@@ -1512,6 +1546,30 @@ class Declas(QMainWindow):
             INSTALLED_EXTENSIONS = {}
         self.statusbar.showMessage("Extensions reloaded.", MESSAGE_DELAY)
 
+    def clear_reports(self):
+        if not self.image_or_dir:
+            missed_path()
+            return
+        root = Path(self.image_or_dir)
+        if not root.is_dir():
+            root = root.parent
+        from PyQt5.QtWidgets import QMessageBox
+        reply = QMessageBox.question(
+            self, "Clear reports",
+            f"Remove all detections.json and *.csv files under:\n{root}\n\nThis cannot be undone.",
+            QMessageBox.Yes | QMessageBox.Cancel,
+        )
+        if reply != QMessageBox.Yes:
+            return
+        count = 0
+        for p in list(root.rglob("detections.json")) + list(root.rglob("*.csv")):
+            try:
+                p.unlink()
+                count += 1
+            except Exception:
+                pass
+        self.statusbar.showMessage(f"Cleared {count} report file(s) ✅", MESSAGE_DELAY)
+
     def build_table(self):
         image_or_dir = self.image_or_dir
         content_data = []
@@ -1608,36 +1666,73 @@ class Declas(QMainWindow):
                                 found = [found] if found else []
                             tag_entries = found
 
+                        def apply_tag_cols(r, entry):
+                            for title, allowed in binary_cols.items():
+                                val = entry.get(title, "")
+                                for v in allowed:
+                                    r[f"{title}_{v}"] = 1 if val == v else 0
+                            for title, val in entry.items():
+                                if title not in binary_cols:
+                                    r[title] = val
+
+                        def null_tag_cols(r):
+                            for t in tag_defs:
+                                title = t["title"]
+                                if title in binary_cols:
+                                    for v in binary_cols[title]:
+                                        r.setdefault(f"{title}_{v}", None)
+                                else:
+                                    r.setdefault(title, None)
+
                         for base_row in base_rows:
-                            # Restore species/station columns from folder structure
                             if not run_on_main_dir:
                                 base_row["species"] = jsf_folder.name
                                 base_row["station"] = jsf_folder.parent.name
 
-                            if tag_entries:
-                                for entry in tag_entries:
-                                    row_copy = dict(base_row)
-                                    for title, allowed in binary_cols.items():
-                                        val = entry.get(title, "")
-                                        for v in allowed:
-                                            row_copy[f"{title}_{v}"] = 1 if val == v else 0
-                                    for title, val in entry.items():
-                                        if title not in binary_cols:
-                                            row_copy[title] = val
-                                    content_data.append(row_copy)
+                            if tag_entries and has_distances:
+                                # Detection rows keep their auto-detected distance;
+                                # manual tag entries are added as separate rows.
+                                null_tag_cols(base_row)
+                                content_data.append(base_row)
+                            elif tag_entries:
+                                # No auto-distances: merge tag values into this row.
+                                row_copy = dict(base_row)
+                                apply_tag_cols(row_copy, tag_entries[0])
+                                content_data.append(row_copy)
                             else:
-                                for t in tag_defs:
-                                    title = t["title"]
-                                    if title in binary_cols:
-                                        for v in binary_cols[title]:
-                                            base_row[f"{title}_{v}"] = None
-                                    else:
-                                        base_row[title] = None
+                                null_tag_cols(base_row)
                                 content_data.append(base_row)
 
-                success_table_build(f"Table built successfully and saved at {folder}")
+                        # Manual tag entries for undetected individuals
+                        # (always appended as additional rows, one per entry).
+                        if tag_entries and has_distances:
+                            base_template = dict(row)
+                            if not run_on_main_dir:
+                                base_template["species"] = jsf_folder.name
+                                base_template["station"] = jsf_folder.parent.name
+                            for entry in tag_entries:
+                                r = dict(base_template)
+                                r["count"] = 1
+                                apply_tag_cols(r, entry)
+                                content_data.append(r)
+                        elif tag_entries and len(tag_entries) > 1:
+                            # Multiple tag entries without distances: add extra rows.
+                            base_template = dict(row)
+                            if not run_on_main_dir:
+                                base_template["species"] = jsf_folder.name
+                                base_template["station"] = jsf_folder.parent.name
+                            for entry in tag_entries[1:]:
+                                r = dict(base_template)
+                                apply_tag_cols(r, entry)
+                                content_data.append(r)
 
-                pd.DataFrame(content_data).to_csv(str(Path(folder, "detections.csv")), index=False)
+                from datetime import datetime as _dt
+                _ts = _dt.now().strftime("%Y%m%d_%H%M%S")
+                _task = (inference_param.get("task", "detection") or "detection").lower()
+                csv_name = f"{_task}_{_ts}.csv"
+                csv_path = Path(folder, csv_name)
+                pd.DataFrame(content_data).to_csv(str(csv_path), index=False)
+                success_table_build(f"Table built successfully and saved at {csv_path}")
 
             except Exception as e:
                 unsuccess_table_build(f"{e}")
@@ -1877,7 +1972,7 @@ class DistanceWorker(QThread):
                     continue
 
                 n = len(unique_paths)
-                station = jsf_folder.name
+                station = jsf_folder.name if self.run_on_main_dir else jsf_folder.parent.name
 
                 import math
                 if self.fov_table:
@@ -1886,6 +1981,14 @@ class DistanceWorker(QThread):
                         (v for k, v in self.fov_table.items() if k.lower() == sl),
                         None,
                     )
+                    if fov_deg is None:
+                        if len(self.fov_table) == 1:
+                            # Single global FOV — apply to every station.
+                            fov_deg = next(iter(self.fov_table.values()))
+                        else:
+                            self.progress.emit(
+                                f"⚠️ No FOV match for station '{station}' — raw depth used."
+                            )
                 else:
                     fov_deg = None
 
@@ -1914,9 +2017,9 @@ class DistanceWorker(QThread):
                             continue
                         x1, y1, x2, y2 = [int(v) for v in bbox[:4]]
                         cx_px = int((x1 + x2) / 2)
-                        cy_px = int((y1 + y2) / 2)
+                        cy_px = min(h - 1, y2)  # bottom-centre = ground contact
                         raw_depth = float(depth_map[
-                            min(h - 1, cy_px), min(w - 1, cx_px)])
+                            cy_px, min(w - 1, cx_px)])
                         if fov_deg:
                             # Pinhole model: map pixel position to angle from
                             # optical axis using the camera's half-FOV.

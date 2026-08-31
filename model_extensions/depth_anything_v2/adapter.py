@@ -42,8 +42,11 @@ class DepthAnythingV2Adapter(ModelAdapter):
         if self.model is None or self.processor is None:
             raise RuntimeError("Depth model has not been loaded.")
 
-        image = Image.open(image_path).convert("RGB")
-        original_w, original_h = image.size
+        pil_img = Image.open(image_path)
+        pil_img.load()                        # force-read pixels before convert
+        pil_img = pil_img.convert("RGB")
+        original_w, original_h = pil_img.size
+        image = np.array(pil_img, dtype=np.uint8)   # numpy → avoids lazy-decode crash in processor
 
         inputs = self.processor(images=image, return_tensors="pt")
         inputs = {
@@ -72,7 +75,13 @@ class DepthAnythingV2Adapter(ModelAdapter):
         return depth
 
     def predict_depth_batch(self, image_paths: list, fov_deg: float = None) -> list:
-        return [self.predict_depth(p) for p in image_paths]
+        results = []
+        for p in image_paths:
+            try:
+                results.append(self.predict_depth(p))
+            except Exception:
+                results.append(None)
+        return results
 
     def predict_single(self, image_path: str, conf_thres: float) -> list:
         return []
