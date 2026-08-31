@@ -1,4 +1,4 @@
-const ZENODO_COUNT = 270;
+const ZENODO_COUNT = 285;
 const REPO = 'stangandaho/declas';
 
 // Replace with your actual YouTube video URL
@@ -41,7 +41,7 @@ async function loadRelease() {
         if (idx === 0) {
           const name = asset.name;
           if (/\.exe$/i.test(name)) downloadLinks['windows'] = asset.browser_download_url;
-          else if (/arm64/i.test(name)) downloadLinks['macos-arm']   = asset.browser_download_url;
+          else if (/arm64/i.test(name)) downloadLinks['macos-arm'] = asset.browser_download_url;
           else if (/intel/i.test(name)) downloadLinks['macos-intel'] = asset.browser_download_url;
           else if (/linux.*\.tar\.gz$/i.test(name)) downloadLinks['linux'] = asset.browser_download_url;
         }
