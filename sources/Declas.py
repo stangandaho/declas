@@ -6,8 +6,8 @@ from PyQt5.QtGui import QIcon, QPixmap, QFontDatabase, QPainter, QColor
 from PyQt5.QtWidgets import (QMainWindow, QAction, QFileDialog, QFileSystemModel,
                              QApplication, QWidget, QDialog, QLineEdit, QComboBox, QCheckBox,
                              QDateEdit, QScrollArea, QPushButton, QVBoxLayout, QHBoxLayout,
-                             QLabel, QFrame, QFormLayout, QGroupBox, QMenu,
-                             QTableWidget, QHeaderView, QSpinBox)
+                             QLabel, QFrame, QFormLayout, QGroupBox, QMenu, QTableWidget, QHeaderView, 
+                             QSpinBox)
 from PyQt5.QtWebEngineWidgets import QWebEngineProfile, QWebEngineSettings, QWebEnginePage
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
@@ -778,7 +778,7 @@ class Declas(QMainWindow):
 
     def _apply_macos_appearance(self, dark) -> None:
         try:
-            from AppKit import NSApp, NSAppearance
+            from AppKit import NSApp, NSAppearance  # type: ignore[import]
             if dark is None:
                 NSApp.setAppearance_(None)
             else:
@@ -1597,6 +1597,24 @@ class Declas(QMainWindow):
                     if t.get("values") and t.get("type") in ("text", "")
                 }
 
+                def apply_tag_cols(r, entry):
+                    for title, allowed in binary_cols.items():
+                        val = entry.get(title, "")
+                        for v in allowed:
+                            r[f"{title}_{v}"] = 1 if val == v else 0
+                    for title, val in entry.items():
+                        if title not in binary_cols:
+                            r[title] = val
+
+                def null_tag_cols(r):
+                    for t in tag_defs:
+                        title = t["title"]
+                        if title in binary_cols:
+                            for v in binary_cols[title]:
+                                r.setdefault(f"{title}_{v}", None)
+                        else:
+                            r.setdefault(title, None)
+
                 for jsf in json_files:
                     jsf_folder = Path(jsf).parent
 
@@ -1664,24 +1682,6 @@ class Declas(QMainWindow):
                             if isinstance(found, dict):
                                 found = [found] if found else []
                             tag_entries = found
-
-                        def apply_tag_cols(r, entry):
-                            for title, allowed in binary_cols.items():
-                                val = entry.get(title, "")
-                                for v in allowed:
-                                    r[f"{title}_{v}"] = 1 if val == v else 0
-                            for title, val in entry.items():
-                                if title not in binary_cols:
-                                    r[title] = val
-
-                        def null_tag_cols(r):
-                            for t in tag_defs:
-                                title = t["title"]
-                                if title in binary_cols:
-                                    for v in binary_cols[title]:
-                                        r.setdefault(f"{title}_{v}", None)
-                                else:
-                                    r.setdefault(title, None)
 
                         for base_row in base_rows:
                             if not run_on_main_dir:
