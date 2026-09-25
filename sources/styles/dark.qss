@@ -59,3 +59,7 @@ QToolButton:pressed {
     background-color: #0f3a60;
     border-color: #0078d4;
 }
+#dir_tree_view {
+    background-color: transparent;
+    border: none;
+}

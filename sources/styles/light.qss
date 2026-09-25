@@ -140,3 +140,7 @@ QScrollBar::add-page:horizontal,
 QScrollBar::sub-page:horizontal {
     background: none;
 }
+#dir_tree_view {
+    background-color: transparent;
+    border: none;
+}

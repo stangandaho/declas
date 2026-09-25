@@ -20,7 +20,7 @@ a = Analysis(
         ('model_extensions', './model_extensions'),
     ] + ultralytics_datas,
     hiddenimports=['cv2', 'supervision', 'piexif', 'ultralytics', 'PytorchWildlife',
-                   'transformers', 'tokenizers'],
+                   'transformers', 'tokenizers', 'onnxruntime'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

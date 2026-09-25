@@ -7,6 +7,8 @@ from PyQt5.QtWidgets import (
     QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout,
 )
 
+from i18n import translate_ui
+
 TAG_TYPES = ["float", "integer", "text", "date", "boolean"]
 TAGS_CONFIG = Path(__file__).resolve().parent.parent / "config" / "custom_tags.json"
 
@@ -92,6 +94,7 @@ class TagsDialog(QDialog):
         btn_row.addStretch()
         btn_row.addWidget(save_btn)
         layout.addLayout(btn_row)
+        translate_ui(self)
 
         for tag in load_tag_definitions():
             self.add_row(
