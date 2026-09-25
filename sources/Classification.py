@@ -3,6 +3,7 @@ from pathlib import Path
 parent_dir = os.path.dirname(os.path.dirname(__file__))
 sys.path.append(parent_dir)
 from Bases import (extract_video_frames, save_detection_json, dect_or_clf_dict)
+from i18n import tr
 
 # Model-extension inference
 
@@ -47,11 +48,16 @@ def draw_and_save_annotated(image_path: str, detections: list) -> None:
     for det in detections:
         bbox = det.get("bbox")
         if bbox:
-            x1, y1, x2, y2 = [int(v) for v in bbox]
-            cv2.rectangle(img, (x1, y1), (x2, y2), (0, 200, 50), 3)
-            label = f"{det.get('species', '')} {det.get('confidence', 0):.2f}"
+            x1, y1, x2, y2 = [int(v) for v in bbox[:4]]
+            # Boxes drawn by the user are orange and carry no confidence score
+            color = (255, 140, 0) if det.get("manual") else (0, 200, 50)
+            conf = det.get("confidence")
+            label = det.get("species", "")
+            if conf is not None:
+                label = f"{label} {conf:.2f}"
+            cv2.rectangle(img, (x1, y1), (x2, y2), color, 3)
             cv2.putText(img, label, (x1, max(y1 - 8, 12)),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 200, 50), 2)
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
 
     out_dir = Path(Path(image_path).parent, "detections")
     out_dir.mkdir(exist_ok=True)
@@ -132,11 +138,11 @@ def extension_video_classification(video_path: str, adapter,
 
     if not frames:
         if log_queue:
-            log_queue.put("No frames extracted.")
+            log_queue.put(tr("No frames extracted."))
         return {}
 
     if log_queue:
-        log_queue.put(f"Running inference on {len(frames)} frames…")
+        log_queue.put(tr("Running inference on {count} frames…").format(count=len(frames)))
 
     to_save: dict = {}
     for fpath in frames:
@@ -164,6 +170,6 @@ def extension_video_classification(video_path: str, adapter,
         save_detection_json(save_dir=str(video_path.parent), to_save=existing)
 
     if log_queue:
-        log_queue.put(f"🎉 Video processed.")
+        log_queue.put(tr("🎉 Video processed."))
 
     return to_save

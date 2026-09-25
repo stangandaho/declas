@@ -10,6 +10,7 @@ from pathlib import Path
 import sys, torch, csv
 
 from sources.Bases import get_unique
+from i18n import tr, translate_ui
 
 DECLAS_ROOT = Path(__file__).resolve().parent.parent
 if str(DECLAS_ROOT) not in sys.path:
@@ -76,6 +77,7 @@ class FovDialog(QDialog):
 
         for station, fov in fov_data.items():
             self.add_row(str(station), str(fov))
+        translate_ui(self)
 
     def add_row(self, station: str = "", fov: str = "") -> None:
         row = self.table.rowCount()
@@ -89,7 +91,7 @@ class FovDialog(QDialog):
             self.table.removeRow(r)
 
     def upload_csv(self) -> None:
-        path, _ = QFileDialog.getOpenFileName(self, "Open CSV", "", "CSV files (*.csv *.txt)")
+        path, _ = QFileDialog.getOpenFileName(self, tr("Open CSV"), "", tr("CSV files (*.csv *.txt)"))
         if not path:
             return
         try:
@@ -118,14 +120,14 @@ class FovDialog(QDialog):
                         self.add_row(station, fov)
                         imported += 1
             if imported:
-                QMessageBox.information(self, "CSV imported",
-                                        f"{imported} station(s) loaded.")
+                QMessageBox.information(self, tr("CSV imported"),
+                                        tr("{count} station(s) loaded.").format(count=imported))
             else:
-                QMessageBox.warning(self, "Nothing imported",
-                                    "No rows were found.\n\n"
-                                    "Expected columns: station, fov  (or any two columns: first = station, second = FOV).")
+                QMessageBox.warning(self, tr("Nothing imported"),
+                                    tr("No rows were found.\n\n"
+                                       "Expected columns: station, fov  (or any two columns: first = station, second = FOV)."))
         except Exception as e:
-            QMessageBox.warning(self, "Error", f"Could not read CSV:\n{e}")
+            QMessageBox.warning(self, tr("Error"), tr("Could not read CSV:\n{error}").format(error=e))
 
     def get_fov_data(self) -> dict:
         data = {}
@@ -157,16 +159,18 @@ class ModelParameter(QDialog):
       self.fov_data: dict = {}
 
       # TASK
-      self.task.addItems(["Detection", "Classification"])
+      # Visible label is translated; the saved value stays "Detection" / "Classification"
+      self.task.addItem(tr("Detection"), "Detection")
+      self.task.addItem(tr("Classification"), "Classification")
       self.task.setCurrentIndex(0)
       self.select_clf_model.hide()
       self.clf_model_label.hide()
-      self.task.currentTextChanged.connect(self.update_model_type_show)
+      self.task.currentIndexChanged.connect(self.update_model_type_show)
 
       # CLASSIF OR DETECTION MODEL
       self.model_type.setDuplicatesEnabled(False)
-      self.populate_model_type(self.task.currentText())
-      self.task.currentTextChanged.connect(self.on_task_changed)
+      self.populate_model_type(self.task.currentData())
+      self.task.currentIndexChanged.connect(lambda _: self.on_task_changed(self.task.currentData()))
       self.model_type.setCurrentIndex(0)
 
       self.select_det_model.setDuplicatesEnabled(False)
@@ -197,6 +201,7 @@ class ModelParameter(QDialog):
       self.fov_btn.setFixedWidth(200)
       self.fov_btn.setMinimumWidth(0)
       self.fov_btn.setMaximumWidth(16777215)
+      translate_ui(self)
 
    def _build_ui(self) -> None:
       self.setMinimumSize(460, 440)
@@ -352,7 +357,7 @@ class ModelParameter(QDialog):
            display_name = m.get("display_name", ext_name)
            self.model_type.addItem(display_name, userData=ext_name)
        if self.model_type.count() == 0:
-           self.model_type.addItem("No models installed")
+           self.model_type.addItem(tr("No models installed"))
        self.model_type.blockSignals(False)
 
    def populate_depth_models(self) -> None:
@@ -364,7 +369,7 @@ class ModelParameter(QDialog):
                display = ext_info["manifest"].get("display_name", ext_name)
                self.depth_model_combo.addItem(display, userData=ext_name)
        if self.depth_model_combo.count() == 0:
-           self.depth_model_combo.addItem("No depth models installed")
+           self.depth_model_combo.addItem(tr("No depth models installed"))
 
    def toggle_distance_controls(self, state) -> None:
        visible = (state == Qt.Checked)
@@ -426,7 +431,7 @@ class ModelParameter(QDialog):
       yolo_half = self.yolo_half.isChecked()
       run_on_main_dir = self.run_on_main_dir.isChecked()
       process_video = self.process_video.isChecked()
-      task = self.task.currentText()
+      task = self.task.currentData()
       model_type = (self.model_type.currentData() or self.model_type.currentText())
 
       select_det_model = [self.select_det_model.itemText(i) for i in range(self.select_det_model.count())]

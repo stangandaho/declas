@@ -1,9 +1,11 @@
 """Fetch the online model registry and install / remove extensions."""
 
 import json
+import shutil
 import ssl
 import urllib.request
 import urllib.error
+import zipfile
 from pathlib import Path
 
 from model_extensions.loader import BUNDLED_DIR
@@ -106,8 +108,22 @@ def download_extension(manifest: dict,
 
     try:
         weights_url = manifest.get("download_url", "")
+        zip_url     = manifest.get("zip_url", "")
         model_file  = manifest.get("model_file", "")
-        if weights_url and model_file:
+        if zip_url and model_file:
+            zip_dest = ext_dir / f"{name}.zip"
+            report(f"Downloading archive for {model_file}")
+            download_with_progress(zip_url, zip_dest, bytes_cb=bytes_callback)
+            with zipfile.ZipFile(zip_dest) as archive:
+                member = next((m for m in archive.namelist()
+                               if Path(m).name == model_file), None)
+                if member is None:
+                    raise RuntimeError(f"{model_file} not found in the downloaded archive")
+                with archive.open(member) as src, open(ext_dir / model_file, "wb") as dst:
+                    shutil.copyfileobj(src, dst)
+            zip_dest.unlink()
+            report(f"Weights saved → {model_file}")
+        elif weights_url and model_file:
             dest = ext_dir / model_file
             report(f"Downloading weights {model_file}")
             download_with_progress(weights_url, dest, bytes_cb=bytes_callback)

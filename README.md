@@ -23,7 +23,7 @@ Declas provides installers for Windows, macOS, and Linux. Download the file for 
 
 ### Windows
 
-1. Download `Declas_Setup_1.2.0.exe` from the [latest release](https://github.com/stangandaho/declas/releases/latest).
+1. Download `Declas_<version>.exe` (for example `Declas_1.4.0.exe`) from the [latest release](https://github.com/stangandaho/declas/releases/latest).
 2. Double-click the downloaded file and follow the installation wizard.
 3. Once installed, launch Declas from the Start Menu or the Desktop shortcut.
 
@@ -31,7 +31,7 @@ Declas provides installers for Windows, macOS, and Linux. Download the file for 
 
 ### macOS
 
-1. Download `Declas-macOS.dmg` from the [latest release](https://github.com/stangandaho/declas/releases/latest).
+1. Download the `.dmg` for your Mac from the [latest release](https://github.com/stangandaho/declas/releases/latest): `Declas-macOS-arm64_<version>.dmg` for Apple Silicon (M1 and later) or `Declas-macOS-Intel_<version>.dmg` for Intel Macs.
 2. Open the `.dmg` file and drag **Declas** into your **Applications** folder.
 3. Launch Declas from Applications.
 
@@ -39,11 +39,11 @@ Declas provides installers for Windows, macOS, and Linux. Download the file for 
 
 ### Linux
 
-1. Download `Declas-Linux.tar.gz` from the [latest release](https://github.com/stangandaho/declas/releases/latest).
+1. Download `Declas-Linux_<version>.tar.gz` (for example `Declas-Linux_1.4.0.tar.gz`) from the [latest release](https://github.com/stangandaho/declas/releases/latest).
 2. Extract the archive:
 
    ```
-   tar -xzf Declas-Linux.tar.gz
+   tar -xzf Declas-Linux_1.4.0.tar.gz
    ```
 
 3. Enter the extracted folder and run the executable:

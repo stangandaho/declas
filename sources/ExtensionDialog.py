@@ -8,7 +8,7 @@ from PyQt5.QtGui import QFont, QIcon
 from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QScrollArea, QWidget, QFrame, QSizePolicy, QTabWidget,
-    QTextEdit, QListWidget, QMessageBox, QTextBrowser, QProgressBar,
+    QTextEdit, QListWidget, QMessageBox, QTextBrowser, QProgressBar, QLineEdit,
 )
 
 DECLAS_ROOT = Path(__file__).resolve().parent.parent
@@ -17,6 +17,13 @@ if str(DECLAS_ROOT) not in sys.path:
 
 from model_extensions.registry import fetch_registry, download_extension, remove_extension
 from model_extensions.loader import scan_extensions
+from i18n import tr, translate_ui
+
+
+def search_text(m: dict) -> str:
+    fields = [m.get(k, "") for k in ("display_name", "name", "author", "region",
+                                     "task", "model_arch", "description")]
+    return " ".join(str(f) for f in fields + list(m.get("classes", []))).lower()
 
 
 # Background workers
@@ -72,9 +79,16 @@ class ExtensionManagerDialog(QDialog):
         self.registry: dict = {}
         self.installed: dict = {}
         self.workers: list = []
+        self.cards: list = []   # (frame, search_text) for every Available card
 
         root = QVBoxLayout(self)
         root.setSpacing(6)
+
+        self.search = QLineEdit()
+        self.search.setPlaceholderText("Search models by name, region, author, task or species…")
+        self.search.setClearButtonEnabled(True)
+        self.search.textChanged.connect(self.apply_search)
+        root.addWidget(self.search)
 
         self.tabs = QTabWidget()
         root.addWidget(self.tabs)
@@ -95,6 +109,7 @@ class ExtensionManagerDialog(QDialog):
         self.log.setPlaceholderText("Activity log …")
         root.addWidget(self.log)
 
+        translate_ui(self)
         self.refresh_installed()
         self.start_fetch()
 
@@ -135,15 +150,37 @@ class ExtensionManagerDialog(QDialog):
             item = self.cards_layout.takeAt(0)
             if item.widget():
                 item.widget().deleteLater()
+        self.cards = []
 
         if error:
-            self.status_lbl.setText(f"⚠  Could not reach registry: {error}")
+            self.status_lbl.setText(tr("⚠  Could not reach registry: {error}").format(error=error))
         elif not models:
-            self.status_lbl.setText("No models found in registry.")
+            self.status_lbl.setText(tr("No models found in registry."))
         else:
-            self.status_lbl.setText(f"{len(models)} model(s) available.")
             for m in models:
-                self.cards_layout.addWidget(self.make_card(m))
+                card = self.make_card(m)
+                self.cards.append((card, search_text(m)))
+                self.cards_layout.addWidget(card)
+            self.apply_search()
+
+    def apply_search(self, *args):
+        terms = self.search.text().lower().split()
+
+        shown = 0
+        for card, text in self.cards:
+            match = all(t in text for t in terms)
+            card.setVisible(match)
+            shown += match
+        if self.cards:
+            total = len(self.cards)
+            self.status_lbl.setText(
+                tr("{shown} of {total} model(s) match.").format(shown=shown, total=total) if terms
+                else tr("{total} model(s) available.").format(total=total))
+
+        for i in range(self.inst_list.count()):
+            item = self.inst_list.item(i)
+            manifest = self.installed.get(item.data(Qt.UserRole), {}).get("manifest", {})
+            item.setHidden(not all(t in search_text(manifest) for t in terms))
 
     def make_card(self, m: dict) -> QFrame:
         frame = QFrame()
@@ -171,7 +208,7 @@ class ExtensionManagerDialog(QDialog):
         meta_parts = []
         #if m.get("developer"): meta_parts.append(m["developer"])
         if m.get("region"): meta_parts.append(m["region"])
-        if m.get("size_mb"):   meta_parts.append(f"{m['size_mb']} MB")
+        if m.get("size_mb"):   meta_parts.append(tr("{size} MB").format(size=m['size_mb']))
         if m.get("environment"): meta_parts.append(m["environment"])
         if meta_parts:
             meta = QLabel("  |  ".join(meta_parts))
@@ -181,7 +218,7 @@ class ExtensionManagerDialog(QDialog):
         # Author
         author = m.get("author", [])
         if author:
-            author_lbl = QLabel(f"Author: {author}")
+            author_lbl = QLabel(tr("Author: {author}").format(author=author))
             author_lbl.setStyleSheet("color: gray; font-size: 13px;")
             layout.addWidget(author_lbl)
 
@@ -198,11 +235,11 @@ class ExtensionManagerDialog(QDialog):
         inf_url = m.get("info_url", "")
         if lic:
             lic_txt = (f'<a href="{lic_url}">{lic}</a>' if lic_url else lic)
-            links.append(f"License: {lic_txt}")
+            links.append(tr("License: {license}").format(license=lic_txt))
         if cit_url:
-            links.append(f'<a href="{cit_url}">Citation</a>')
+            links.append(f'<a href="{cit_url}">{tr("Citation")}</a>')
         if inf_url:
-            links.append(f'<a href="{inf_url}">Info page</a>')
+            links.append(f'<a href="{inf_url}">{tr("Info page")}</a>')
         if links:
             link_lbl = QLabel("  |  ".join(links))
             link_lbl.setOpenExternalLinks(True)
@@ -213,7 +250,7 @@ class ExtensionManagerDialog(QDialog):
         classes = m.get("classes", [])
         if classes:
             preview = ", ".join(classes)# + (f"  … (+{len(classes)-12} more)" if len(classes) > 12 else "")
-            cls_lbl = QLabel(f"Classes: {preview}")
+            cls_lbl = QLabel(tr("Classes: {classes}").format(classes=preview))
             cls_lbl.setWordWrap(True)
             cls_lbl.setStyleSheet("font-size: 13px;")
             layout.addWidget(cls_lbl)
@@ -225,7 +262,7 @@ class ExtensionManagerDialog(QDialog):
         bottom.addStretch()
         info = self.installed.get(m.get("name"), {})
         is_ready = info.get("status") == "ready"
-        btn = QPushButton("Installed ✓" if is_ready else "Download")
+        btn = QPushButton(tr("Installed ✓") if is_ready else tr("Download"))
         btn.setEnabled(not is_ready)
         btn.setMinimumWidth(110)
         btn.clicked.connect(
@@ -238,7 +275,7 @@ class ExtensionManagerDialog(QDialog):
 
     def start_download(self, manifest: dict, btn: QPushButton):
         btn.setEnabled(False)
-        btn.setText(" Downloading …")
+        btn.setText(tr(" Downloading …"))
         self.progress_bar.setValue(0)
         self.progress_bar.setFormat("%p%")
         self.progress_bar.setVisible(True)
@@ -257,21 +294,22 @@ class ExtensionManagerDialog(QDialog):
             self.progress_bar.setValue(downloaded)
             mb_done  = downloaded / 1_048_576
             mb_total = total / 1_048_576
-            self.progress_bar.setFormat(f"{mb_done:.1f} / {mb_total:.1f} MB  (%p%)")
+            self.progress_bar.setFormat(
+                tr("{done:.1f} / {total:.1f} MB  (%p%)").format(done=mb_done, total=mb_total))
         else:
             self.progress_bar.setMaximum(0)
             mb_done = downloaded / 1_048_576
-            self.progress_bar.setFormat(f"{mb_done:.1f} MB …")
+            self.progress_bar.setFormat(tr("{done:.1f} MB …").format(done=mb_done))
 
     def on_download_done(self, ok: bool, btn: QPushButton, manifest: dict):
         self.progress_bar.setVisible(False)
         if ok:
-            btn.setText("Installed ✓")
+            btn.setText(tr("Installed ✓"))
             self.refresh_installed()
             self.extension_changed.emit()
         else:
             btn.setEnabled(True)
-            btn.setText("Download")
+            btn.setText(tr("Download"))
 
     # Installed tab
 
@@ -301,7 +339,7 @@ class ExtensionManagerDialog(QDialog):
         for name, info in ready.items():
             m = info.get("manifest", {})
             is_bundled = not m.get("model_file", "")
-            suffix = "  [bundled]" if is_bundled else ""
+            suffix = tr("  [bundled]") if is_bundled else ""
             text = (
                 f"{m.get('display_name', name)}  "
                 f"v{m.get('version', '?')}  —  "
@@ -314,7 +352,8 @@ class ExtensionManagerDialog(QDialog):
                 item.setForeground(QColor("gray"))
             self.inst_list.addItem(item)
 
-        self.tabs.setTabText(0, f"Installed ({len(ready)})")
+        self.tabs.setTabText(0, tr("Installed ({count})").format(count=len(ready)))
+        self.apply_search()
 
     def delete_selected(self):
         item = self.inst_list.currentItem()
@@ -324,25 +363,25 @@ class ExtensionManagerDialog(QDialog):
         if is_bundled:
             QMessageBox.information(
                 self,
-                "Bundled extension",
-                "This extension is bundled with the app and cannot be removed.",
+                tr("Bundled extension"),
+                tr("This extension is bundled with the app and cannot be removed."),
             )
             return
         name = item.data(Qt.UserRole)
         reply = QMessageBox.question(
             self,
-            "Delete extension",
-            f"Remove '{name}' and all its files from disk?\nThis cannot be undone.",
+            tr("Delete extension"),
+            tr("Remove '{name}' and all its files from disk?\nThis cannot be undone.").format(name=name),
             QMessageBox.Yes | QMessageBox.No,
         )
         if reply == QMessageBox.Yes:
             ok = remove_extension(name)
             if ok:
-                self.log.append(f"Removed {name}.")
+                self.log.append(tr("Removed {name}.").format(name=name))
                 self.refresh_installed()
                 self.extension_changed.emit()
             else:
-                self.log.append(f"Could not remove {name} — directory not found.")
+                self.log.append(tr("Could not remove {name} — directory not found.").format(name=name))
 
 
 # Publish guidelines
@@ -386,7 +425,7 @@ model_extensions/
   <tr><td><b>model_file</b></td><td>Filename of the weights file, e.g. <code>my_model.pt</code></td></tr>
   <tr><td><b>download_url</b></td><td>Direct URL to download the weights (Zenodo, HF, GitHub Releases…)</td></tr>
   <tr><td><b>size_mb</b></td><td>Approximate size in MB</td></tr>
-  <tr><td><b>zip_url</b></td><td>Optional ZIP bundling adapter + auxiliaries (leave blank otherwise)</td></tr>
+  <tr><td><b>zip_url</b></td><td>Optional ZIP containing the weights; <b>model_file</b> is extracted from it (leave blank otherwise)</td></tr>
   <tr><td><b>adapter</b></td><td>Filename of the adapter script, default <code>adapter.py</code></td></tr>
   <tr><td><b>classes</b></td><td>JSON array of class/species names the model outputs</td></tr>
 </table>
@@ -468,3 +507,4 @@ class PublishGuidelinesDialog(QDialog):
         row.addStretch()
         row.addWidget(close_btn)
         layout.addLayout(row)
+        translate_ui(self)

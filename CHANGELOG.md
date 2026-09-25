@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.4.0
+
+### New Features
+- draw bounding boxes around animals the model missed, and delete wrong ones, directly on the image; each drawn box is saved with its species to `detections.json` and counted in the report
+- image and video thumbnails in the sidebar, with the open media highlighted; the folder tree now shows folders only
+- French interface (Setting > General > Language, applied after restart)
+- search field in the Extensions window to find a model by name, region, author, task or species
+- new model extension: Sub-Saharan Africa Wildlife Detector v1 (36 classes, ONNX)
+
+### Improvements
+- narrower sidebar with a thin separator, giving more room to the image
+- Previous / Next now go through files in name order, matching the thumbnails
+
 ## v1.3.1
 
 ### Bug Fixes

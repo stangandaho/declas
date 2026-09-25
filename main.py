@@ -15,6 +15,13 @@ if sys.platform == "win32" and getattr(sys, "frozen", False):
         return subprocess.call(cmd, shell=True)
     os.system = _silent_os_system
 
+# PyQt5 ships an old msvcp140.dll that onnxruntime cannot initialise with.
+# Loading onnxruntime first makes Windows keep the newer runtime for the whole process.
+try:
+    import onnxruntime
+except Exception:
+    pass
+
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QFont
 
@@ -36,6 +43,14 @@ if __name__ == "__main__":
     freeze_support()  
 
     app = QApplication(sys.argv)
+
+    # Qt's own texts (OK/Cancel/Yes/No buttons, file dialogs) in the chosen language
+    from PyQt5.QtCore import QTranslator, QLibraryInfo
+    from i18n import LANGUAGE
+    qt_translator = QTranslator()
+    if LANGUAGE == "fr" and qt_translator.load(
+            "qtbase_fr", QLibraryInfo.location(QLibraryInfo.TranslationsPath)):
+        app.installTranslator(qt_translator)
 
     MainWindow = Declas()
     font = QFont("Montserrat", 11)
