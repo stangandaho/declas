@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Donation · Declas</title>
+  <meta name="description" content="Support Declas, free and open-source camera trap AI software, by bank transfer (Orabank Bénin) or PI QR code.">
+  <meta name="theme-color" content="#FBF7F0">
+  <meta property="og:title" content="Donation · Declas">
+  <meta property="og:description" content="Support Declas, free and open-source camera trap AI software, by bank transfer (Orabank Bénin) or PI QR code.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="assets/img/screens/view-annotated.webp">
+  <link rel="alternate" hreflang="en" href="donate.html">
+  <link rel="alternate" hreflang="fr" href="fr/donate.html">
+  <link rel="icon" type="image/png" href="assets/img/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script>try{if(!localStorage.getItem('declas-lang')&&/^fr\b/i.test((navigator.languages&&navigator.languages[0])||navigator.language||''))location.replace('fr/'+(location.pathname.split('/').pop()||'index.html')+location.hash)}catch(e){}</script>
+  <script>try{var t=localStorage.getItem('declas-theme');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+  <link rel="stylesheet" href="assets/css/site.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="container">
+      <a class="brand" href="index.html"><img src="assets/img/logo.png" alt="" width="30" height="30">Declas</a>
+      <nav class="nav" aria-label="Main">
+        <a href="donate.html" aria-current="page">Donation</a>
+        <button type="button" class="nav-link" data-open-download>Download</button>
+        <a href="docs.html">Docs</a>
+        <a href="about.html">About</a>
+        <a href="contact.html">Contact</a>
+      </nav>
+      <div class="header-tools">
+        <div class="lang-switch" role="group" aria-label="Language"><a href="donate.html" lang="en" hreflang="en" data-lang="en" aria-current="true">EN</a><a href="fr/donate.html" lang="fr" hreflang="fr" data-lang="fr">FR</a></div>
+        <button class="icon-btn theme-toggle" type="button" aria-label="Toggle dark mode">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        </button>
+        <button class="icon-btn menu-toggle" type="button" aria-label="Open menu" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="page-hero">
+      <div class="container">
+        <h1>Keep Declas free for every field team</h1>
+        <p class="lead">Declas is built and maintained by volunteers, and it will always be free. Your donation pays for testing hardware, hosting, model training and the time spent answering users and fixing bugs.</p>
+      </div>
+    </section>
+
+    <section class="section-sm" style="padding-top:8px">
+      <div class="container">
+        <div class="donate-grid">
+          <article class="card">
+            <h2 style="font-size:1.3rem;font-weight:800">Bank transfer</h2>
+            <p class="muted" style="font-size:.95rem">Send any amount to our Orabank Bénin account, from Benin or abroad (use the IBAN and BIC for international transfers). Please add the payment reference so we can thank you.</p>
+            <dl class="kv" id="bank-details" style="margin-top:12px"></dl>
+            <a class="btn btn-secondary btn-sm" id="rib-download" href="#" download style="margin-top:16px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 20h16"/></svg>
+              Download the RIB (PDF)
+            </a>
+          </article>
+
+          <article class="card center">
+            <h2 style="font-size:1.3rem;font-weight:800">PI Orabank QR code</h2>
+            <p class="muted" style="font-size:.95rem">From Benin or another UEMOA country, scan this code with your Orabank app or any banking or mobile-money app that supports PI instant payments (BCEAO).</p>
+            <div class="qr-box" id="piorabank-qr"></div>
+            <p class="muted" style="font-size:.9rem;margin:0 0 4px">No camera? In your app, choose a PI transfer <strong>by alias</strong> and paste:</p>
+            <dl class="kv pi-alias" id="pi-alias" style="text-align:left;margin-bottom:12px"></dl>
+            <a class="btn btn-primary btn-block" id="piorabank-link" href="#" target="_blank" rel="noopener"><span>Open the payment link</span></a>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">Where it goes</span>
+          <h2>What your support makes possible</h2>
+        </div>
+        <div class="grid grid-3">
+          <article class="card"><h3>New regional models</h3><p>Training and packaging classifiers for regions that still have none, starting with West and Central Africa.</p></article>
+          <article class="card"><h3>Testing on real machines</h3><p>Checking every release on Windows, Apple Silicon, Intel Macs and Linux before it reaches you.</p></article>
+          <article class="card"><h3>Training workshops</h3><p>Helping field teams and students learn to process their own surveys with Declas.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-alt">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">No budget? No problem</span>
+          <h2>Other ways to help</h2>
+        </div>
+        <div class="grid grid-4">
+          <a class="card" href="https://github.com/stangandaho/declas" target="_blank" rel="noopener" style="text-decoration:none"><h3>Star on GitHub</h3><p>It helps other researchers find the project.</p></a>
+          <a class="card" href="https://doi.org/10.5281/zenodo.20951592" target="_blank" rel="noopener" style="text-decoration:none"><h3>Cite Declas</h3><p>Citations show funders the software is used.</p></a>
+          <a class="card" href="https://github.com/stangandaho/declas/issues" target="_blank" rel="noopener" style="text-decoration:none"><h3>Report bugs</h3><p>A clear bug report is a contribution too.</p></a>
+          <a class="card" href="docs.html#publish" style="text-decoration:none"><h3>Share a model</h3><p>Publish your classifier for everyone.</p></a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="site-footer"></div>
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/site.js"></script>
+</body>
+</html>

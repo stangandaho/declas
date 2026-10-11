@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="fr" class="no-js" data-base="../">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Documentation · Declas</title>
+  <meta name="description" content="Documentation complète et pas à pas de Declas : installation, extensions de modèles, paramètres d’inférence, traitement par lot, vérification des résultats, étiquettes, estimation de distance et export CSV.">
+  <meta name="theme-color" content="#FBF7F0">
+  <meta property="og:title" content="Documentation · Declas">
+  <meta property="og:description" content="Documentation complète et pas à pas de Declas : installation, extensions de modèles, paramètres d’inférence, traitement par lot, vérification des résultats, étiquettes, estimation de distance et export CSV.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="../assets/img/screens/view-annotated.webp">
+  <link rel="alternate" hreflang="en" href="../docs.html">
+  <link rel="alternate" hreflang="fr" href="docs.html">
+  <link rel="icon" type="image/png" href="../assets/img/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script>try{var t=localStorage.getItem('declas-theme');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+  <link rel="stylesheet" href="../assets/css/site.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Aller au contenu</a>
+  <header class="site-header">
+    <div class="container">
+      <a class="brand" href="index.html"><img src="../assets/img/logo.png" alt="" width="30" height="30">Declas</a>
+      <nav class="nav" aria-label="Navigation principale">
+        <a href="donate.html">Faire un don</a>
+        <button type="button" class="nav-link" data-open-download>Télécharger</button>
+        <a href="docs.html" aria-current="page">Docs</a>
+        <a href="about.html">À propos</a>
+        <a href="contact.html">Contact</a>
+      </nav>
+      <div class="header-tools">
+        <div class="lang-switch" role="group" aria-label="Langue"><a href="../docs.html" lang="en" hreflang="en" data-lang="en">EN</a><a href="docs.html" lang="fr" hreflang="fr" data-lang="fr" aria-current="true">FR</a></div>
+        <button class="icon-btn theme-toggle" type="button" aria-label="Activer ou désactiver le mode sombre">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        </button>
+        <button class="icon-btn menu-toggle" type="button" aria-label="Ouvrir le menu" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="container">
+      <div class="page-hero" style="padding-bottom:0">
+        <h1>Utiliser Declas, pas à pas</h1>
+        <p class="lead">Tout ce qu’il faut pour passer d’un dossier d’images et de vidéos de pièges photographiques à un tableau prêt pour l’analyse. Chaque capture d’écran ci-dessous provient de Declas, en français, traitant de vraies images d’inventaire.</p>
+      </div>
+
+      <div class="docs-layout">
+        <aside class="toc" aria-label="Table des matières">
+          <p class="toc-title">Sur cette page</p>
+          <ol><li><a href="#overview">1. Ce que fait Declas</a></li><li><a href="#quick-start">2. Démarrage rapide (5 minutes)</a></li><li><a href="#install">3. Installation</a><ol><li><a href="#install-windows">Windows</a></li><li><a href="#install-macos">macOS</a></li><li><a href="#install-linux">Linux</a></li><li><a href="#install-first-launch">Premier lancement</a></li></ol></li><li><a href="#interface">4. Découvrir l’interface</a><ol><li><a href="#toolbar">Boutons de la barre d’outils</a></li><li><a href="#menus">Menus</a></li></ol></li><li><a href="#organise">5. Organiser vos données</a><ol><li><a href="#single-folder">Mode A : un dossier de médias (« Exécuter sur le dossier principal » coché)</a></li><li><a href="#project-mode">Mode B : projet › station › espèce (« Exécuter sur le dossier principal » décoché)</a></li></ol></li><li><a href="#models">6. Extensions de modèles</a><ol><li><a href="#install-model">Installer un modèle</a></li><li><a href="#model-list">Modèles disponibles</a></li></ol></li><li><a href="#parameters">7. Paramètres d’inférence</a></li><li><a href="#run-single">8. Exécuter sur une seule image ou vidéo</a></li><li><a href="#run-batch">9. Exécuter sur des dossiers (traitement par lot)</a></li><li><a href="#review">10. Vérifier les résultats</a><ol><li><a href="#inference-tab">L’onglet Inférence</a></li><li><a href="#view-annotated">Voir les boîtes</a></li><li><a href="#edit-results">Corriger les espèces et les nombres</a></li></ol></li><li><a href="#boxes">11. Dessiner et supprimer des boîtes englobantes</a></li><li><a href="#tags">12. Étiquettes personnalisées</a><ol><li><a href="#define-tags">Définir vos étiquettes</a></li><li><a href="#fill-tags">Renseigner les étiquettes</a></li></ol></li><li><a href="#metadata-map">13. Métadonnées et carte</a></li><li><a href="#videos">14. Travailler avec des vidéos</a></li><li><a href="#distance">15. Estimation de distance</a><ol><li><a href="#distance-setup">Configuration</a></li><li><a href="#fov">Champ de vision par station</a></li><li><a href="#how-distance">Comment la distance est calculée</a></li></ol></li><li><a href="#split">16. Séparer les images vides</a></li><li><a href="#table">17. Construire le tableau (export CSV)</a><ol><li><a href="#csv-columns">Description des colonnes</a></li></ol></li><li><a href="#outputs">18. Fichiers créés par Declas</a><ol><li><a href="#json-format">Le format de detections.json</a></li><li><a href="#clear-reports">Repartir de zéro</a></li></ol></li><li><a href="#import">19. Importer un résultat existant</a></li><li><a href="#settings">20. Réglages</a></li><li><a href="#publish">21. Publier votre propre modèle</a><ol><li><a href="#publish-layout">1. Créer le dossier de l’extension</a></li><li><a href="#publish-manifest">2. Le décrire dans manifest.json</a></li><li><a href="#publish-adapter">3. Écrire adapter.py</a></li><li><a href="#publish-submit">4. Héberger les poids et soumettre</a></li></ol></li><li><a href="#faq">22. Dépannage et FAQ</a></li></ol>
+        </aside>
+
+        <div>
+          <div class="toc-mobile">
+            <details>
+              <summary><span>Sommaire · <span class="muted" data-current>Présentation</span></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></summary>
+              <div class="toc-inner"><ol><li><a href="#overview">1. Ce que fait Declas</a></li><li><a href="#quick-start">2. Démarrage rapide (5 minutes)</a></li><li><a href="#install">3. Installation</a><ol><li><a href="#install-windows">Windows</a></li><li><a href="#install-macos">macOS</a></li><li><a href="#install-linux">Linux</a></li><li><a href="#install-first-launch">Premier lancement</a></li></ol></li><li><a href="#interface">4. Découvrir l’interface</a><ol><li><a href="#toolbar">Boutons de la barre d’outils</a></li><li><a href="#menus">Menus</a></li></ol></li><li><a href="#organise">5. Organiser vos données</a><ol><li><a href="#single-folder">Mode A : un dossier de médias (« Exécuter sur le dossier principal » coché)</a></li><li><a href="#project-mode">Mode B : projet › station › espèce (« Exécuter sur le dossier principal » décoché)</a></li></ol></li><li><a href="#models">6. Extensions de modèles</a><ol><li><a href="#install-model">Installer un modèle</a></li><li><a href="#model-list">Modèles disponibles</a></li></ol></li><li><a href="#parameters">7. Paramètres d’inférence</a></li><li><a href="#run-single">8. Exécuter sur une seule image ou vidéo</a></li><li><a href="#run-batch">9. Exécuter sur des dossiers (traitement par lot)</a></li><li><a href="#review">10. Vérifier les résultats</a><ol><li><a href="#inference-tab">L’onglet Inférence</a></li><li><a href="#view-annotated">Voir les boîtes</a></li><li><a href="#edit-results">Corriger les espèces et les nombres</a></li></ol></li><li><a href="#boxes">11. Dessiner et supprimer des boîtes englobantes</a></li><li><a href="#tags">12. Étiquettes personnalisées</a><ol><li><a href="#define-tags">Définir vos étiquettes</a></li><li><a href="#fill-tags">Renseigner les étiquettes</a></li></ol></li><li><a href="#metadata-map">13. Métadonnées et carte</a></li><li><a href="#videos">14. Travailler avec des vidéos</a></li><li><a href="#distance">15. Estimation de distance</a><ol><li><a href="#distance-setup">Configuration</a></li><li><a href="#fov">Champ de vision par station</a></li><li><a href="#how-distance">Comment la distance est calculée</a></li></ol></li><li><a href="#split">16. Séparer les images vides</a></li><li><a href="#table">17. Construire le tableau (export CSV)</a><ol><li><a href="#csv-columns">Description des colonnes</a></li></ol></li><li><a href="#outputs">18. Fichiers créés par Declas</a><ol><li><a href="#json-format">Le format de detections.json</a></li><li><a href="#clear-reports">Repartir de zéro</a></li></ol></li><li><a href="#import">19. Importer un résultat existant</a></li><li><a href="#settings">20. Réglages</a></li><li><a href="#publish">21. Publier votre propre modèle</a><ol><li><a href="#publish-layout">1. Créer le dossier de l’extension</a></li><li><a href="#publish-manifest">2. Le décrire dans manifest.json</a></li><li><a href="#publish-adapter">3. Écrire adapter.py</a></li><li><a href="#publish-submit">4. Héberger les poids et soumettre</a></li></ol></li><li><a href="#faq">22. Dépannage et FAQ</a></li></ol></div>
+            </details>
+          </div>
+
+          <article class="prose">
+
+<section>
+<h2 id="overview">1. Ce que fait Declas</h2>
+<p>Declas est une application de bureau qui <strong>détecte les animaux et identifie les espèces</strong> dans les images et vidéos de pièges photographiques. Elle fonctionne entièrement sur votre ordinateur : une fois un modèle téléchargé, aucune connexion internet n’est nécessaire et aucune image n’est envoyée en ligne.</p>
+<p>Une session type se déroule ainsi :</p>
+<ol>
+  <li>Vous installez une ou plusieurs <strong>extensions de modèles</strong> d’IA (un détecteur comme MegaDetector, ou un classificateur d’espèces régional).</li>
+  <li>Vous indiquez à Declas un <strong>dossier</strong> de médias, ou tout un <strong>projet</strong> avec un dossier par station.</li>
+  <li>Declas exécute le modèle et écrit un fichier <code>detections.json</code> dans chaque dossier, ainsi que des copies annotées des images.</li>
+  <li>Vous <strong>vérifiez</strong> les résultats, corrigez les noms d’espèces et les nombres, dessinez les boîtes oubliées par le modèle et ajoutez vos propres étiquettes.</li>
+  <li>Vous <strong>construisez le tableau</strong> : un CSV avec une ligne par espèce et par image, comprenant la date, l’heure, le GPS, vos étiquettes et, si l’option est activée, la distance jusqu’à chaque animal.</li>
+</ol>
+<figure class="shot"><img src="../assets/img/screens/fr/results-inference.webp" width="1560" height="920" loading="lazy" alt="Fenêtre principale de Declas avec une image de trois cobes défassa et l’onglet Inférence indiquant KobusEllipsiprymnus, nombre 3"><figcaption><b>La fenêtre principale après le traitement d’un dossier de station :</b> miniatures à gauche, image au centre, résultats à droite.</figcaption></figure>
+<div class="callout note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg><p>Declas lit les images <strong>.jpg, .jpeg et .png</strong> et les vidéos <strong>.mp4, .avi, .mov et .mkv</strong>.</p></div>
+</section>
+
+<section>
+<h2 id="quick-start">2. Démarrage rapide (5 minutes)</h2>
+<p>Si vous voulez simplement voir Declas fonctionner sur vos propres images, suivez ces étapes. Chacune renvoie à la section détaillée.</p>
+<ol class="step-list">
+  <li><strong>Installez Declas</strong> pour votre système et ouvrez-le. <a href="#install">Installation</a></li>
+  <li>Ouvrez <span class="ui">Modèles › Extensions</span>, allez dans l’onglet <span class="ui">Disponibles</span> et cliquez sur <span class="ui">Télécharger</span> pour <em>MegaDetector 6b</em> (50 Mo), ou pour un modèle d’espèces adapté à votre région. <a href="#models">Extensions de modèles</a></li>
+  <li>Ouvrez <span class="ui">Paramètres › Paramètres d’inférence</span>. Réglez <span class="ui">Tâche</span> sur <em>Détection</em> (MegaDetector) ou <em>Classification</em> (modèle d’espèces), choisissez le modèle, cochez <span class="ui">Exécuter sur le dossier principal</span> puis cliquez sur <span class="ui">Enregistrer</span>. <a href="#parameters">Paramètres d’inférence</a></li>
+  <li>Cliquez sur <img class="ui-icon" src="../assets/img/icons/folder.png" alt=""> <span class="ui">Sélectionner un dossier</span> et choisissez un dossier contenant des images.</li>
+  <li>Cliquez sur <img class="ui-icon" src="../assets/img/icons/batch.png" alt=""> <span class="ui">Exécuter sur le(s) dossier(s)</span>. Attendez le message <em>Terminé avec succès</em> dans la barre d’état.</li>
+  <li>Cliquez sur une miniature, puis sur <span class="ui">Afficher</span> dans l’onglet Inférence pour voir les boîtes. <a href="#review">Vérifier les résultats</a></li>
+  <li>Cliquez sur <img class="ui-icon" src="../assets/img/icons/table.png" alt=""> <span class="ui">Construire le tableau</span>. Le CSV est enregistré dans le dossier sélectionné. <a href="#table">Construire le tableau</a></li>
+</ol>
+</section>
+
+<section>
+<h2 id="install">3. Installation</h2>
+<p>Declas propose des installateurs pour Windows, macOS et Linux. Utilisez le bouton <a href="#download" data-open-download>Télécharger</a>, ou récupérez les fichiers dans la <a href="https://github.com/stangandaho/declas/releases/latest" target="_blank" rel="noopener">dernière version sur GitHub</a>.</p>
+<div class="table-wrap"><table>
+  <thead><tr><th>Système</th><th>Fichier</th><th>Remarques</th></tr></thead>
+  <tbody>
+    <tr><td>Windows (64 bits)</td><td><code>Declas_<span data-latest-version>1.4.0</span>.exe</code></td><td>Assistant d’installation</td></tr>
+    <tr><td>macOS, Apple Silicon (M1 et plus récents)</td><td><code>Declas-macOS-arm64_<span data-latest-version>1.4.0</span>.dmg</code></td><td>Glisser dans Applications</td></tr>
+    <tr><td>macOS, Intel</td><td><code>Declas-macOS-Intel_<span data-latest-version>1.4.0</span>.dmg</code></td><td>Glisser dans Applications</td></tr>
+    <tr><td>Linux (x86-64)</td><td><code>Declas-Linux_<span data-latest-version>1.4.0</span>.tar.gz</code></td><td>Extraire et lancer</td></tr>
+  </tbody>
+</table></div>
+<p>Tout ordinateur 64 bits récent peut faire tourner Declas. Les modèles les plus lourds (par exemple DeepFaune Classification, 1,2 Go) demandent plus de mémoire. Une carte graphique NVIDIA (CUDA) accélère nettement le traitement, mais n’est pas obligatoire.</p>
+
+<h3 id="install-windows">Windows</h3>
+<ol class="step-list">
+  <li>Téléchargez <code>Declas_&lt;version&gt;.exe</code>.</li>
+  <li>Double-cliquez dessus et suivez l’assistant d’installation.</li>
+  <li>Lancez Declas depuis le menu Démarrer ou le raccourci du bureau.</li>
+</ol>
+<div class="callout warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 21h20z"/><path d="M12 10v4M12 17h.01"/></svg><p>L’installateur n’est pas signé numériquement : Windows SmartScreen peut afficher <em>« Windows a protégé votre ordinateur »</em>. Cliquez sur <span class="ui">Informations complémentaires</span>, puis sur <span class="ui">Exécuter quand même</span>. Cette étape n’est nécessaire qu’une fois.</p></div>
+
+<h3 id="install-macos">macOS</h3>
+<ol class="step-list">
+  <li>Téléchargez le <code>.dmg</code> correspondant à votre Mac : <em>arm64</em> pour Apple Silicon (M1, M2, M3, M4…) ou <em>Intel</em> pour les Mac plus anciens. Vous hésitez ? Ouvrez <span class="ui"> › À propos de ce Mac</span> : « Puce : Apple M… » signifie Apple Silicon.</li>
+  <li>Ouvrez le <code>.dmg</code> et faites glisser <strong>Declas</strong> dans le dossier <strong>Applications</strong>.</li>
+  <li>Lancez Declas depuis Applications.</li>
+</ol>
+<div class="callout warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 21h20z"/><path d="M12 10v4M12 17h.01"/></svg><div><p>L’application n’est pas notariée : Gatekeeper peut bloquer le premier lancement. Faites un clic droit (ou Contrôle-clic) sur l’application, choisissez <span class="ui">Ouvrir</span>, puis confirmez.</p><p>Si macOS indique que l’application est <em>« endommagée »</em>, ouvrez le Terminal et exécutez :</p><pre><code class="language-bash">xattr -cr /Applications/Declas.app</code></pre></div></div>
+
+<h3 id="install-linux">Linux</h3>
+<ol class="step-list">
+  <li>Téléchargez <code>Declas-Linux_&lt;version&gt;.tar.gz</code>.</li>
+  <li>Extrayez l’archive et lancez le programme :
+<pre><code class="language-bash">tar -xzf Declas-Linux_<span data-latest-version>1.4.0</span>.tar.gz
+cd Declas
+chmod +x Declas
+./Declas</code></pre></li>
+</ol>
+<p>Si une erreur signale une bibliothèque manquante comme <code>libGL.so.1</code>, installez-la avec votre gestionnaire de paquets, par exemple <code>sudo apt-get install libgl1</code> sous Debian ou Ubuntu.</p>
+
+<h3 id="install-first-launch">Premier lancement</h3>
+<p>À la première ouverture, la fenêtre est vide et aucun modèle n’est encore installé. C’est normal : rendez-vous dans <a href="#models">Extensions de modèles</a> pour en télécharger un.</p>
+<figure class="shot"><img src="../assets/img/screens/fr/main-empty.webp" width="1560" height="920" loading="lazy" alt="La fenêtre de Declas vide au premier lancement"><figcaption><b>Declas au premier lancement :</b> les menus en haut, la barre d’outils en dessous, et des panneaux vides.</figcaption></figure>
+</section>
+
+<section>
+<h2 id="interface">4. Découvrir l’interface</h2>
+<figure class="shot"><img src="../assets/img/screens/fr/view-annotated.webp" width="1560" height="920" loading="lazy" alt="La fenêtre de Declas avec l’arborescence des dossiers, les miniatures, la visionneuse, les onglets de résultats et le journal"><figcaption><b>La fenêtre principale :</b> un dossier de station traité est ouvert.</figcaption></figure>
+<ul>
+  <li><strong>Barre de menus</strong> : <span class="ui">Fichier</span>, <span class="ui">Paramètres</span> et <span class="ui">Modèles</span>.</li>
+  <li><strong>Barre d’outils</strong> : chaque action en un clic (voir le tableau ci-dessous).</li>
+  <li><strong>Arborescence des dossiers</strong> (en haut à gauche) : les sous-dossiers du dossier sélectionné. Cliquez sur un dossier pour afficher ses médias.</li>
+  <li><strong>Miniatures</strong> (à gauche) : toutes les images et vidéos du dossier courant, par ordre de nom. Le fichier ouvert est mis en évidence. Cliquez sur une miniature pour l’ouvrir.</li>
+  <li><strong>Visionneuse</strong> (au centre) : l’image ou la vidéo, avec les boutons <span class="ui">Précédent</span>, <span class="ui">Lecture/Pause</span> et <span class="ui">Suivant</span> en dessous. Pour les vidéos, une barre de lecture et des boutons de saut ◀◀ / ▶▶ apparaissent.</li>
+  <li><strong>Panneau latéral</strong> (à droite), avec quatre onglets : <span class="ui">Métadonnées</span>, <span class="ui">Carte</span>, <span class="ui">Inférence</span> et <span class="ui">Étiquettes personnalisées</span>.</li>
+  <li><strong>Journal</strong> (en bas à droite) : les messages des traitements par lot, dossier par dossier.</li>
+  <li><strong>Barre d’état</strong> (en bas) : de courts messages comme <em>Exécution…</em>, <em>Terminé ✅</em> ou <em>Terminé avec succès</em>, avec un indicateur animé pendant le traitement.</li>
+</ul>
+
+<h3 id="toolbar">Boutons de la barre d’outils</h3>
+<div class="table-wrap"><table>
+  <thead><tr><th>Bouton</th><th>Nom</th><th>Action</th></tr></thead>
+  <tbody>
+    <tr><td><img class="ui-icon" src="../assets/img/icons/folder.png" alt=""></td><td>Sélectionner un dossier</td><td>Choisir le dossier (ou le projet) à traiter.</td></tr>
+    <tr><td><img class="ui-icon" src="../assets/img/icons/image.png" alt=""></td><td>Sélectionner un média</td><td>Ouvrir une seule image ou vidéo. Son dossier s’affiche dans la barre latérale.</td></tr>
+    <tr><td><img class="ui-icon" src="../assets/img/icons/globe.png" alt=""></td><td>Afficher sur la carte</td><td>Placer l’image courante sur la carte, si elle contient des coordonnées GPS.</td></tr>
+    <tr><td><img class="ui-icon" src="../assets/img/icons/run.png" alt=""></td><td>Exécuter sur le média affiché</td><td>Lancer le modèle choisi sur l’image ou la vidéo affichée.</td></tr>
+    <tr><td><img class="ui-icon" src="../assets/img/icons/batch.png" alt=""></td><td>Exécuter sur le(s) dossier(s)</td><td>Lancer le modèle sur tout le dossier ou projet sélectionné.</td></tr>
+    <tr><td><img class="ui-icon" src="../assets/img/icons/table.png" alt=""></td><td>Construire le tableau</td><td>Réunir tous les résultats et étiquettes dans un fichier CSV.</td></tr>
+    <tr><td><img class="ui-icon" src="../assets/img/icons/remove.png" alt=""></td><td>Effacer tous les rapports</td><td>Supprimer tous les fichiers <code>detections.json</code> et <code>.csv</code> du dossier courant, après confirmation.</td></tr>
+    <tr><td><img class="ui-icon" src="../assets/img/icons/split.png" alt=""></td><td>Séparer les médias avec / sans cible</td><td>Copier les images dans les dossiers <code>has_target</code> et <code>no_target</code>.</td></tr>
+    <tr><td><img class="ui-icon" src="../assets/img/icons/zoom.png" alt=""></td><td>Loupe</td><td>Activer une loupe qui suit la souris sur l’image.</td></tr>
+    <tr><td><img class="ui-icon" src="../assets/img/icons/draw_box.png" alt=""></td><td>Dessiner une boîte englobante</td><td>Faire glisser sur l’image pour encadrer un animal manqué.</td></tr>
+    <tr><td><img class="ui-icon" src="../assets/img/icons/erase_box.png" alt=""></td><td>Supprimer une boîte englobante</td><td>Survoler une boîte puis cliquer pour la supprimer.</td></tr>
+  </tbody>
+</table></div>
+
+<h3 id="menus">Menus</h3>
+<div class="table-wrap"><table>
+  <thead><tr><th>Menu</th><th>Élément</th><th>Rôle</th></tr></thead>
+  <tbody>
+    <tr><td>Fichier</td><td>Importer</td><td>Charger un <code>detections.json</code> existant pour construire un tableau à partir de celui-ci. <a href="#import">En savoir plus</a></td></tr>
+    <tr><td>Fichier</td><td>Quitter</td><td>Fermer Declas.</td></tr>
+    <tr><td>Paramètres</td><td>Apparence</td><td>Thème Clair, Sombre ou Système.</td></tr>
+    <tr><td>Paramètres</td><td>Paramètres d’inférence</td><td>Tâche, modèle, seuils, options vidéo et distance. <a href="#parameters">En savoir plus</a></td></tr>
+    <tr><td>Paramètres</td><td>Étiquettes</td><td>Définir vos propres champs de données. <a href="#tags">En savoir plus</a></td></tr>
+    <tr><td>Paramètres</td><td>Général</td><td>Son de notification, langue et thème. <a href="#settings">En savoir plus</a></td></tr>
+    <tr><td>Modèles</td><td>Extensions</td><td>Parcourir, télécharger et supprimer des modèles d’IA. <a href="#models">En savoir plus</a></td></tr>
+    <tr><td>Modèles</td><td>Publier</td><td>Comment publier votre propre modèle pour Declas. <a href="#publish">En savoir plus</a></td></tr>
+  </tbody>
+</table></div>
+</section>
+
+<section>
+<h2 id="organise">5. Organiser vos données</h2>
+<p>Declas accepte deux organisations de dossiers. Le choix se fait avec l’option <span class="ui">Exécuter sur le dossier principal</span> dans les <a href="#parameters">paramètres d’inférence</a>. Elle détermine la façon dont les dossiers sont traités et dont le tableau final est rempli.</p>
+
+<h3 id="single-folder">Mode A : un dossier de médias (« Exécuter sur le dossier principal » coché)</h3>
+<p>Utilisez ce mode quand vos images ne sont pas encore triées, ce qui est le cas habituel en sortie de carte SD. Declas ne traite que les médias situés directement dans le dossier sélectionné.</p>
+<pre class="tree">Survey_2024/
+└── SD30/                <span class="c">← sélectionnez ce dossier</span>
+    ├── 10220130.JPG
+    ├── 10260398.JPG
+    ├── 10280600.JPG
+    └── …</pre>
+<p>Traitez chaque station en sélectionnant son dossier l’un après l’autre. La colonne <code>species</code> du tableau provient du modèle.</p>
+
+<h3 id="project-mode">Mode B : projet › station › espèce (« Exécuter sur le dossier principal » décoché)</h3>
+<p>Utilisez ce mode quand vos images sont déjà triées en dossiers d’espèces à l’intérieur de chaque station, par exemple après un premier tri manuel. Sélectionnez le dossier du <strong>projet</strong> : Declas parcourt chaque station et traite, en parallèle, tous les sous-dossiers contenant des médias.</p>
+<figure class="shot narrow"><img src="../assets/img/structure.webp" width="1000" height="562" loading="lazy" alt="Dossier de projet contenant Station A et Station B, chacune avec un dossier par espèce"><figcaption><b>Mode projet :</b> un dossier par station, puis un dossier par espèce.</figcaption></figure>
+<p>Dans ce mode, la colonne <code>station</code> du tableau reprend le nom du dossier de station et la colonne <code>species</code> le nom du dossier d’espèce. Le modèle sert à compter les individus et à localiser leurs boîtes.</p>
+<div class="callout warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 21h20z"/><path d="M12 10v4M12 17h.01"/></svg><p>Si vous sélectionnez un dossier contenant directement des images alors que l’option est décochée, Declas affiche <em>« Aucun sous-dossier valide trouvé »</em>. Cochez <span class="ui">Exécuter sur le dossier principal</span>, ou sélectionnez le dossier parent qui contient les dossiers des stations.</p></div>
+<p>Les dossiers nommés <code>detections</code> et <code>frames</code> sont créés par Declas et sont toujours ignorés.</p>
+</section>
+
+<section>
+<h2 id="models">6. Extensions de modèles</h2>
+<p>Declas n’est pas livré avec un modèle figé. Les modèles s’installent sous forme d’<strong>extensions</strong> : de petits paquets contenant un fichier de description et le code pour les exécuter. Leurs poids sont téléchargés une seule fois et conservés sur votre ordinateur.</p>
+
+<h3 id="install-model">Installer un modèle</h3>
+<ol class="step-list">
+  <li>Ouvrez <span class="ui">Modèles › Extensions</span>. La fenêtre reste ouverte pendant que vous continuez à travailler dans Declas.</li>
+  <li>Ouvrez l’onglet <span class="ui">Disponibles</span>. Chaque fiche indique la région du modèle, sa taille, son framework, son auteur, sa licence, sa citation et les classes qu’il reconnaît.</li>
+  <li>Utilisez le champ de recherche pour filtrer par nom, région, auteur, tâche ou espèce, par exemple <em>leopard</em> ou <em>Europe</em>.</li>
+  <li>Cliquez sur <span class="ui">Télécharger</span>. Une barre de progression suit le téléchargement ; le bouton devient <span class="ui">Installé ✓</span> une fois terminé.</li>
+</ol>
+<figure class="shot narrow"><img src="../assets/img/screens/fr/extensions-available.webp" width="820" height="560" loading="lazy" alt="La fenêtre des extensions, onglet Disponibles, avec MegaDetector 6b installé et MegaDetector 5a"><figcaption><b>Modèles › Extensions › Disponibles :</b> tous les modèles du registre en ligne sont listés ici.</figcaption></figure>
+<figure class="shot narrow"><img src="../assets/img/screens/fr/extensions-installed.webp" width="820" height="560" loading="lazy" alt="L’onglet Installés listant quatre extensions installées"><figcaption><b>Onglet Installés :</b> sélectionnez un modèle et cliquez sur Supprimer la sélection pour le retirer. Les modèles intégrés ne peuvent pas être supprimés.</figcaption></figure>
+<div class="callout tip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><p><strong>Quel modèle choisir ?</strong> S’il existe un modèle d’espèces pour votre région, utilisez-le avec <em>Tâche : Classification</em> : il repère et nomme les animaux en une seule passe. Sinon, utilisez <em>MegaDetector 6b</em> avec <em>Tâche : Détection</em> pour séparer animaux, personnes et véhicules des images vides, puis triez les espèces vous-même.</p></div>
+
+<h3 id="model-list">Modèles disponibles</h3>
+<p>Cette liste est lue en direct depuis le registre utilisé par Declas : elle correspond toujours à ce que vous voyez dans <span class="ui">Modèles › Extensions</span>.</p>
+<div class="table-wrap"><table id="model-table">
+  <thead><tr><th>Modèle</th><th>Tâche</th><th>Région</th><th>Classes</th><th>Taille</th><th>Licence</th></tr></thead>
+  <tbody>
+    <tr><td>MegaDetector 6b</td><td>Détection</td><td>Mondial</td><td>animal, person, vehicle</td><td>50 Mo</td><td>MIT</td></tr>
+    <tr><td>MegaDetector 5a</td><td>Détection</td><td>Mondial</td><td>animal, person, vehicle</td><td>281 Mo</td><td>MIT</td></tr>
+    <tr><td>MegaDetector 5b</td><td>Détection</td><td>Mondial</td><td>animal, person, vehicle</td><td>281 Mo</td><td>MIT</td></tr>
+    <tr><td>DeepFaune Detection v1.1</td><td>Détection</td><td>Europe</td><td>animal, person, vehicle</td><td>22 Mo</td><td>CC BY-NC-SA 4.0</td></tr>
+    <tr><td>Sub-Saharan Africa Wildlife Detector v1</td><td>Classification</td><td>Afrique subsaharienne</td><td>36</td><td>101 Mo</td><td>CC BY-NC 4.0</td></tr>
+    <tr><td>DeepFaune Classification v1.1</td><td>Classification</td><td>Europe</td><td>26</td><td>1 220 Mo</td><td>CC BY-NC-SA 4.0</td></tr>
+    <tr><td>Namib Desert v1</td><td>Classification</td><td>Namibie</td><td>30</td><td>107 Mo</td><td>CC BY-NC-SA 4.0</td></tr>
+    <tr><td>AI4G Snapshot Serengeti</td><td>Classification</td><td>Serengeti (Tanzanie)</td><td>10</td><td>89 Mo</td><td>MIT</td></tr>
+    <tr><td>AI4G Amazon Classification</td><td>Classification</td><td>Amazonie</td><td>36</td><td>192 Mo</td><td>MIT</td></tr>
+    <tr><td>Colombian Amazon (pywildlife)</td><td>Classification</td><td>Colombie (Amazonie)</td><td>36</td><td>197 Mo</td><td>MIT</td></tr>
+    <tr><td>Peruvian Amazon v1</td><td>Classification</td><td>Pérou (Amazonie)</td><td>42</td><td>247 Mo</td><td>MIT</td></tr>
+    <tr><td>Southwest USA v3</td><td>Classification</td><td>Sud-ouest des États-Unis</td><td>27</td><td>431 Mo</td><td>MIT</td></tr>
+    <tr><td>New Zealand Invasives v1</td><td>Classification</td><td>Nouvelle-Zélande</td><td>17</td><td>32 Mo</td><td>CC BY-NC-SA 4.0</td></tr>
+    <tr><td>Iran Wildlife v1</td><td>Classification</td><td>Iran</td><td>13</td><td>32 Mo</td><td>CC BY-NC-SA 4.0</td></tr>
+    <tr><td>Depth Anything V2 (Metric Outdoor)</td><td>Profondeur</td><td>Mondial</td><td>distance en mètres</td><td>97 Mo</td><td>Apache-2.0</td></tr>
+  </tbody>
+</table></div>
+<nav class="pager" id="model-pager" aria-label="Pages de la liste des modèles" hidden></nav>
+<p>Les modèles sont créés par leurs auteurs, cités sur chaque fiche. Plusieurs sont sous licence <strong>usage non commercial uniquement</strong> (CC BY-NC) : vérifiez la licence avant toute utilisation commerciale des résultats, et citez le modèle dans vos publications grâce au lien <span class="ui">Citation</span>.</p>
+</section>
+
+<section>
+<h2 id="parameters">7. Paramètres d’inférence</h2>
+<p>Ouvrez <span class="ui">Paramètres › Paramètres d’inférence</span> pour choisir ce que Declas exécute et comment. Cliquez sur <span class="ui">Enregistrer</span> pour conserver vos réglages ; ils sont retrouvés à la prochaine ouverture de Declas.</p>
+<figure class="shot narrow"><img src="../assets/img/screens/fr/inference-parameters.webp" width="631" height="585" loading="lazy" alt="La boîte de dialogue des paramètres d’inférence"><figcaption><b>Paramètres › Paramètres d’inférence</b></figcaption></figure>
+<div class="table-wrap"><table>
+  <thead><tr><th>Réglage</th><th>Signification</th><th>Conseil</th></tr></thead>
+  <tbody>
+    <tr><td class="ui">Tâche</td><td><em>Détection</em> repère les animaux, les personnes et les véhicules. <em>Classification</em> nomme aussi les espèces.</td><td>Doit correspondre au type de modèle choisi.</td></tr>
+    <tr><td class="ui">Modèle</td><td>L’extension installée à utiliser. Seuls les modèles dont les poids sont téléchargés apparaissent.</td><td>Si la liste indique <em>Aucun modèle installé</em>, voir <a href="#models">Extensions de modèles</a>.</td></tr>
+    <tr><td class="ui">Taille d’image</td><td>Deux nombres, largeur et hauteur, par exemple <code>1920 1440</code>.</td><td>Gardez la valeur par défaut sauf indication contraire de l’auteur du modèle.</td></tr>
+    <tr><td class="ui">Seuil de confiance</td><td>Les détections dont le score est inférieur à cette valeur sont ignorées (de 0 à 1).</td><td>0,55 est un bon point de départ. Baissez-le (0,3 à 0,4) si des animaux sont manqués ; augmentez-le en cas de fausses détections.</td></tr>
+    <tr><td class="ui">Détections maximum</td><td>Le nombre maximal d’objets conservés par image.</td><td>300 suffit largement pour la faune.</td></tr>
+    <tr><td class="ui">Classes d’intérêt</td><td>Cochez les classes ou espèces à conserver. Celles qui sont décochées sont retirées des résultats.</td><td>Décochez <em>person</em> et <em>vehicle</em> pour ne garder que les animaux.</td></tr>
+    <tr><td class="ui">Traiter les vidéos</td><td>Si coché, les vidéos sont analysées en même temps que les images.</td><td>Décochez pour ignorer les vidéos et gagner du temps.</td></tr>
+    <tr><td class="ui">Intervalle d’images</td><td>Pour les vidéos, analyse une image toutes les <em>n</em> images.</td><td>À 30 images par seconde, un intervalle de 30 correspond à une image par seconde. Plus petit, c’est plus complet mais plus lent.</td></tr>
+    <tr><td class="ui">Demi-précision</td><td>Exécute le modèle en précision 16 bits.</td><td>Utile uniquement avec une carte graphique CUDA. Laissez décoché sur processeur.</td></tr>
+    <tr><td class="ui">Exécuter sur le dossier principal</td><td>Coché : traite uniquement le dossier sélectionné. Décoché : organisation projet › station › espèce.</td><td>Voir <a href="#organise">Organiser vos données</a>.</td></tr>
+    <tr><td class="ui">Périphérique</td><td><em>cpu</em>, ou <em>cuda</em> lorsqu’une carte NVIDIA est détectée.</td><td>Choisissez <em>cuda</em> s’il apparaît.</td></tr>
+    <tr><td class="ui">Estimation de distance</td><td>Cochez <span class="ui">Estimer</span> pour calculer la distance jusqu’à chaque animal après la détection.</td><td>Voir <a href="#distance">Estimation de distance</a>.</td></tr>
+  </tbody>
+</table></div>
+</section>
+
+<section>
+<h2 id="run-single">8. Exécuter sur une seule image ou vidéo</h2>
+<p>Pratique pour essayer un modèle ou un seuil avant de traiter tout un inventaire.</p>
+<ol class="step-list">
+  <li>Ouvrez un fichier avec <img class="ui-icon" src="../assets/img/icons/image.png" alt=""> <span class="ui">Sélectionner un média</span>, ou cliquez sur une miniature après avoir sélectionné un dossier.</li>
+  <li>Cliquez sur <img class="ui-icon" src="../assets/img/icons/run.png" alt=""> <span class="ui">Exécuter sur le média affiché</span>. La barre d’état affiche <em>Exécution…</em>, puis <em>Terminé ✅</em>.</li>
+  <li>Le résultat apparaît dans l’onglet <span class="ui">Inférence</span>. Cliquez sur <span class="ui">Afficher</span> pour voir les boîtes.</li>
+</ol>
+<p>Le résultat est enregistré dans le <code>detections.json</code> de ce dossier : vous pourrez construire un tableau à partir de celui-ci plus tard.</p>
+</section>
+
+<section>
+<h2 id="run-batch">9. Exécuter sur des dossiers (traitement par lot)</h2>
+<ol class="step-list">
+  <li>Vérifiez vos réglages dans <span class="ui">Paramètres › Paramètres d’inférence</span>, en particulier <span class="ui">Exécuter sur le dossier principal</span>.</li>
+  <li>Cliquez sur <img class="ui-icon" src="../assets/img/icons/folder.png" alt=""> <span class="ui">Sélectionner un dossier</span> et choisissez un dossier de station (mode A) ou un dossier de projet (mode B).</li>
+  <li>Cliquez sur <img class="ui-icon" src="../assets/img/icons/batch.png" alt=""> <span class="ui">Exécuter sur le(s) dossier(s)</span>.</li>
+</ol>
+<p>Le traitement se déroule en arrière-plan : vous pouvez continuer à naviguer. Le journal affiche chaque dossier au début (<em>🔄 Traitement : SD30</em>, ou <em>🔄 Station : …</em> en mode projet) et à la fin du traitement, et la barre d’état indique <em>Terminé avec succès</em> quand tout est fini. Un son de notification retentit si vous l’avez activé dans les <a href="#settings">paramètres généraux</a>.</p>
+<figure class="shot"><img src="../assets/img/screens/fr/batch-log.webp" width="1560" height="920" loading="lazy" alt="Le journal affichant Traitement : SD28 et le message Terminé avec succès dans la barre d’état"><figcaption><b>Traitement par lot :</b> le journal (en bas à droite) liste chaque dossier traité ; la barre d’état confirme la fin du traitement.</figcaption></figure>
+<div class="callout tip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><p>Relancer un dossier remplace son <code>detections.json</code>. Si vous avez corrigé des résultats à la main, sauvegardez ce fichier avant de relancer.</p></div>
+</section>
+
+<section>
+<h2 id="review">10. Vérifier les résultats</h2>
+
+<h3 id="inference-tab">L’onglet Inférence</h3>
+<p>Cliquez sur une miniature et ouvrez l’onglet <span class="ui">Inférence</span>. Declas affiche une <strong>fiche par espèce</strong> trouvée sur l’image, avec le nom de l’espèce et le nombre d’individus.</p>
+<figure class="shot"><img src="../assets/img/screens/fr/multi-species.webp" width="1560" height="920" loading="lazy" alt="Onglet Inférence avec deux fiches : KobusEllipsiprymnus nombre 3 et SylvicapraGrimmia nombre 1"><figcaption><b>Deux espèces sur une même image :</b> chacune a sa propre fiche.</figcaption></figure>
+<p>Les images où rien n’a été trouvé sont enregistrées avec l’espèce <em>Empty</em> et un nombre de 0, pour qu’elles figurent quand même dans votre tableau.</p>
+
+<h3 id="view-annotated">Voir les boîtes</h3>
+<p>Cliquez sur <span class="ui">Afficher</span> pour voir la copie annotée de l’image, avec une boîte et un score de confiance pour chaque détection. Ces copies sont enregistrées dans le sous-dossier <code>detections</code> : vos images originales ne sont jamais modifiées.</p>
+<div class="gallery">
+  <figure class="shot"><img src="../assets/img/screens/fr/hyenas.webp" width="1560" height="920" loading="lazy" alt="Trois hyènes tachetées encadrées sur une image infrarouge de nuit"><figcaption><b>CrocutaCrocuta × 3 :</b> de nuit</figcaption></figure>
+  <figure class="shot"><img src="../assets/img/screens/fr/leopard.webp" width="1560" height="920" loading="lazy" alt="Un léopard encadré dans les hautes herbes"><figcaption><b>PantheraPardus × 1 :</b> confiance 0,60</figcaption></figure>
+</div>
+<p>Utilisez la <img class="ui-icon" src="../assets/img/icons/zoom.png" alt=""> <span class="ui">Loupe</span> pour agrandir les animaux petits ou éloignés : activez-la, puis survolez l’image.</p>
+
+<h3 id="edit-results">Corriger les espèces et les nombres</h3>
+<ol class="step-list">
+  <li>Saisissez un nouveau nom dans le champ <span class="ui">Espèce</span>, ou modifiez le <span class="ui">Nombre</span>.</li>
+  <li>Cliquez sur <span class="ui">Ajouter une espèce</span> pour ajouter une fiche pour une espèce que le modèle n’a pas signalée.</li>
+  <li>Cliquez sur le bouton <span class="ui">–</span> d’une fiche pour supprimer cette entrée.</li>
+</ol>
+<p>Les modifications sont <strong>enregistrées automatiquement</strong> dans <code>detections.json</code> au fil de la saisie. Elles seront prises en compte à la prochaine construction du tableau.</p>
+</section>
+
+<section>
+<h2 id="boxes">11. Dessiner et supprimer des boîtes englobantes</h2>
+<p>Quand le modèle manque un animal, ou encadre quelque chose qui n’en est pas un, corrigez-le directement sur l’image.</p>
+<h4>Ajouter un animal manqué</h4>
+<ol class="step-list">
+  <li>Cliquez sur <img class="ui-icon" src="../assets/img/icons/draw_box.png" alt=""> <span class="ui">Dessiner une boîte englobante</span>.</li>
+  <li>Tracez un rectangle autour de l’animal.</li>
+  <li>Choisissez ou saisissez l’espèce dans la boîte de dialogue <span class="ui">Nouvelle boîte englobante</span>. Les espèces déjà présentes sur l’image sont proposées en premier, suivies des classes du modèle.</li>
+</ol>
+<h4>Supprimer une boîte erronée</h4>
+<ol class="step-list">
+  <li>Cliquez sur <img class="ui-icon" src="../assets/img/icons/erase_box.png" alt=""> <span class="ui">Supprimer une boîte englobante</span>.</li>
+  <li>Survolez la boîte (elle se met en évidence) puis cliquez dessus.</li>
+</ol>
+<figure class="shot"><img src="../assets/img/screens/box-editing.webp" width="1920" height="1010" loading="lazy" alt="Un babouin encadré en vert par le modèle et un second babouin encadré en rouge à la main, avec PapioSp nombre 2"><figcaption><b>Modification des boîtes :</b> la boîte verte a été trouvée par le modèle, la rouge dessinée à la main. Le nombre passe à 2 (capture de l’interface en anglais).</figcaption></figure>
+<p>Chaque boîte ajoutée ou supprimée met à jour le nombre d’individus et est enregistrée dans <code>detections.json</code> : elle est donc prise en compte dans le rapport. Les fichiers créés par de très anciennes versions de Declas ne peuvent pas être modifiés ainsi.</p>
+</section>
+
+<section>
+<h2 id="tags">12. Étiquettes personnalisées</h2>
+<p>Les étiquettes permettent de noter vos propres observations pour chaque image ou vidéo : sexe, classe d’âge, comportement, distance mesurée à la main… Elles deviennent des colonnes du tableau final.</p>
+<h3 id="define-tags">Définir vos étiquettes</h3>
+<ol class="step-list">
+  <li>Ouvrez <span class="ui">Paramètres › Étiquettes</span>.</li>
+  <li>Cliquez sur <span class="ui">Ajouter une étiquette</span>, puis renseignez le <span class="ui">Titre de l’étiquette</span>, choisissez le <span class="ui">Type de données</span> (<em>float</em>, <em>integer</em>, <em>text</em>, <em>date</em> ou <em>boolean</em>) et, si besoin, listez des <span class="ui">Valeurs prédéfinies (séparées par des virgules)</span>.</li>
+  <li>Cliquez sur <span class="ui">Enregistrer</span>.</li>
+</ol>
+<figure class="shot narrow"><img src="../assets/img/screens/fr/tags-dialog.webp" width="600" height="320" loading="lazy" alt="Boîte de dialogue des étiquettes avec sex de type text, valeurs male et female, et distance_m de type float"><figcaption><b>Paramètres › Étiquettes :</b> deux étiquettes, <code>sex</code> (male, female) et <code>distance_m</code>.</figcaption></figure>
+<h3 id="fill-tags">Renseigner les étiquettes</h3>
+<p>Ouvrez une image et allez dans l’onglet <span class="ui">Étiquettes personnalisées</span>. Chaque étiquette a son champ ; celles qui ont des valeurs prédéfinies affichent une liste déroulante. Cliquez sur <span class="ui">Ajouter une entrée</span> pour décrire plusieurs individus sur la même image (Entrée 1, Entrée 2…). Les valeurs sont enregistrées automatiquement.</p>
+<figure class="shot"><img src="../assets/img/screens/fr/custom-tags.webp" width="1560" height="920" loading="lazy" alt="Onglet Étiquettes personnalisées avec Entrée 1 : sex male, distance_m vide"><figcaption><b>Onglet Étiquettes personnalisées :</b> les valeurs d’une image.</figcaption></figure>
+<p>Dans le tableau, une étiquette texte avec des valeurs prédéfinies devient une colonne 0/1 par valeur (par exemple <code>sex_male</code>, <code>sex_female</code>), ce qui facilite l’analyse. Les autres étiquettes gardent une seule colonne avec la valeur saisie. Chaque entrée supplémentaire ajoute une ligne.</p>
+<div class="callout note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg><p>Une étiquette nommée <code>distance_m</code> est traitée à part lorsque l’estimation automatique de distance est activée : les valeurs saisies à la main sont ajoutées comme lignes supplémentaires pour les individus non détectés par le modèle, au lieu de remplacer les distances estimées.</p></div>
+</section>
+
+<section>
+<h2 id="metadata-map">13. Métadonnées et carte</h2>
+<p>L’onglet <span class="ui">Métadonnées</span> liste tout ce que contient le fichier image : position GPS, marque de l’appareil, micrologiciel, date et heure de la prise de vue, exposition, etc.</p>
+<figure class="shot"><img src="../assets/img/screens/fr/metadata.webp" width="1560" height="920" loading="lazy" alt="Onglet Métadonnées affichant les informations GPS (floutées), la marque BUSHNELL et DateTimeOriginal 2020:10:31 12:07:00"><figcaption><b>Onglet Métadonnées :</b> les coordonnées GPS sont floutées ici pour protéger le site d’inventaire.</figcaption></figure>
+<p>Si l’image contient des coordonnées GPS, cliquez sur <img class="ui-icon" src="../assets/img/icons/globe.png" alt=""> <span class="ui">Afficher sur la carte</span> pour la placer sur une carte interactive dans l’onglet <span class="ui">Carte</span>. En l’absence de données GPS, Declas vous l’indique.</p>
+<p>La date, l’heure et le GPS sont aussi repris dans le tableau. La colonne <code>time_radian</code> donne l’heure de la journée sous forme d’angle entre 0 et 2π, prête pour l’analyse des rythmes d’activité.</p>
+<div class="callout warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 21h20z"/><path d="M12 10v4M12 17h.01"/></svg><p>Avant de partager publiquement des résultats ou des captures d’écran, pensez à retirer ou arrondir les coordonnées des espèces sensibles. Des localisations exactes peuvent aider les braconniers.</p></div>
+</section>
+
+<section>
+<h2 id="videos">14. Travailler avec des vidéos</h2>
+<ul>
+  <li>Cliquez sur la miniature d’une vidéo pour la lire dans la visionneuse. Utilisez la barre de lecture, ◀◀ / ▶▶ et Lecture/Pause.</li>
+  <li>Quand <span class="ui">Traiter les vidéos</span> est coché, Declas extrait une image toutes les <span class="ui">Intervalle d’images</span> images dans un sous-dossier <code>frames</code> (nommées <code>&lt;vidéo&gt;_f000120.jpg</code>, etc.), exécute le modèle sur chacune et fusionne les résultats dans le <code>detections.json</code> du dossier.</li>
+  <li>Chaque image extraite reçoit sa propre date et heure, calculées à partir de l’heure de début de la vidéo et de la position de l’image. Le GPS est repris du fichier vidéo lorsqu’il en contient.</li>
+  <li>Dans le tableau, les lignes issues de vidéos ont <code>media_type</code> égal à <em>video</em>.</li>
+</ul>
+<p>Les étiquettes saisies pour une vidéo s’appliquent à ses images lors de la construction du tableau.</p>
+</section>
+
+<section>
+<h2 id="distance">15. Estimation de distance</h2>
+<p>Declas peut estimer la distance entre la caméra et chaque animal détecté, ce qui est utile pour l’échantillonnage par distance avec pièges photographiques et l’estimation de densité. Il utilise <strong>Depth Anything V2 (Metric Outdoor)</strong>, un modèle qui prédit une profondeur en mètres pour chaque pixel (jusqu’à 80 m).</p>
+<h3 id="distance-setup">Configuration</h3>
+<ol class="step-list">
+  <li>Ouvrez <span class="ui">Paramètres › Paramètres d’inférence</span> et cochez <span class="ui">Estimer</span> sous <span class="ui">Estimation de distance</span>.</li>
+  <li>Choisissez le <span class="ui">Modèle de profondeur</span>. Ses poids (environ 97 Mo) se téléchargent automatiquement la première fois, ce qui demande une connexion internet une seule fois.</li>
+  <li>Cliquez sur <span class="ui">Définir le champ de vision</span> et saisissez le champ de vision horizontal de chaque caméra, en degrés (voir ci-dessous).</li>
+  <li>Cliquez sur <span class="ui">Enregistrer</span>, puis lancez la détection comme d’habitude.</li>
+</ol>
+<p>L’estimation de distance démarre automatiquement après la détection. Si un dossier possède déjà un <code>detections.json</code>, Declas saute la détection et passe directement à l’estimation de distance, ce qui fait gagner beaucoup de temps.</p>
+
+<h3 id="fov">Champ de vision par station</h3>
+<p>Le champ de vision corrige la distance des animaux situés sur les côtés de l’image, qui sont plus loin que ne l’indique leur seule profondeur. Vous le trouverez dans le manuel de votre caméra (souvent entre 40° et 60° pour les pièges photographiques).</p>
+<ul>
+  <li>Utilisez <span class="ui">Ajouter</span> et <span class="ui">Supprimer</span> pour modifier le tableau, une ligne par station.</li>
+  <li>Ou cliquez sur <span class="ui">Importer un CSV</span> avec une ligne par station. Les colonnes <code>station</code> et <code>fov</code> sont utilisées ; si elles portent d’autres noms, la première colonne est la station et la seconde le champ de vision.</li>
+</ul>
+<pre data-lang="CSV"><code class="language-plaintext">station,fov
+SD25,52
+SD28,52
+SD30,48</code></pre>
+<p>Le nom de la station doit correspondre au nom du dossier : le dossier sélectionné en mode A, ou le dossier de station en mode B (sans tenir compte des majuscules). Si vous ne définissez <strong>qu’un seul</strong> champ de vision, il s’applique à toutes les stations. Si aucun ne correspond, Declas utilise la profondeur brute et affiche un avertissement dans la barre d’état.</p>
+
+<h3 id="how-distance">Comment la distance est calculée</h3>
+<p>Pour chaque boîte, Declas lit la profondeur au <strong>milieu du bord inférieur</strong> de la boîte, là où l’animal touche le sol. Avec un champ de vision, il convertit la position horizontale de ce point en angle par rapport à l’axe de la caméra et divise la profondeur par son cosinus :</p>
+<pre data-lang="Formule"><code class="language-plaintext">pos      = (x − largeur/2) / (largeur/2)    # −1 bord gauche … +1 bord droit
+angle    = atan(pos × tan(FOV / 2))
+distance = profondeur / cos(angle)</code></pre>
+<p>Le résultat est enregistré pour chaque individu sous <code>distance_m</code>. Dans le tableau, une image avec des distances donne une ligne par individu (nombre = 1), chacune avec sa propre distance.</p>
+<div class="callout note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg><p>La profondeur monoculaire reste une estimation. Calibrez-la pour votre site, par exemple en photographiant une personne ou un repère à des distances connues devant chaque caméra, avant de l’utiliser pour estimer des densités.</p></div>
+</section>
+
+<section>
+<h2 id="split">16. Séparer les images vides</h2>
+<p>Les pièges photographiques produisent beaucoup d’images vides (vent, herbes, soleil). Après avoir exécuté un modèle, cliquez sur <img class="ui-icon" src="../assets/img/icons/split.png" alt=""> <span class="ui">Séparer les médias avec / sans cible</span>. Dans chaque dossier traité, Declas crée :</p>
+<ul>
+  <li><code>has_target/</code> : les copies des images avec au moins une détection,</li>
+  <li><code>no_target/</code> : les copies des images où rien n’a été trouvé.</li>
+</ul>
+<figure class="shot"><img src="../assets/img/screens/fr/after-split.webp" width="1560" height="920" loading="lazy" alt="L’arborescence montrant les dossiers detections, has_target et no_target"><figcaption><b>Après la séparation :</b> <code>has_target</code> et <code>no_target</code> apparaissent à côté de <code>detections</code>.</figcaption></figure>
+<p>Les images sont <strong>copiées</strong>, pas déplacées : les originaux restent à leur place. Cela double l’espace disque occupé par ces images.</p>
+</section>
+
+<section>
+<h2 id="table">17. Construire le tableau (export CSV)</h2>
+<ol class="step-list">
+  <li>Sélectionnez le dossier (mode A) ou le projet (mode B) traité.</li>
+  <li>Cliquez sur <img class="ui-icon" src="../assets/img/icons/table.png" alt=""> <span class="ui">Construire le tableau</span>.</li>
+  <li>Un message indique où le fichier a été enregistré : <code>&lt;tâche&gt;_AAAAMMJJ_HHMMSS.csv</code> (par exemple <code>classification_20261011_211359.csv</code>) dans le dossier sélectionné. Les tableaux précédents ne sont jamais écrasés.</li>
+</ol>
+<p>Voici les premières lignes d’un vrai tableau construit à partir de la station SD30 (chemins raccourcis, coordonnées masquées) :</p>
+<div class="table-wrap"><table>
+  <thead><tr><th>media</th><th>media_type</th><th>species</th><th>count</th><th>latitude</th><th>longitude</th><th>altitude</th><th>make</th><th>date</th><th>time</th><th>time_radian</th><th>distance_m</th><th>sex_male</th><th>sex_female</th></tr></thead>
+  <tbody>
+    <tr><td>10220130</td><td>image</td><td>SylvicapraGrimmia</td><td>1</td><td>•••</td><td>•••</td><td>184.0</td><td>BUSHNEL</td><td>2020:10:22</td><td>07:27:17</td><td>1.952</td><td></td><td></td><td></td></tr>
+    <tr><td>10260398</td><td>image</td><td>HippopotamusAmphibious</td><td>1</td><td>•••</td><td>•••</td><td>0.0</td><td>BUSHNEL</td><td>2020:10:26</td><td>02:37:32</td><td>0.687</td><td></td><td></td><td></td></tr>
+    <tr><td>10270578</td><td>image</td><td>Empty</td><td>0</td><td>•••</td><td>•••</td><td>209.0</td><td>BUSHNEL</td><td>2020:10:27</td><td>12:45:15</td><td>3.339</td><td></td><td></td><td></td></tr>
+    <tr><td>10280600</td><td>image</td><td>KobusEllipsiprymnus</td><td>3</td><td>•••</td><td>•••</td><td>205.0</td><td>BUSHNEL</td><td>2020:10:28</td><td>10:56:20</td><td>2.864</td><td></td><td></td><td></td></tr>
+  </tbody>
+</table></div>
+
+<h3 id="csv-columns">Description des colonnes</h3>
+<p>Les noms de colonnes restent en anglais, quelle que soit la langue de l’interface, pour que vos scripts d’analyse fonctionnent partout.</p>
+<div class="table-wrap"><table>
+  <thead><tr><th>Colonne</th><th>Contenu</th></tr></thead>
+  <tbody>
+    <tr><td><code>media_path</code></td><td>Chemin complet de l’image (ou de l’image extraite d’une vidéo).</td></tr>
+    <tr><td><code>media</code></td><td>Nom du fichier sans extension.</td></tr>
+    <tr><td><code>media_type</code></td><td><em>image</em> ou <em>video</em>.</td></tr>
+    <tr><td><code>category</code></td><td>Classe renvoyée par le modèle (ou <em>Empty</em>).</td></tr>
+    <tr><td><code>species</code></td><td>Nom de l’espèce. En mode projet (B), le nom du dossier d’espèce.</td></tr>
+    <tr><td><code>station</code></td><td>Mode projet (B) uniquement : le nom du dossier de station.</td></tr>
+    <tr><td><code>count</code></td><td>Nombre d’individus de cette espèce sur l’image (1 par ligne lorsque des distances sont présentes).</td></tr>
+    <tr><td><code>latitude</code>, <code>longitude</code>, <code>altitude</code></td><td>Position GPS du fichier, si disponible.</td></tr>
+    <tr><td><code>make</code>, <code>model</code></td><td>Marque et modèle de l’appareil, d’après le fichier.</td></tr>
+    <tr><td><code>date</code>, <code>time</code></td><td>Date et heure de la prise de vue (<code>AAAA:MM:JJ</code>, <code>HH:MM:SS</code>).</td></tr>
+    <tr><td><code>time_radian</code></td><td>Heure de la journée sous forme d’angle de 0 à 2π (00:00 = 0, 12:00 = π).</td></tr>
+    <tr><td><code>distance_m</code></td><td>Distance estimée jusqu’à l’animal, en mètres (vide si elle n’a pas été calculée).</td></tr>
+    <tr><td><em>vos étiquettes</em></td><td>Une colonne par étiquette, ou une colonne 0/1 par valeur prédéfinie (<code>sex_male</code>, <code>sex_female</code>…).</td></tr>
+  </tbody>
+</table></div>
+<p>Le CSV s’ouvre directement dans Excel, LibreOffice, R (<code>read.csv()</code>) ou Python (<code>pandas.read_csv()</code>).</p>
+</section>
+
+<section>
+<h2 id="outputs">18. Fichiers créés par Declas</h2>
+<p>Declas ne modifie jamais vos médias originaux. Tout ce qu’il produit se trouve à côté :</p>
+<pre class="tree">SD30/
+├── 10280600.JPG                     <span class="c">← votre image originale, intacte</span>
+├── detections.json                  <span class="c">← résultats de tous les fichiers du dossier</span>
+├── detections/
+│   ├── 10280600.JPG                 <span class="c">← copie annotée avec les boîtes</span>
+│   └── custom_tags.json             <span class="c">← vos valeurs d’étiquettes</span>
+├── frames/                          <span class="c">← images extraites des vidéos (si le dossier en contient)</span>
+│   └── detections/
+├── has_target/ · no_target/         <span class="c">← uniquement après une séparation</span>
+└── classification_20261011_211359.csv   <span class="c">← uniquement après Construire le tableau</span></pre>
+
+<h3 id="json-format">Le format de detections.json</h3>
+<p>Chaque entrée a pour clé <code>&lt;nom du fichier&gt;_&lt;espèce&gt;</code> et conserve les boîtes individuelles, ce qui permet de réutiliser les résultats dans d’autres outils :</p>
+<pre><code class="language-json">"10280600_KobusEllipsiprymnus": {
+  "media": "10280600",
+  "media_type": "image",
+  "species": "KobusEllipsiprymnus",
+  "count": 3,
+  "date": "2020:10:28",
+  "time": "10:56:20",
+  "time_radian": 2.864,
+  "detections": [
+    { "species": "KobusEllipsiprymnus", "confidence": 0.76,
+      "bbox": [632.9, 804.7, 888.4, 997.3] },
+    …
+  ]
+}</code></pre>
+<p><code>bbox</code> vaut <code>[x1, y1, x2, y2]</code> en pixels, depuis le coin supérieur gauche de l’image.</p>
+<h3 id="clear-reports">Repartir de zéro</h3>
+<p><img class="ui-icon" src="../assets/img/icons/remove.png" alt=""> <span class="ui">Effacer tous les rapports de détection/classification</span> supprime tous les fichiers <code>detections.json</code> et <strong>tous les fichiers .csv</strong> du dossier courant, après confirmation. Cette action est irréversible : déplacez d’abord hors du dossier tout CSV que vous voulez garder (y compris vos propres fichiers).</p>
+</section>
+
+<section>
+<h2 id="import">19. Importer un résultat existant</h2>
+<p>Utilisez <span class="ui">Fichier › Importer</span> pour sélectionner un fichier <code>detections.json</code>, par exemple produit sur un autre ordinateur. Declas confirme <em>Fichier importé ✅</em> ; cliquez ensuite sur <img class="ui-icon" src="../assets/img/icons/table.png" alt=""> <span class="ui">Construire le tableau</span> pour créer le CSV à côté de ce fichier.</p>
+</section>
+
+<section>
+<h2 id="settings">20. Réglages</h2>
+<figure class="shot narrow" style="max-width:420px"><img src="../assets/img/screens/fr/general-settings.webp" width="444" height="383" loading="lazy" alt="Boîte de dialogue des paramètres généraux avec le son de notification, la langue et le thème"><figcaption><b>Paramètres › Général</b></figcaption></figure>
+<ul>
+  <li><strong>Notification</strong> : cochez <span class="ui">Jouer un son à la fin d’un traitement</span> et choisissez un son pour être prévenu à la fin d’un long traitement. Sélectionner un son en joue un aperçu.</li>
+  <li><strong>Langue</strong> : English ou Français. La nouvelle langue s’applique au prochain démarrage de Declas.</li>
+  <li><strong>Thème</strong> : Clair, Sombre ou Système (suit votre système d’exploitation). Également disponible dans <span class="ui">Paramètres › Apparence</span>.</li>
+</ul>
+<figure class="shot"><img src="../assets/img/screens/fr/dark-mode.webp" width="1560" height="920" loading="lazy" alt="Declas en thème sombre"><figcaption><b>Thème sombre</b></figcaption></figure>
+</section>
+
+<section>
+<h2 id="publish">21. Publier votre propre modèle</h2>
+<p>Tout le monde peut ajouter un modèle de détection ou de classification à Declas. <span class="ui">Modèles › Publier</span> affiche ces consignes dans l’application.</p>
+<h3 id="publish-layout">1. Créer le dossier de l’extension</h3>
+<pre class="tree">model_extensions/
+└── my_model_v1/
+    ├── manifest.json   <span class="c">← métadonnées (obligatoire)</span>
+    ├── adapter.py      <span class="c">← code d’inférence (obligatoire)</span>
+    └── README.md       <span class="c">← facultatif mais apprécié</span></pre>
+<h3 id="publish-manifest">2. Le décrire dans manifest.json</h3>
+<pre data-file="manifest.json"><code class="language-json">{
+  "name": "my_model_v1",
+  "display_name": "My Model v1",
+  "version": "1.0",
+  "author": "Votre nom ou organisation",
+  "description": "Une phrase décrivant ce que fait le modèle.",
+  "license": "CC-BY-4.0",
+  "license_url": "https://…",
+  "citation_url": "https://doi.org/…",
+  "info_url": "https://github.com/…",
+  "region": "West Africa",
+  "task": "classification",
+  "framework": "ultralytics",
+  "model_arch": "yolov8",
+  "environment": "PyTorch",
+  "input_type": "detect",
+  "model_file": "my_model.pt",
+  "download_url": "https://zenodo.org/records/…/files/my_model.pt?download=1",
+  "size_mb": 50,
+  "zip_url": "",
+  "adapter": "adapter.py",
+  "classes": ["species_a", "species_b"]
+}</code></pre>
+<h3 id="publish-adapter">3. Écrire adapter.py</h3>
+<pre data-file="adapter.py"><code class="language-python">from model_extensions.base import ModelAdapter
+
+class MyModelAdapter(ModelAdapter):
+
+    def load(self, model_path: str, device: str) -&gt; None:
+        # Appelée une fois. model_path est le fichier de poids téléchargé.
+        ...
+
+    def predict_single(self, image_path: str, conf_thres: float) -&gt; list:
+        # Un dictionnaire par détection :
+        #   species (str), confidence (0–1), bbox [x1, y1, x2, y2] en pixels, ou []
+        return [{"species": "lion", "confidence": 0.92, "bbox": [10, 20, 300, 400]}]</code></pre>
+<h3 id="publish-submit">4. Héberger les poids et soumettre</h3>
+<ul>
+  <li>Hébergez les poids sur <strong>Zenodo</strong> (gratuit, avec un DOI), le <strong>Hugging Face Hub</strong> ou les <strong>GitHub Releases</strong> (fichiers de moins de 2 Go). <code>download_url</code> doit être un lien de téléchargement direct.</li>
+  <li>Faites un fork du <a href="https://github.com/stangandaho/declas" target="_blank" rel="noopener">dépôt Declas</a>, ajoutez votre dossier dans <code>model_extensions/</code> et une entrée dans <code>model_extensions/registry.json</code>.</li>
+  <li>Ouvrez une pull request avec une courte description. Les mainteneurs relisent le code, testent le téléchargement puis l’intègrent : votre modèle apparaît alors dans l’onglet <span class="ui">Disponibles</span> de chaque utilisateur.</li>
+</ul>
+</section>
+
+<section>
+<h2 id="faq">22. Dépannage et FAQ</h2>
+<div class="faq">
+  <details><summary>Declas affiche « Aucun modèle installé. Ajoutez-en un ! »</summary><div><p>Installez un modèle dans <span class="ui">Modèles › Extensions › Disponibles</span>, puis sélectionnez-le dans <span class="ui">Paramètres › Paramètres d’inférence</span> et cliquez sur Enregistrer.</p></div></details>
+  <details><summary>« Les poids de l’extension « … » ne sont pas téléchargés. »</summary><div><p>Le modèle est listé mais son fichier de poids manque, généralement parce qu’un téléchargement a été interrompu. Supprimez-le dans l’onglet Installés puis téléchargez-le à nouveau.</p></div></details>
+  <details><summary>« Aucun sous-dossier valide trouvé » lors du traitement d’un dossier</summary><div><p>Vous êtes en mode projet (Exécuter sur le dossier principal décoché) mais avez sélectionné un dossier qui contient des images. Cochez <span class="ui">Exécuter sur le dossier principal</span>, ou sélectionnez le dossier parent qui contient les dossiers des stations. Voir <a href="#organise">Organiser vos données</a>.</p></div></details>
+  <details><summary>Les vidéos sont ignorées</summary><div><p>Cochez <span class="ui">Traiter les vidéos</span> dans les paramètres d’inférence. Quand l’option est désactivée, la barre d’état indique « Le traitement des vidéos est désactivé ».</p></div></details>
+  <details><summary>Trop d’animaux manqués, ou trop de fausses détections</summary><div><p>Ajustez le <span class="ui">Seuil de confiance</span> : baissez-le pour détecter plus d’animaux, augmentez-le pour réduire les faux positifs. Vous pouvez aussi corriger des images une à une avec les <a href="#boxes">outils de boîtes</a>.</p></div></details>
+  <details><summary>Le traitement est lent</summary><div><p>Utilisez une carte graphique CUDA si vous en avez une (<span class="ui">Périphérique : cuda</span>), augmentez l’<span class="ui">Intervalle d’images</span> pour les vidéos, décochez <span class="ui">Traiter les vidéos</span> si vous n’en avez pas besoin, ou choisissez un modèle plus léger (MegaDetector 6b pèse 50 Mo contre 281 Mo pour la 5a).</p></div></details>
+  <details><summary>Le bouton « Afficher » n’affiche rien</summary><div><p>Lancez d’abord la détection ou la classification sur cette image. Afficher montre la copie annotée du dossier <code>detections</code>.</p></div></details>
+  <details><summary>« Aucune information GPS trouvée » avec Afficher sur la carte</summary><div><p>L’image ne contient pas de coordonnées GPS. Beaucoup de pièges photographiques ne les enregistrent pas ; vous pourrez joindre les coordonnées des stations au CSV lors de l’analyse.</p></div></details>
+  <details><summary>Declas a-t-il besoin d’internet ?</summary><div><p>Seulement pour télécharger les modèles (et le modèle de profondeur la première fois que l’estimation de distance est utilisée). Le traitement lui-même se fait entièrement hors ligne.</p></div></details>
+  <details><summary>Où trouver plus d’aide ?</summary><div><p>Cherchez ou ouvrez un ticket sur <a href="https://github.com/stangandaho/declas/issues" target="_blank" rel="noopener">GitHub</a>, ou utilisez le <a href="contact.html">formulaire de contact</a>. Indiquer votre version de Declas, votre système d’exploitation et le fichier journal aide beaucoup. Sous Windows, le journal se trouve dans <code>%TEMP%\declas_running_verbose.log</code> ; sous macOS et Linux, c’est <code>declas_running_verbose.log</code> dans votre dossier temporaire.</p></div></details>
+</div>
+</section>
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+    <button class="icon-btn back-to-top" type="button" aria-label="Retour en haut"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+  </main>
+
+  <div id="site-footer"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+  <script src="../assets/js/config.js"></script>
+  <script src="../assets/js/site.js"></script>
+</body>
+</html>

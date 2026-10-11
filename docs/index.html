@@ -1,115 +1,178 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="no-js">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Declas: Camera Trap Analysis</title>
-  <meta name="description" content="Turn camera trap media into flat, analysable data with AI-driven detection. Runs locally, no internet required.">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Declas · AI for camera trap images and videos</title>
+  <meta name="description" content="Declas is free, open-source desktop software that detects and classifies wildlife in camera trap images and videos, entirely on your own computer. Windows, macOS and Linux.">
+  <meta name="theme-color" content="#FBF7F0">
+  <meta property="og:title" content="Declas · AI for camera trap images and videos">
+  <meta property="og:description" content="Turn camera trap media into flat, analysable data with AI. Free, open source, runs offline.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="assets/img/screens/view-annotated.webp">
+  <link rel="alternate" hreflang="en" href="index.html">
+  <link rel="alternate" hreflang="fr" href="fr/index.html">
+  <link rel="icon" type="image/png" href="assets/img/logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script>try{if(!localStorage.getItem('declas-lang')&&/^fr\b/i.test((navigator.languages&&navigator.languages[0])||navigator.language||''))location.replace('fr/'+(location.pathname.split('/').pop()||'index.html')+location.hash)}catch(e){}</script>
+  <script>try{var t=localStorage.getItem('declas-theme');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+  <link rel="stylesheet" href="assets/css/site.css">
 </head>
 <body>
-  <main class="page">
-    <div class="card">
-
-      <h1>Declas</h1>
-      <!--<img
-        class="logo"
-        src="https://raw.githubusercontent.com/stangandaho/declas/main/icons/logo.png"
-        alt="Declas logo"
-      >**/ -->
-      
-      <p class="tagline">Turn camera trap media into flat, analysable data with AI-driven detection</p>
-
-      <div class="download-area">
-        <div class="split-wrap" id="split-wrap">
-
-          <button class="split-main" id="download-btn">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                 stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 3v13"/>
-              <path d="M7 13l5 5 5-5"/>
-              <path d="M3 20h18"/>
-            </svg>
-            <span id="btn-label">Download</span>
-          </button>
-
-          <button
-            class="split-arrow"
-            id="dropdown-toggle"
-            aria-haspopup="listbox"
-            aria-expanded="false"
-            aria-label="Choose platform"
-          >
-            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                 stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M6 9l6 6 6-6"/>
-            </svg>
-          </button>
-
-          <ul class="dropdown" id="dropdown" role="listbox" hidden>
-            <li>
-              <button class="dropdown-item" data-os="windows" role="option">
-                <svg viewBox="0 0 24 24" fill="currentColor" class="os-icon">
-                  <path d="M3 5.6L10.5 4.5v7H3zM11.5 4.35L21 3v8.5H11.5zM3 12.5h7.5v7L3 18.4zM11.5 12.5H21v8.5l-9.5-1.35z"/>
-                </svg>
-                Windows
-              </button>
-            </li>
-            <li>
-              <button class="dropdown-item" data-os="macos-arm" role="option">
-                <svg viewBox="0 0 24 24" fill="currentColor" class="os-icon">
-                  <path d="M18.7 17.2c-.5.7-1 1.3-1.8 1.3-.7 0-1-.4-1.8-.4s-1.1.4-1.9.4c-.7 0-1.3-.6-1.8-1.3-1.5-2.1-2.6-5.9-1.1-8.5.7-1.3 2-2.1 3.3-2.1.8 0 1.6.5 2.1.5s1.4-.6 2.3-.6c.6 0 2.4.2 3.5 1.9-.1.1-2.1 1.2-2.1 3.6 0 2.9 2.5 3.8 2.5 3.9-.1.1-.5 1.9-2.2 3.3zM14.5 3c.1 1.7-1.4 3-2.7 3-.2-1.6 1.4-3 2.7-3z"/>
-                </svg>
-                macOS (Apple Silicon)
-              </button>
-            </li>
-            <li>
-              <button class="dropdown-item" data-os="macos-intel" role="option">
-                <svg viewBox="0 0 24 24" fill="currentColor" class="os-icon">
-                  <path d="M18.7 17.2c-.5.7-1 1.3-1.8 1.3-.7 0-1-.4-1.8-.4s-1.1.4-1.9.4c-.7 0-1.3-.6-1.8-1.3-1.5-2.1-2.6-5.9-1.1-8.5.7-1.3 2-2.1 3.3-2.1.8 0 1.6.5 2.1.5s1.4-.6 2.3-.6c.6 0 2.4.2 3.5 1.9-.1.1-2.1 1.2-2.1 3.6 0 2.9 2.5 3.8 2.5 3.9-.1.1-.5 1.9-2.2 3.3zM14.5 3c.1 1.7-1.4 3-2.7 3-.2-1.6 1.4-3 2.7-3z"/>
-                </svg>
-                macOS (Intel)
-              </button>
-            </li>
-            <li>
-              <button class="dropdown-item" data-os="linux" role="option">
-                <svg viewBox="0 0 24 24" class="os-icon">
-                  <!-- body + head -->
-                  <path d="M12 2C9.8 2 8 3.5 8 5.5c0 1 .4 1.9 1 2.6C7.3 9.4 6.5 11 6.5 13c0 3.6 2.5 6.5 5.5 6.5s5.5-2.9 5.5-6.5c0-2-.8-3.6-2.5-4.9.6-.7 1-1.6 1-2.6C16 3.5 14.2 2 12 2z" fill="currentColor"/>
-                  <!-- belly -->
-                  <ellipse cx="12" cy="14" rx="2.5" ry="4" fill="white"/>
-                  <!-- eyes -->
-                  <circle cx="10.2" cy="5.8" r=".9" fill="white"/>
-                  <circle cx="13.8" cy="5.8" r=".9" fill="white"/>
-                  <!-- feet -->
-                  <path d="M9 20l-2 2.5h4zM15 20l2 2.5h-4z" fill="currentColor"/>
-                </svg>
-                Linux
-              </button>
-            </li>
-          </ul>
-        </div>
-
-        <button class="btn-video" id="video-btn">
-          <svg class="icon" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M23 7s-.3-2-1.2-2.8c-1.1-1.2-2.4-1.2-3-1.3C16.2 2.8 12 2.8 12 2.8s-4.2 0-6.8.2c-.6.1-1.9.1-3 1.3C1.3 5 1 7 1 7S.8 9.2.8 11.5v2.1C.8 16 1 18 1 18s.3 2 1.2 2.8c1.1 1.2 2.6 1.1 3.3 1.2C7.6 22.2 12 22.2 12 22.2s4.2 0 6.8-.3c.6-.1 1.9-.1 3-1.3.9-.8 1.2-2.8 1.2-2.8s.2-2.2.2-4.4v-2.1C23.2 9.2 23 7 23 7zM9.7 15.5V8.4l8.1 3.6-8.1 3.5z"/>
-          </svg>
-          Video Docs
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="container">
+      <a class="brand" href="index.html"><img src="assets/img/logo.png" alt="" width="30" height="30">Declas</a>
+      <nav class="nav" aria-label="Main">
+        <a href="donate.html">Donation</a>
+        <button type="button" class="nav-link" data-open-download>Download</button>
+        <a href="docs.html">Docs</a>
+        <a href="about.html">About</a>
+        <a href="contact.html">Contact</a>
+      </nav>
+      <div class="header-tools">
+        <div class="lang-switch" role="group" aria-label="Language"><a href="index.html" lang="en" hreflang="en" data-lang="en" aria-current="true">EN</a><a href="fr/index.html" lang="fr" hreflang="fr" data-lang="fr">FR</a></div>
+        <button class="icon-btn theme-toggle" type="button" aria-label="Toggle dark mode">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
         </button>
-
-        <p class="release-tag" id="release-tag"></p>
+        <button class="icon-btn menu-toggle" type="button" aria-label="Open menu" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </button>
       </div>
-
-      <div class="counter">
-        <strong class="counter-num" id="counter-label">...</strong>
-        <span class="counter-label">downloads</span>
-      </div>
-
     </div>
+  </header>
+
+  <main id="main">
+    <section class="hero">
+      <div class="container hero-grid">
+        <div>
+          <a class="pill" href="https://github.com/stangandaho/declas/releases/latest" target="_blank" rel="noopener" data-latest-link><b data-latest-tag>v1.4.0</b> See what's new</a>
+          <h1>Camera trap media to <em>analysable data</em>, on your own computer</h1>
+          <p class="lead">Declas finds the animals in your camera trap images and videos, names the species, and gives you one clean CSV ready for analysis. Free, open source, and it works without internet.</p>
+          <div class="hero-actions">
+            <button class="btn btn-primary" type="button" data-open-download>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 20h16"/></svg>
+              Download for free
+            </button>
+            <a class="btn btn-secondary" href="docs.html">Read the documentation</a>
+          </div>
+          <div class="hero-meta">
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Windows, macOS, Linux</span>
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Your data never leaves your machine</span>
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong class="count" data-count="total">332</strong> downloads</span></span>
+          </div>
+        </div>
+        <div class="app-frame">
+          <div class="app-frame-bar"><i></i><i></i><i></i><span>Declas <span data-latest-version>1.4.0</span></span></div>
+          <img src="assets/img/screens/view-annotated.webp" width="1560" height="920" alt="Declas showing three waterbuck detected with bounding boxes and a species count of 3 in the Inference panel" data-zoom fetchpriority="high">
+        </div>
+      </div>
+    </section>
+
+    <section class="section features">
+      <div class="container">
+        <div class="section-head">
+          <h2>What Declas does</h2>
+          <p>Point Declas at a folder of camera trap media. It finds animals, people and vehicles, identifies species with a regional model, and keeps every result editable.</p>
+        </div>
+        <div class="grid grid-3">
+          <article class="card glass-card reveal">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 8h5v5H8z"/><path d="m21 15-3.5-3.5L12 17"/></svg></div>
+            <h3>Detection and species ID</h3>
+            <p>MegaDetector finds animals, people and vehicles. Regional classifiers for Africa, Europe, the Amazon, New Zealand and more name the species.</p>
+          </article>
+          <article class="card glass-card reveal">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M8 13h8M8 16h5"/></svg></div>
+            <h3>Whole surveys in one run</h3>
+            <p>Process a single folder, or a full project with one folder per station. Each folder gets its own <code>detections.json</code>.</p>
+          </article>
+          <article class="card glass-card reveal">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="14" height="14" rx="2"/><path d="m16 10 6-3v10l-6-3"/></svg></div>
+            <h3>Images and videos</h3>
+            <p>Videos are sampled every <em>n</em> frames, each frame is analysed, and its date and time are worked out from the video.</p>
+          </article>
+          <article class="card glass-card reveal">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></div>
+            <h3>You stay in control</h3>
+            <p>Fix a species name or a count, draw a box around an animal the model missed, or delete a wrong one. Every edit goes into the report.</p>
+          </article>
+          <article class="card glass-card reveal">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/><path d="m17.5 15.5 2-2"/></svg></div>
+            <h3>Distance to the animal</h3>
+            <p>A depth model estimates how far each animal is from the camera, with field-of-view correction per station, ready for distance sampling.</p>
+          </article>
+          <article class="card glass-card reveal">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v18H3z"/><path d="M3 9h18M3 15h18M9 3v18"/></svg></div>
+            <h3>One analysis-ready table</h3>
+            <p>Results, EXIF date, time, GPS and your own tags are merged into one CSV, with one row per species per image.</p>
+          </article>
+        </div>
+        <div class="marquee" style="margin-top:28px">
+          <div class="chip-list marquee-track">
+            <span class="chip"><b>Empty-image split</b> separates blank triggers</span>
+            <span class="chip"><b>Custom tags</b> sex, age, behaviour…</span>
+            <span class="chip"><b>GPS map</b> of geotagged images</span>
+            <span class="chip"><b>Zoom lens</b> for small animals</span>
+            <span class="chip"><b>Dark mode</b> and French interface</span>
+            <span class="chip"><b>Plug-in models</b> you can publish yourself</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-alt">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">How it works</span>
+          <h2>From raw folders to a CSV in four steps</h2>
+        </div>
+        <div class="steps">
+          <div class="step reveal"><h3>Install a model</h3><p>Open <span class="ui">Models › Extensions</span> and download a detector or a classifier for your region.</p></div>
+          <div class="step reveal"><h3>Choose your folder</h3><p>Select a station folder or a whole project. Thumbnails of every image and video appear on the left.</p></div>
+          <div class="step reveal"><h3>Run</h3><p>Run on the image you are looking at, or on every folder at once. Progress is shown in the log.</p></div>
+          <div class="step reveal"><h3>Review and export</h3><p>Check the boxes, fix what is wrong, add tags, then build the table with one click.</p></div>
+        </div>
+        <p style="margin-top:36px"><a class="btn btn-secondary" href="docs.html#quick-start">Follow the quick start guide</a></p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">Real results</span>
+          <h2>Real survey images, as Declas sees them</h2>
+          <p>Screenshots from a West African savanna survey processed with the Sub-Saharan Africa Wildlife Detector, including night-time infrared shots.</p>
+        </div>
+        <div class="gallery">
+          <figure class="shot reveal"><img src="assets/img/screens/hyenas.webp" width="1560" height="920" loading="lazy" alt="Three spotted hyenas detected at night with an infrared camera"><figcaption><b>Spotted hyena × 3:</b> infrared, 22:52</figcaption></figure>
+          <figure class="shot reveal"><img src="assets/img/screens/leopard.webp" width="1560" height="920" loading="lazy" alt="A leopard detected in tall grass at night"><figcaption><b>Leopard:</b> infrared, 02:58, confidence 0.60</figcaption></figure>
+          <figure class="shot reveal"><img src="assets/img/screens/multi-species-annotated.webp" width="1560" height="920" loading="lazy" alt="Waterbuck and a common duiker detected in the same image, listed as two species entries"><figcaption><b>Two species in one frame:</b> waterbuck × 3, common duiker × 1</figcaption></figure>
+          <figure class="shot reveal"><img src="assets/img/screens/dark-mode.webp" width="1560" height="920" loading="lazy" alt="Declas in dark mode with detections on a misty morning image"><figcaption><b>Dark mode:</b> Setting › Appearance</figcaption></figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-sm" style="padding-bottom:96px">
+      <div class="container">
+        <div class="cta-band reveal">
+          <div>
+            <h2>Ready to clear your backlog?</h2>
+            <p>Free forever. No account, no upload, no limits on the number of images.</p>
+          </div>
+          <div class="hero-actions">
+            <button class="btn btn-primary" type="button" data-open-download>Download Declas</button>
+            <a class="btn btn-secondary" href="donate.html">Support the project</a>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
-  <script src="script.js"></script>
+  <div id="site-footer"></div>
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/site.js"></script>
 </body>
 </html>

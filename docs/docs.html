@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Docs · Declas</title>
+  <meta name="description" content="Complete step-by-step documentation for Declas: installation, model extensions, inference parameters, batch processing, reviewing results, tags, distance estimation and CSV export.">
+  <meta name="theme-color" content="#FBF7F0">
+  <meta property="og:title" content="Docs · Declas">
+  <meta property="og:description" content="Complete step-by-step documentation for Declas: installation, model extensions, inference parameters, batch processing, reviewing results, tags, distance estimation and CSV export.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="assets/img/screens/view-annotated.webp">
+  <link rel="alternate" hreflang="en" href="docs.html">
+  <link rel="alternate" hreflang="fr" href="fr/docs.html">
+  <link rel="icon" type="image/png" href="assets/img/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script>try{if(!localStorage.getItem('declas-lang')&&/^fr\b/i.test((navigator.languages&&navigator.languages[0])||navigator.language||''))location.replace('fr/'+(location.pathname.split('/').pop()||'index.html')+location.hash)}catch(e){}</script>
+  <script>try{var t=localStorage.getItem('declas-theme');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+  <link rel="stylesheet" href="assets/css/site.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="container">
+      <a class="brand" href="index.html"><img src="assets/img/logo.png" alt="" width="30" height="30">Declas</a>
+      <nav class="nav" aria-label="Main">
+        <a href="donate.html">Donation</a>
+        <button type="button" class="nav-link" data-open-download>Download</button>
+        <a href="docs.html" aria-current="page">Docs</a>
+        <a href="about.html">About</a>
+        <a href="contact.html">Contact</a>
+      </nav>
+      <div class="header-tools">
+        <div class="lang-switch" role="group" aria-label="Language"><a href="docs.html" lang="en" hreflang="en" data-lang="en" aria-current="true">EN</a><a href="fr/docs.html" lang="fr" hreflang="fr" data-lang="fr">FR</a></div>
+        <button class="icon-btn theme-toggle" type="button" aria-label="Toggle dark mode">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        </button>
+        <button class="icon-btn menu-toggle" type="button" aria-label="Open menu" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="container">
+      <div class="page-hero" style="padding-bottom:0">
+        <h1>Using Declas, step by step</h1>
+        <p class="lead">Everything you need to go from a folder of camera trap images and videos to an analysis-ready table. Every screenshot below was taken from Declas processing real survey images.</p>
+      </div>
+
+      <div class="docs-layout">
+        <aside class="toc" aria-label="Table of contents">
+          <p class="toc-title">On this page</p>
+          <ol><li><a href="#overview">1. What Declas does</a></li><li><a href="#quick-start">2. Quick start (5 minutes)</a></li><li><a href="#install">3. Installation</a><ol><li><a href="#install-windows">Windows</a></li><li><a href="#install-macos">macOS</a></li><li><a href="#install-linux">Linux</a></li><li><a href="#install-first-launch">First launch</a></li></ol></li><li><a href="#interface">4. A tour of the interface</a><ol><li><a href="#toolbar">Toolbar buttons</a></li><li><a href="#menus">Menus</a></li></ol></li><li><a href="#organise">5. Organise your data</a><ol><li><a href="#single-folder">Mode A: one folder of media ("Run on main directory" ticked)</a></li><li><a href="#project-mode">Mode B: project › station › species ("Run on main directory" unticked)</a></li></ol></li><li><a href="#models">6. Model extensions</a><ol><li><a href="#install-model">Install a model</a></li><li><a href="#model-list">Available models</a></li></ol></li><li><a href="#parameters">7. Inference parameters</a></li><li><a href="#run-single">8. Run on a single image or video</a></li><li><a href="#run-batch">9. Run on folders (batch processing)</a></li><li><a href="#review">10. Review the results</a><ol><li><a href="#inference-tab">The Inference tab</a></li><li><a href="#view-annotated">See the boxes</a></li><li><a href="#edit-results">Correct species and counts</a></li></ol></li><li><a href="#boxes">11. Draw and delete bounding boxes</a></li><li><a href="#tags">12. Custom tags</a><ol><li><a href="#define-tags">Define your tags</a></li><li><a href="#fill-tags">Fill in tags</a></li></ol></li><li><a href="#metadata-map">13. Metadata and map</a></li><li><a href="#videos">14. Working with videos</a></li><li><a href="#distance">15. Distance estimation</a><ol><li><a href="#distance-setup">Set it up</a></li><li><a href="#fov">Field of view per station</a></li><li><a href="#how-distance">How the distance is computed</a></li></ol></li><li><a href="#split">16. Separate empty images</a></li><li><a href="#table">17. Build the table (CSV export)</a><ol><li><a href="#csv-columns">Column reference</a></li></ol></li><li><a href="#outputs">18. Files created by Declas</a><ol><li><a href="#json-format">The detections.json format</a></li><li><a href="#clear-reports">Starting over</a></li></ol></li><li><a href="#import">19. Import an existing result</a></li><li><a href="#settings">20. Settings</a></li><li><a href="#publish">21. Publish your own model</a><ol><li><a href="#publish-layout">1. Create the extension folder</a></li><li><a href="#publish-manifest">2. Describe it in manifest.json</a></li><li><a href="#publish-adapter">3. Write adapter.py</a></li><li><a href="#publish-submit">4. Host the weights and submit</a></li></ol></li><li><a href="#faq">22. Troubleshooting and FAQ</a></li></ol>
+        </aside>
+
+        <div>
+          <div class="toc-mobile">
+            <details>
+              <summary><span>Contents · <span class="muted" data-current>Overview</span></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></summary>
+              <div class="toc-inner"><ol><li><a href="#overview">1. What Declas does</a></li><li><a href="#quick-start">2. Quick start (5 minutes)</a></li><li><a href="#install">3. Installation</a><ol><li><a href="#install-windows">Windows</a></li><li><a href="#install-macos">macOS</a></li><li><a href="#install-linux">Linux</a></li><li><a href="#install-first-launch">First launch</a></li></ol></li><li><a href="#interface">4. A tour of the interface</a><ol><li><a href="#toolbar">Toolbar buttons</a></li><li><a href="#menus">Menus</a></li></ol></li><li><a href="#organise">5. Organise your data</a><ol><li><a href="#single-folder">Mode A: one folder of media ("Run on main directory" ticked)</a></li><li><a href="#project-mode">Mode B: project › station › species ("Run on main directory" unticked)</a></li></ol></li><li><a href="#models">6. Model extensions</a><ol><li><a href="#install-model">Install a model</a></li><li><a href="#model-list">Available models</a></li></ol></li><li><a href="#parameters">7. Inference parameters</a></li><li><a href="#run-single">8. Run on a single image or video</a></li><li><a href="#run-batch">9. Run on folders (batch processing)</a></li><li><a href="#review">10. Review the results</a><ol><li><a href="#inference-tab">The Inference tab</a></li><li><a href="#view-annotated">See the boxes</a></li><li><a href="#edit-results">Correct species and counts</a></li></ol></li><li><a href="#boxes">11. Draw and delete bounding boxes</a></li><li><a href="#tags">12. Custom tags</a><ol><li><a href="#define-tags">Define your tags</a></li><li><a href="#fill-tags">Fill in tags</a></li></ol></li><li><a href="#metadata-map">13. Metadata and map</a></li><li><a href="#videos">14. Working with videos</a></li><li><a href="#distance">15. Distance estimation</a><ol><li><a href="#distance-setup">Set it up</a></li><li><a href="#fov">Field of view per station</a></li><li><a href="#how-distance">How the distance is computed</a></li></ol></li><li><a href="#split">16. Separate empty images</a></li><li><a href="#table">17. Build the table (CSV export)</a><ol><li><a href="#csv-columns">Column reference</a></li></ol></li><li><a href="#outputs">18. Files created by Declas</a><ol><li><a href="#json-format">The detections.json format</a></li><li><a href="#clear-reports">Starting over</a></li></ol></li><li><a href="#import">19. Import an existing result</a></li><li><a href="#settings">20. Settings</a></li><li><a href="#publish">21. Publish your own model</a><ol><li><a href="#publish-layout">1. Create the extension folder</a></li><li><a href="#publish-manifest">2. Describe it in manifest.json</a></li><li><a href="#publish-adapter">3. Write adapter.py</a></li><li><a href="#publish-submit">4. Host the weights and submit</a></li></ol></li><li><a href="#faq">22. Troubleshooting and FAQ</a></li></ol></div>
+            </details>
+          </div>
+
+          <article class="prose">
+
+<section>
+<h2 id="overview">1. What Declas does</h2>
+<p>Declas is a desktop application for <strong>detecting animals and identifying species</strong> in camera trap images and videos. It runs entirely on your computer: once a model is downloaded, no internet connection is needed and no image is ever uploaded.</p>
+<p>A typical session looks like this:</p>
+<ol>
+  <li>You install one or more AI <strong>model extensions</strong> (a detector such as MegaDetector, or a regional species classifier).</li>
+  <li>You point Declas at a <strong>folder</strong> of media, or at a whole <strong>project</strong> with one folder per station.</li>
+  <li>Declas runs the model and writes a <code>detections.json</code> file in each folder, plus annotated copies of the images.</li>
+  <li>You <strong>review</strong> the results, correct species names and counts, draw boxes the model missed, and add your own tags.</li>
+  <li>You <strong>build a table</strong>: one CSV with a row per species per image, including date, time, GPS, your tags and, if enabled, the distance to each animal.</li>
+</ol>
+<figure class="shot"><img src="assets/img/screens/results-inference.webp" width="1560" height="920" loading="lazy" alt="Declas main window with an image of three waterbuck and the Inference panel listing KobusEllipsiprymnus with count 3"><figcaption><b>The main window after processing a station folder:</b> thumbnails on the left, the image in the centre, results on the right.</figcaption></figure>
+<div class="callout note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg><p>Declas reads <strong>.jpg, .jpeg and .png</strong> images and <strong>.mp4, .avi, .mov and .mkv</strong> videos.</p></div>
+</section>
+
+<section>
+<h2 id="quick-start">2. Quick start (5 minutes)</h2>
+<p>If you just want to see Declas work on your own images, follow these steps. Each one links to the detailed section.</p>
+<ol class="step-list">
+  <li><strong>Install Declas</strong> for your system and open it. <a href="#install">Installation</a></li>
+  <li>Open <span class="ui">Models › Extensions</span>, go to the <span class="ui">Available</span> tab and click <span class="ui">Download</span> on <em>MegaDetector 6b</em> (50 MB), or on a species model for your region. <a href="#models">Model extensions</a></li>
+  <li>Open <span class="ui">Setting › Inference parameters</span>. Set <span class="ui">Task</span> to <em>Detection</em> (MegaDetector) or <em>Classification</em> (species model), pick the model, tick <span class="ui">Run on main directory</span>, and click <span class="ui">Save</span>. <a href="#parameters">Inference parameters</a></li>
+  <li>Click <img class="ui-icon" src="assets/img/icons/folder.png" alt=""> <span class="ui">Select directory</span> and choose a folder that contains images.</li>
+  <li>Click <img class="ui-icon" src="assets/img/icons/batch.png" alt=""> <span class="ui">Run folder(s)</span>. Wait for <em>Completed successfully</em> in the status bar.</li>
+  <li>Click any thumbnail, then <span class="ui">View</span> in the Inference tab to see the boxes. <a href="#review">Review results</a></li>
+  <li>Click <img class="ui-icon" src="assets/img/icons/table.png" alt=""> <span class="ui">Build table</span>. The CSV is saved in the folder you selected. <a href="#table">Build the table</a></li>
+</ol>
+</section>
+
+<section>
+<h2 id="install">3. Installation</h2>
+<p>Declas has installers for Windows, macOS and Linux. Use the <a href="#download" data-open-download>Download</a> button, or get the files from the <a href="https://github.com/stangandaho/declas/releases/latest" target="_blank" rel="noopener">latest GitHub release</a>.</p>
+<div class="table-wrap"><table>
+  <thead><tr><th>System</th><th>File</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td>Windows (64-bit)</td><td><code>Declas_<span data-latest-version>1.4.0</span>.exe</code></td><td>Installer wizard</td></tr>
+    <tr><td>macOS, Apple Silicon (M1 and later)</td><td><code>Declas-macOS-arm64_<span data-latest-version>1.4.0</span>.dmg</code></td><td>Drag to Applications</td></tr>
+    <tr><td>macOS, Intel</td><td><code>Declas-macOS-Intel_<span data-latest-version>1.4.0</span>.dmg</code></td><td>Drag to Applications</td></tr>
+    <tr><td>Linux (x86-64)</td><td><code>Declas-Linux_<span data-latest-version>1.4.0</span>.tar.gz</code></td><td>Extract and run</td></tr>
+  </tbody>
+</table></div>
+<p>Any recent 64-bit computer can run Declas. Larger models (for example DeepFaune Classification, 1.2 GB) need more memory. An NVIDIA graphics card (CUDA) makes processing much faster, but is not required.</p>
+
+<h3 id="install-windows">Windows</h3>
+<ol class="step-list">
+  <li>Download <code>Declas_&lt;version&gt;.exe</code>.</li>
+  <li>Double-click it and follow the installation wizard.</li>
+  <li>Launch Declas from the Start menu or the desktop shortcut.</li>
+</ol>
+<div class="callout warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 21h20z"/><path d="M12 10v4M12 17h.01"/></svg><p>The installer is not code-signed, so Windows SmartScreen may say <em>"Windows protected your PC"</em>. Click <span class="ui">More info</span>, then <span class="ui">Run anyway</span>. You only need to do this once.</p></div>
+
+<h3 id="install-macos">macOS</h3>
+<ol class="step-list">
+  <li>Download the <code>.dmg</code> for your Mac: <em>arm64</em> for Apple Silicon (M1, M2, M3, M4…) or <em>Intel</em> for older Macs. Not sure? Open <span class="ui"> › About This Mac</span>: "Chip: Apple M…" means Apple Silicon.</li>
+  <li>Open the <code>.dmg</code> and drag <strong>Declas</strong> into your <strong>Applications</strong> folder.</li>
+  <li>Launch Declas from Applications.</li>
+</ol>
+<div class="callout warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 21h20z"/><path d="M12 10v4M12 17h.01"/></svg><div><p>The app is not notarized, so Gatekeeper may block the first launch. Right-click (or Control-click) the app, choose <span class="ui">Open</span>, then confirm.</p><p>If macOS says the app is <em>"damaged"</em>, open Terminal and run:</p><pre><code class="language-bash">xattr -cr /Applications/Declas.app</code></pre></div></div>
+
+<h3 id="install-linux">Linux</h3>
+<ol class="step-list">
+  <li>Download <code>Declas-Linux_&lt;version&gt;.tar.gz</code>.</li>
+  <li>Extract it and start the program:
+<pre><code class="language-bash">tar -xzf Declas-Linux_<span data-latest-version>1.4.0</span>.tar.gz
+cd Declas
+chmod +x Declas
+./Declas</code></pre></li>
+</ol>
+<p>If you see an error about a missing library such as <code>libGL.so.1</code>, install it with your package manager, for example <code>sudo apt-get install libgl1</code> on Debian or Ubuntu.</p>
+
+<h3 id="install-first-launch">First launch</h3>
+<p>The first time you open Declas, the window is empty and no model is installed yet. That is expected: go to <a href="#models">Model extensions</a> to download one.</p>
+<figure class="shot"><img src="assets/img/screens/main-empty.webp" width="1560" height="920" loading="lazy" alt="The empty Declas window on first launch"><figcaption><b>Declas on first launch:</b> menus at the top, the toolbar below them, and empty panels.</figcaption></figure>
+</section>
+
+<section>
+<h2 id="interface">4. A tour of the interface</h2>
+<figure class="shot"><img src="assets/img/screens/view-annotated.webp" width="1560" height="920" loading="lazy" alt="The Declas window with the folder tree, thumbnails, image viewer, result tabs and log"><figcaption><b>The main window:</b> a processed station folder is open.</figcaption></figure>
+<ul>
+  <li><strong>Menu bar</strong>: <span class="ui">File</span>, <span class="ui">Setting</span> and <span class="ui">Models</span>.</li>
+  <li><strong>Toolbar</strong>: one-click access to every action (see the table below).</li>
+  <li><strong>Folder tree</strong> (top left): the sub-folders of the folder you selected. Click a folder to show its media.</li>
+  <li><strong>Thumbnails</strong> (left): every image and video in the current folder, in name order. The open file is highlighted. Click one to open it.</li>
+  <li><strong>Viewer</strong> (centre): the image or video, with <span class="ui">Previous</span>, <span class="ui">Play/Pause</span> and <span class="ui">Next</span> buttons below it. For videos, a seek bar and ◀◀ / ▶▶ jump buttons appear.</li>
+  <li><strong>Side panel</strong> (right), with four tabs: <span class="ui">Metadata</span>, <span class="ui">Map</span>, <span class="ui">Inference</span> and <span class="ui">Custom Tags</span>.</li>
+  <li><strong>Log</strong> (bottom right): messages from batch runs, folder by folder.</li>
+  <li><strong>Status bar</strong> (bottom): short messages such as <em>Running…</em>, <em>Done ✅</em> or <em>Completed successfully</em>, with a spinner while work is in progress.</li>
+</ul>
+
+<h3 id="toolbar">Toolbar buttons</h3>
+<div class="table-wrap"><table>
+  <thead><tr><th>Button</th><th>Name</th><th>What it does</th></tr></thead>
+  <tbody>
+    <tr><td><img class="ui-icon" src="assets/img/icons/folder.png" alt=""></td><td>Select directory</td><td>Choose the folder (or project) to work on.</td></tr>
+    <tr><td><img class="ui-icon" src="assets/img/icons/image.png" alt=""></td><td>Select media</td><td>Open a single image or video. Its folder is shown in the sidebar.</td></tr>
+    <tr><td><img class="ui-icon" src="assets/img/icons/globe.png" alt=""></td><td>Show on map</td><td>Plot the current image on the map, if it has GPS coordinates.</td></tr>
+    <tr><td><img class="ui-icon" src="assets/img/icons/run.png" alt=""></td><td>Run on current media</td><td>Run the selected model on the image or video you are looking at.</td></tr>
+    <tr><td><img class="ui-icon" src="assets/img/icons/batch.png" alt=""></td><td>Run folder(s)</td><td>Run the model on the whole selected folder or project.</td></tr>
+    <tr><td><img class="ui-icon" src="assets/img/icons/table.png" alt=""></td><td>Build table</td><td>Merge all results and tags into one CSV file.</td></tr>
+    <tr><td><img class="ui-icon" src="assets/img/icons/remove.png" alt=""></td><td>Clear all reports</td><td>Delete every <code>detections.json</code> and <code>.csv</code> file under the current folder, after confirmation.</td></tr>
+    <tr><td><img class="ui-icon" src="assets/img/icons/split.png" alt=""></td><td>Target or No target split</td><td>Copy images into <code>has_target</code> and <code>no_target</code> folders.</td></tr>
+    <tr><td><img class="ui-icon" src="assets/img/icons/zoom.png" alt=""></td><td>Zoom lens</td><td>Toggle a magnifier that follows the mouse over the image.</td></tr>
+    <tr><td><img class="ui-icon" src="assets/img/icons/draw_box.png" alt=""></td><td>Draw bounding box</td><td>Drag on the image to add a box around a missed animal.</td></tr>
+    <tr><td><img class="ui-icon" src="assets/img/icons/erase_box.png" alt=""></td><td>Delete bounding box</td><td>Hover a box and click it to remove it.</td></tr>
+  </tbody>
+</table></div>
+
+<h3 id="menus">Menus</h3>
+<div class="table-wrap"><table>
+  <thead><tr><th>Menu</th><th>Item</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td>File</td><td>Import</td><td>Load an existing <code>detections.json</code> so you can build a table from it. <a href="#import">More</a></td></tr>
+    <tr><td>File</td><td>Quit</td><td>Close Declas.</td></tr>
+    <tr><td>Setting</td><td>Appearance</td><td>Light, Dark or System theme.</td></tr>
+    <tr><td>Setting</td><td>Inference parameters</td><td>Task, model, thresholds, video and distance options. <a href="#parameters">More</a></td></tr>
+    <tr><td>Setting</td><td>Tags</td><td>Define your own data fields. <a href="#tags">More</a></td></tr>
+    <tr><td>Setting</td><td>General</td><td>Notification sound, language and theme. <a href="#settings">More</a></td></tr>
+    <tr><td>Models</td><td>Extensions</td><td>Browse, download and remove AI models. <a href="#models">More</a></td></tr>
+    <tr><td>Models</td><td>Publish</td><td>How to publish your own model for Declas. <a href="#publish">More</a></td></tr>
+  </tbody>
+</table></div>
+</section>
+
+<section>
+<h2 id="organise">5. Organise your data</h2>
+<p>Declas supports two folder layouts. Which one you use is set by the <span class="ui">Run on main directory</span> option in <a href="#parameters">Inference parameters</a>. It changes how folders are processed and how the final table is filled.</p>
+
+<h3 id="single-folder">Mode A: one folder of media ("Run on main directory" ticked)</h3>
+<p>Use this when your images are not yet sorted, which is the usual case straight from the SD card. Declas processes only the media sitting directly in the folder you select.</p>
+<pre class="tree">Survey_2024/
+└── SD30/                <span class="c">← select this folder</span>
+    ├── 10220130.JPG
+    ├── 10260398.JPG
+    ├── 10280600.JPG
+    └── …</pre>
+<p>Process each station by selecting its folder in turn. The <code>species</code> column of the table comes from the model.</p>
+
+<h3 id="project-mode">Mode B: project › station › species ("Run on main directory" unticked)</h3>
+<p>Use this when your images are already sorted into species folders inside each station, for example after a first manual sort. Select the <strong>project</strong> folder: Declas visits every station and processes every sub-folder that contains media, in parallel.</p>
+<figure class="shot narrow"><img src="assets/img/structure.webp" width="1000" height="562" loading="lazy" alt="Project folder containing Station A and Station B, each with one folder per species"><figcaption><b>Project mode:</b> one folder per station, then one folder per species.</figcaption></figure>
+<p>In this mode, the table's <code>station</code> column is the station folder name and the <code>species</code> column is the species folder name. The model is used to count individuals and to find their boxes.</p>
+<div class="callout warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 21h20z"/><path d="M12 10v4M12 17h.01"/></svg><p>If you select a folder that has images directly inside it while the option is unticked, Declas reports <em>"No valid subdirectories found"</em>. Either tick <span class="ui">Run on main directory</span>, or select the parent folder that contains the station folders.</p></div>
+<p>Folders named <code>detections</code> and <code>frames</code> are created by Declas and are always skipped.</p>
+</section>
+
+<section>
+<h2 id="models">6. Model extensions</h2>
+<p>Declas does not ship with a fixed model. Instead, models are installed as <strong>extensions</strong>: small packages with a description file and the code to run them. Their weights are downloaded once and stored on your computer.</p>
+
+<h3 id="install-model">Install a model</h3>
+<ol class="step-list">
+  <li>Open <span class="ui">Models › Extensions</span>. The window stays open while you keep working in Declas.</li>
+  <li>Open the <span class="ui">Available</span> tab. Each card shows the model's region, size, framework, author, licence, citation and the classes it can recognise.</li>
+  <li>Use the search box to filter by name, region, author, task or species, for example <em>leopard</em> or <em>Europe</em>.</li>
+  <li>Click <span class="ui">Download</span>. A progress bar shows the download; the button changes to <span class="ui">Installed ✓</span> when it is done.</li>
+</ol>
+<figure class="shot narrow"><img src="assets/img/screens/extensions-available.webp" width="820" height="560" loading="lazy" alt="The Extensions window, Available tab, showing MegaDetector 6b as installed and MegaDetector 5a"><figcaption><b>Models › Extensions › Available:</b> every model in the online registry is listed here.</figcaption></figure>
+<figure class="shot narrow"><img src="assets/img/screens/extensions-installed.webp" width="820" height="560" loading="lazy" alt="The Installed tab listing four installed extensions"><figcaption><b>Installed tab:</b> select a model and click Delete selected to remove it. Bundled models cannot be removed.</figcaption></figure>
+<div class="callout tip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><p><strong>Which model should I pick?</strong> If a species model exists for your region, use it with <em>Task: Classification</em>: it finds and names animals in one pass. Otherwise use <em>MegaDetector 6b</em> with <em>Task: Detection</em> to separate animals, people and vehicles from empty images, then sort species yourself.</p></div>
+
+<h3 id="model-list">Available models</h3>
+<p>This list is read live from the same registry Declas uses, so it always matches what you see in <span class="ui">Models › Extensions</span>.</p>
+<div class="table-wrap"><table id="model-table">
+  <thead><tr><th>Model</th><th>Task</th><th>Region</th><th>Classes</th><th>Size</th><th>Licence</th></tr></thead>
+  <tbody>
+    <tr><td>MegaDetector 6b</td><td>Detection</td><td>Global</td><td>animal, person, vehicle</td><td>50 MB</td><td>MIT</td></tr>
+    <tr><td>MegaDetector 5a</td><td>Detection</td><td>Global</td><td>animal, person, vehicle</td><td>281 MB</td><td>MIT</td></tr>
+    <tr><td>MegaDetector 5b</td><td>Detection</td><td>Global</td><td>animal, person, vehicle</td><td>281 MB</td><td>MIT</td></tr>
+    <tr><td>DeepFaune Detection v1.1</td><td>Detection</td><td>Europe</td><td>animal, person, vehicle</td><td>22 MB</td><td>CC BY-NC-SA 4.0</td></tr>
+    <tr><td>Sub-Saharan Africa Wildlife Detector v1</td><td>Classification</td><td>Sub-Saharan Africa</td><td>36</td><td>101 MB</td><td>CC BY-NC 4.0</td></tr>
+    <tr><td>DeepFaune Classification v1.1</td><td>Classification</td><td>Europe</td><td>26</td><td>1,220 MB</td><td>CC BY-NC-SA 4.0</td></tr>
+    <tr><td>Namib Desert v1</td><td>Classification</td><td>Namibia</td><td>30</td><td>107 MB</td><td>CC BY-NC-SA 4.0</td></tr>
+    <tr><td>AI4G Snapshot Serengeti</td><td>Classification</td><td>Serengeti (Tanzania)</td><td>10</td><td>89 MB</td><td>MIT</td></tr>
+    <tr><td>AI4G Amazon Classification</td><td>Classification</td><td>Amazon</td><td>36</td><td>192 MB</td><td>MIT</td></tr>
+    <tr><td>Colombian Amazon (pywildlife)</td><td>Classification</td><td>Colombia (Amazon)</td><td>36</td><td>197 MB</td><td>MIT</td></tr>
+    <tr><td>Peruvian Amazon v1</td><td>Classification</td><td>Peru (Amazon)</td><td>42</td><td>247 MB</td><td>MIT</td></tr>
+    <tr><td>Southwest USA v3</td><td>Classification</td><td>Southwest USA</td><td>27</td><td>431 MB</td><td>MIT</td></tr>
+    <tr><td>New Zealand Invasives v1</td><td>Classification</td><td>New Zealand</td><td>17</td><td>32 MB</td><td>CC BY-NC-SA 4.0</td></tr>
+    <tr><td>Iran Wildlife v1</td><td>Classification</td><td>Iran</td><td>13</td><td>32 MB</td><td>CC BY-NC-SA 4.0</td></tr>
+    <tr><td>Depth Anything V2 (Metric Outdoor)</td><td>Depth</td><td>Global</td><td>distance in metres</td><td>97 MB</td><td>Apache-2.0</td></tr>
+  </tbody>
+</table></div>
+<nav class="pager" id="model-pager" aria-label="Model list pages" hidden></nav>
+<p>Models are made by their authors, credited in each card. Several are licensed for <strong>non-commercial use only</strong> (CC BY-NC): check the licence before using results commercially, and cite the model in your publications using the <span class="ui">Citation</span> link.</p>
+</section>
+
+<section>
+<h2 id="parameters">7. Inference parameters</h2>
+<p>Open <span class="ui">Setting › Inference parameters</span> to choose what Declas runs and how. Click <span class="ui">Save</span> to keep your changes; they are remembered the next time you open Declas.</p>
+<figure class="shot narrow"><img src="assets/img/screens/inference-parameters.webp" width="631" height="585" loading="lazy" alt="The Inference parameters dialog"><figcaption><b>Setting › Inference parameters</b></figcaption></figure>
+<div class="table-wrap"><table>
+  <thead><tr><th>Setting</th><th>What it means</th><th>Advice</th></tr></thead>
+  <tbody>
+    <tr><td class="ui">Task</td><td><em>Detection</em> finds animals, people and vehicles. <em>Classification</em> also names the species.</td><td>Must match the kind of model you pick.</td></tr>
+    <tr><td class="ui">Model</td><td>The installed extension to use. Only models whose weights are downloaded are listed.</td><td>If the list says <em>No models installed</em>, see <a href="#models">Model extensions</a>.</td></tr>
+    <tr><td class="ui">Image size</td><td>Two numbers, width and height, for example <code>1920 1440</code>.</td><td>Keep the default unless a model's author says otherwise.</td></tr>
+    <tr><td class="ui">Confidence threshold</td><td>Detections with a score below this value are ignored (0 to 1).</td><td>0.55 is a good start. Lower it (0.3–0.4) if animals are missed; raise it if you get false detections.</td></tr>
+    <tr><td class="ui">Maximum detection</td><td>The maximum number of objects kept per image.</td><td>300 is plenty for wildlife.</td></tr>
+    <tr><td class="ui">Classes of interest</td><td>Tick the classes or species you want to keep. Unticked ones are dropped from results.</td><td>Untick <em>person</em> and <em>vehicle</em> to keep only animals.</td></tr>
+    <tr><td class="ui">Process video</td><td>When ticked, video files are analysed alongside images.</td><td>Untick to skip videos and save time.</td></tr>
+    <tr><td class="ui">Frame stride</td><td>For videos, analyse one frame out of every <em>n</em>.</td><td>At 30 fps, a stride of 30 means one frame per second. Smaller is more thorough but slower.</td></tr>
+    <tr><td class="ui">Half-precision</td><td>Runs the model in 16-bit precision.</td><td>Only useful on a CUDA graphics card. Leave off on CPU.</td></tr>
+    <tr><td class="ui">Run on main directory</td><td>Ticked: process the selected folder only. Unticked: project › station › species layout.</td><td>See <a href="#organise">Organise your data</a>.</td></tr>
+    <tr><td class="ui">Device</td><td><em>cpu</em>, or <em>cuda</em> when an NVIDIA card is detected.</td><td>Use <em>cuda</em> if it is listed.</td></tr>
+    <tr><td class="ui">Distance estimation</td><td>Tick <span class="ui">Estimate</span> to compute the distance to each animal after detection.</td><td>See <a href="#distance">Distance estimation</a>.</td></tr>
+  </tbody>
+</table></div>
+</section>
+
+<section>
+<h2 id="run-single">8. Run on a single image or video</h2>
+<p>Use this to try a model or a threshold before processing a whole survey.</p>
+<ol class="step-list">
+  <li>Open a file with <img class="ui-icon" src="assets/img/icons/image.png" alt=""> <span class="ui">Select media</span>, or click a thumbnail after selecting a folder.</li>
+  <li>Click <img class="ui-icon" src="assets/img/icons/run.png" alt=""> <span class="ui">Run on current media</span>. The status bar shows <em>Running…</em>, then <em>Done ✅</em>.</li>
+  <li>The result appears in the <span class="ui">Inference</span> tab. Click <span class="ui">View</span> to see the boxes.</li>
+</ol>
+<p>The result is saved to the <code>detections.json</code> of that folder, so you can build a table from it later.</p>
+</section>
+
+<section>
+<h2 id="run-batch">9. Run on folders (batch processing)</h2>
+<ol class="step-list">
+  <li>Check your settings in <span class="ui">Setting › Inference parameters</span>, especially <span class="ui">Run on main directory</span>.</li>
+  <li>Click <img class="ui-icon" src="assets/img/icons/folder.png" alt=""> <span class="ui">Select directory</span> and choose a station folder (mode A) or a project folder (mode B).</li>
+  <li>Click <img class="ui-icon" src="assets/img/icons/batch.png" alt=""> <span class="ui">Run folder(s)</span>.</li>
+</ol>
+<p>Processing runs in the background, so you can keep browsing. The log shows each folder as it starts (<em>🔄 Processing: SD30</em>, or <em>🔄 Station: …</em> in project mode) and ends, and the status bar says <em>Completed successfully</em> when everything is done. A notification sound plays if you enabled it in <a href="#settings">General settings</a>.</p>
+<figure class="shot"><img src="assets/img/screens/batch-log.webp" width="1560" height="920" loading="lazy" alt="The log panel listing Processing SD30 and Processing SD28, and Completed successfully in the status bar"><figcaption><b>Batch run:</b> the log (bottom right) lists each processed folder; the status bar confirms completion.</figcaption></figure>
+<div class="callout tip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><p>Running a folder again replaces its <code>detections.json</code>. If you edited results by hand, back that file up before re-running.</p></div>
+</section>
+
+<section>
+<h2 id="review">10. Review the results</h2>
+
+<h3 id="inference-tab">The Inference tab</h3>
+<p>Click a thumbnail and open the <span class="ui">Inference</span> tab. Declas shows one <strong>card per species</strong> found in that image, with the species name and the number of individuals.</p>
+<figure class="shot"><img src="assets/img/screens/multi-species.webp" width="1560" height="920" loading="lazy" alt="Inference tab showing two species cards: KobusEllipsiprymnus count 3 and SylvicapraGrimmia count 1"><figcaption><b>Two species in one image:</b> each has its own card.</figcaption></figure>
+<p>Images where nothing was found are recorded with the species <em>Empty</em> and a count of 0, so they still appear in your table.</p>
+
+<h3 id="view-annotated">See the boxes</h3>
+<p>Click <span class="ui">View</span> to display the annotated copy of the image, with a box and a confidence score for every detection. These copies are saved in the <code>detections</code> sub-folder, so your original images are never modified.</p>
+<div class="gallery">
+  <figure class="shot"><img src="assets/img/screens/hyenas.webp" width="1560" height="920" loading="lazy" alt="Three spotted hyenas boxed in an infrared night image"><figcaption><b>CrocutaCrocuta × 3:</b> at night</figcaption></figure>
+  <figure class="shot"><img src="assets/img/screens/leopard.webp" width="1560" height="920" loading="lazy" alt="A leopard boxed in tall grass"><figcaption><b>PantheraPardus × 1:</b> confidence 0.60</figcaption></figure>
+</div>
+<p>Use <img class="ui-icon" src="assets/img/icons/zoom.png" alt=""> <span class="ui">Zoom lens</span> to magnify small or distant animals: turn it on, then move the mouse over the image.</p>
+
+<h3 id="edit-results">Correct species and counts</h3>
+<ol class="step-list">
+  <li>Type a new name in the <span class="ui">Species</span> field, or change the <span class="ui">Count</span>.</li>
+  <li>Click <span class="ui">Add species</span> to add a card for a species the model did not report.</li>
+  <li>Click the <span class="ui">–</span> button on a card to remove that entry.</li>
+</ol>
+<p>Changes are <strong>saved automatically</strong> to <code>detections.json</code> as you type. They are included the next time you build the table.</p>
+</section>
+
+<section>
+<h2 id="boxes">11. Draw and delete bounding boxes</h2>
+<p>When the model misses an animal, or boxes something that is not one, fix it directly on the image.</p>
+<h4>Add a missed animal</h4>
+<ol class="step-list">
+  <li>Click <img class="ui-icon" src="assets/img/icons/draw_box.png" alt=""> <span class="ui">Draw bounding box</span>.</li>
+  <li>Drag a rectangle around the animal.</li>
+  <li>Choose or type the species in the dialog. Species already on the image are listed first, followed by the model's classes.</li>
+</ol>
+<h4>Delete a wrong box</h4>
+<ol class="step-list">
+  <li>Click <img class="ui-icon" src="assets/img/icons/erase_box.png" alt=""> <span class="ui">Delete bounding box</span>.</li>
+  <li>Hover over the box (it highlights) and click it.</li>
+</ol>
+<figure class="shot"><img src="assets/img/screens/box-editing.webp" width="1920" height="1010" loading="lazy" alt="A baboon boxed in green by the model and a second baboon boxed in red by hand, with PapioSp count 2"><figcaption><b>Box editing:</b> the green box was found by the model, the red one drawn by hand. The count updates to 2.</figcaption></figure>
+<p>Each added or deleted box updates the species count and is saved to <code>detections.json</code>, so it counts in the report. Files created by very old versions of Declas cannot be edited this way.</p>
+</section>
+
+<section>
+<h2 id="tags">12. Custom tags</h2>
+<p>Tags let you record your own observations for each image or video, such as sex, age class, behaviour or a manual distance. They become columns in the final table.</p>
+<h3 id="define-tags">Define your tags</h3>
+<ol class="step-list">
+  <li>Open <span class="ui">Setting › Tags</span>.</li>
+  <li>Click <span class="ui">Add Tag</span>, then fill in a <span class="ui">Tag Title</span>, choose a <span class="ui">Data Type</span> (<em>float</em>, <em>integer</em>, <em>text</em>, <em>date</em> or <em>boolean</em>), and optionally list <span class="ui">Predefined Values</span> separated by commas.</li>
+  <li>Click <span class="ui">Save</span>.</li>
+</ol>
+<figure class="shot narrow"><img src="assets/img/screens/tags-dialog.webp" width="600" height="320" loading="lazy" alt="Tags dialog with sex as text with values male, female and distance_m as float"><figcaption><b>Setting › Tags:</b> two tags, <code>sex</code> (male, female) and <code>distance_m</code>.</figcaption></figure>
+<h3 id="fill-tags">Fill in tags</h3>
+<p>Open an image and go to the <span class="ui">Custom Tags</span> tab. Each tag has a field; tags with predefined values show a drop-down. Click <span class="ui">Add entry</span> to describe several individuals in the same image (Entry 1, Entry 2…). Values are saved automatically.</p>
+<figure class="shot"><img src="assets/img/screens/custom-tags.webp" width="1560" height="920" loading="lazy" alt="Custom Tags tab with Entry 1: sex male, distance_m empty"><figcaption><b>Custom Tags tab:</b> values for one image.</figcaption></figure>
+<p>In the table, a text tag with predefined values becomes one 0/1 column per value (for example <code>sex_male</code>, <code>sex_female</code>), which is convenient for analysis. Other tags keep a single column with the value you entered. Each extra entry adds a row.</p>
+<div class="callout note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg><p>A tag called <code>distance_m</code> is treated specially when automatic distance estimation is on: manual values are added as extra rows for individuals the model did not detect, instead of overwriting estimated distances.</p></div>
+</section>
+
+<section>
+<h2 id="metadata-map">13. Metadata and map</h2>
+<p>The <span class="ui">Metadata</span> tab lists everything stored in the image file: GPS position, camera make, firmware, date and time the picture was taken, exposure and more.</p>
+<figure class="shot"><img src="assets/img/screens/metadata.webp" width="1560" height="920" loading="lazy" alt="Metadata tab showing GPS information (blurred), make BUSHNELL and DateTimeOriginal 2020:10:31 12:07:00"><figcaption><b>Metadata tab:</b> GPS coordinates are blurred here to protect the survey site.</figcaption></figure>
+<p>If the image has GPS coordinates, click <img class="ui-icon" src="assets/img/icons/globe.png" alt=""> <span class="ui">Show on map</span> to place it on an interactive map in the <span class="ui">Map</span> tab. If there is no GPS data, Declas tells you so.</p>
+<p>Date, time and GPS are also copied into the table. The <code>time_radian</code> column gives the time of day as an angle between 0 and 2π, ready for activity-pattern analysis.</p>
+<div class="callout warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 21h20z"/><path d="M12 10v4M12 17h.01"/></svg><p>Before sharing results or screenshots publicly, consider removing or rounding coordinates of sensitive species. Exact locations can help poachers.</p></div>
+</section>
+
+<section>
+<h2 id="videos">14. Working with videos</h2>
+<ul>
+  <li>Click a video thumbnail to play it in the viewer. Use the seek bar, ◀◀ / ▶▶ and Play/Pause.</li>
+  <li>When <span class="ui">Process video</span> is ticked, Declas extracts one frame every <span class="ui">Frame stride</span> frames into a <code>frames</code> sub-folder (named <code>&lt;video&gt;_f000120.jpg</code>, and so on), runs the model on each frame, and merges the results into the folder's <code>detections.json</code>.</li>
+  <li>Each frame gets its own date and time, computed from the video's start time and the frame position. GPS is taken from the video file when it has any.</li>
+  <li>In the table, rows from videos have <code>media_type</code> set to <em>video</em>.</li>
+</ul>
+<p>Tags you enter for a video apply to its frames when the table is built.</p>
+</section>
+
+<section>
+<h2 id="distance">15. Distance estimation</h2>
+<p>Declas can estimate how far each detected animal is from the camera, which is useful for camera trap distance sampling and density estimation. It uses <strong>Depth Anything V2 (Metric Outdoor)</strong>, a model that predicts a depth in metres for every pixel (up to 80 m).</p>
+<h3 id="distance-setup">Set it up</h3>
+<ol class="step-list">
+  <li>Open <span class="ui">Setting › Inference parameters</span> and tick <span class="ui">Estimate</span> under <span class="ui">Distance estimation</span>.</li>
+  <li>Choose the <span class="ui">Depth model</span>. Its weights (about 97 MB) download automatically the first time, which needs an internet connection once.</li>
+  <li>Click <span class="ui">Set Field Of View</span> and enter the horizontal field of view of each camera, in degrees (see below).</li>
+  <li>Click <span class="ui">Save</span>, then run detection as usual.</li>
+</ol>
+<p>Distance estimation starts automatically after detection. If a folder already has a <code>detections.json</code>, Declas skips detection and goes straight to distance estimation, which saves a lot of time.</p>
+
+<h3 id="fov">Field of view per station</h3>
+<p>The field of view (FOV) corrects for animals that are off to the side of the image, which are further away than their depth alone suggests. Find it in your camera's manual (often between 40° and 60° for trail cameras).</p>
+<ul>
+  <li>Use <span class="ui">Add</span> and <span class="ui">Remove</span> to edit the table, one row per station.</li>
+  <li>Or click <span class="ui">Upload CSV</span> with one row per station. The columns <code>station</code> and <code>fov</code> are used; if they are named differently, the first column is the station and the second the FOV.</li>
+</ul>
+<pre data-lang="CSV"><code class="language-plaintext">station,fov
+SD25,52
+SD28,52
+SD30,48</code></pre>
+<p>The station name must match the folder name: the selected folder in mode A, or the station folder in mode B (matching ignores upper/lower case). If you define <strong>a single</strong> FOV, it applies to every station. If no FOV matches, Declas uses the raw depth and shows a warning in the status bar.</p>
+
+<h3 id="how-distance">How the distance is computed</h3>
+<p>For each box, Declas reads the depth at the <strong>bottom centre</strong> of the box, where the animal touches the ground. With a FOV, it converts the horizontal position of that point into an angle from the camera axis and divides the depth by its cosine:</p>
+<pre data-lang="Formula"><code class="language-plaintext">pos      = (x − width/2) / (width/2)    # −1 left edge … +1 right edge
+angle    = atan(pos × tan(FOV / 2))
+distance = depth / cos(angle)</code></pre>
+<p>The result is stored for each individual as <code>distance_m</code>. In the table, an image with distances gets one row per individual (count = 1), each with its own distance.</p>
+<div class="callout note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg><p>Monocular depth is an estimate. Calibrate it for your site, for example by photographing a person or a marker at known distances in front of each camera, before using it for density estimates.</p></div>
+</section>
+
+<section>
+<h2 id="split">16. Separate empty images</h2>
+<p>Camera traps produce many empty images (wind, grass, sun). After running a model, click <img class="ui-icon" src="assets/img/icons/split.png" alt=""> <span class="ui">Target or No target split</span>. In every processed folder, Declas creates:</p>
+<ul>
+  <li><code>has_target/</code>: copies of images with at least one detection,</li>
+  <li><code>no_target/</code>: copies of images where nothing was found.</li>
+</ul>
+<figure class="shot"><img src="assets/img/screens/after-split.webp" width="1560" height="920" loading="lazy" alt="The folder tree showing detections, has_target and no_target folders"><figcaption><b>After the split:</b> <code>has_target</code> and <code>no_target</code> appear next to <code>detections</code>.</figcaption></figure>
+<p>Images are <strong>copied</strong>, not moved, so the originals stay where they were. Remember that this doubles the disk space used by those images.</p>
+</section>
+
+<section>
+<h2 id="table">17. Build the table (CSV export)</h2>
+<ol class="step-list">
+  <li>Select the folder (mode A) or project (mode B) you processed.</li>
+  <li>Click <img class="ui-icon" src="assets/img/icons/table.png" alt=""> <span class="ui">Build table</span>.</li>
+  <li>A message confirms where the file was saved: <code>&lt;task&gt;_YYYYMMDD_HHMMSS.csv</code> (for example <code>classification_20261011_211359.csv</code>) inside the selected folder. Older tables are never overwritten.</li>
+</ol>
+<p>Here are the first rows of a real table built from station SD30 (paths shortened, coordinates hidden):</p>
+<div class="table-wrap"><table>
+  <thead><tr><th>media</th><th>media_type</th><th>species</th><th>count</th><th>latitude</th><th>longitude</th><th>altitude</th><th>make</th><th>date</th><th>time</th><th>time_radian</th><th>distance_m</th><th>sex_male</th><th>sex_female</th></tr></thead>
+  <tbody>
+    <tr><td>10220130</td><td>image</td><td>SylvicapraGrimmia</td><td>1</td><td>•••</td><td>•••</td><td>184.0</td><td>BUSHNEL</td><td>2020:10:22</td><td>07:27:17</td><td>1.952</td><td></td><td></td><td></td></tr>
+    <tr><td>10260398</td><td>image</td><td>HippopotamusAmphibious</td><td>1</td><td>•••</td><td>•••</td><td>0.0</td><td>BUSHNEL</td><td>2020:10:26</td><td>02:37:32</td><td>0.687</td><td></td><td></td><td></td></tr>
+    <tr><td>10270578</td><td>image</td><td>Empty</td><td>0</td><td>•••</td><td>•••</td><td>209.0</td><td>BUSHNEL</td><td>2020:10:27</td><td>12:45:15</td><td>3.339</td><td></td><td></td><td></td></tr>
+    <tr><td>10280600</td><td>image</td><td>KobusEllipsiprymnus</td><td>3</td><td>•••</td><td>•••</td><td>205.0</td><td>BUSHNEL</td><td>2020:10:28</td><td>10:56:20</td><td>2.864</td><td></td><td></td><td></td></tr>
+  </tbody>
+</table></div>
+
+<h3 id="csv-columns">Column reference</h3>
+<div class="table-wrap"><table>
+  <thead><tr><th>Column</th><th>Content</th></tr></thead>
+  <tbody>
+    <tr><td><code>media_path</code></td><td>Full path of the image (or video frame).</td></tr>
+    <tr><td><code>media</code></td><td>File name without extension.</td></tr>
+    <tr><td><code>media_type</code></td><td><em>image</em> or <em>video</em>.</td></tr>
+    <tr><td><code>category</code></td><td>Class returned by the model (or <em>Empty</em>).</td></tr>
+    <tr><td><code>species</code></td><td>Species name. In project mode (B), the species folder name.</td></tr>
+    <tr><td><code>station</code></td><td>Project mode (B) only: the station folder name.</td></tr>
+    <tr><td><code>count</code></td><td>Number of individuals of that species in the image (1 per row when distances are present).</td></tr>
+    <tr><td><code>latitude</code>, <code>longitude</code>, <code>altitude</code></td><td>GPS position from the file, when available.</td></tr>
+    <tr><td><code>make</code>, <code>model</code></td><td>Camera brand and model from the file.</td></tr>
+    <tr><td><code>date</code>, <code>time</code></td><td>When the picture was taken (<code>YYYY:MM:DD</code>, <code>HH:MM:SS</code>).</td></tr>
+    <tr><td><code>time_radian</code></td><td>Time of day as an angle from 0 to 2π (00:00 = 0, 12:00 = π).</td></tr>
+    <tr><td><code>distance_m</code></td><td>Estimated distance to the animal, in metres (empty if not computed).</td></tr>
+    <tr><td><em>your tags</em></td><td>One column per tag, or one 0/1 column per predefined value (<code>sex_male</code>, <code>sex_female</code>…).</td></tr>
+  </tbody>
+</table></div>
+<p>The CSV opens directly in Excel, LibreOffice, R (<code>read.csv()</code>) or Python (<code>pandas.read_csv()</code>).</p>
+</section>
+
+<section>
+<h2 id="outputs">18. Files created by Declas</h2>
+<p>Declas never changes your original media. Everything it produces sits next to them:</p>
+<pre class="tree">SD30/
+├── 10280600.JPG                     <span class="c">← your original image, untouched</span>
+├── detections.json                  <span class="c">← results for every file in this folder</span>
+├── detections/
+│   ├── 10280600.JPG                 <span class="c">← annotated copy with boxes</span>
+│   └── custom_tags.json             <span class="c">← your tag values</span>
+├── frames/                          <span class="c">← video frames (only if the folder has videos)</span>
+│   └── detections/
+├── has_target/ · no_target/         <span class="c">← only after a split</span>
+└── classification_20261011_211359.csv   <span class="c">← only after Build table</span></pre>
+
+<h3 id="json-format">The detections.json format</h3>
+<p>Each entry is keyed by <code>&lt;file name&gt;_&lt;species&gt;</code> and keeps the individual boxes, so results can be re-used by other tools:</p>
+<pre><code class="language-json">"10280600_KobusEllipsiprymnus": {
+  "media": "10280600",
+  "media_type": "image",
+  "species": "KobusEllipsiprymnus",
+  "count": 3,
+  "date": "2020:10:28",
+  "time": "10:56:20",
+  "time_radian": 2.864,
+  "detections": [
+    { "species": "KobusEllipsiprymnus", "confidence": 0.76,
+      "bbox": [632.9, 804.7, 888.4, 997.3] },
+    …
+  ]
+}</code></pre>
+<p><code>bbox</code> is <code>[x1, y1, x2, y2]</code> in pixels, from the top-left corner of the image.</p>
+<h3 id="clear-reports">Starting over</h3>
+<p><img class="ui-icon" src="assets/img/icons/remove.png" alt=""> <span class="ui">Clear all detection/classification reports</span> deletes every <code>detections.json</code> and <strong>every .csv file</strong> under the current folder, after asking for confirmation. This cannot be undone, so move any CSV you want to keep (including your own files) out of the folder first.</p>
+</section>
+
+<section>
+<h2 id="import">19. Import an existing result</h2>
+<p>Use <span class="ui">File › Import</span> to select a <code>detections.json</code> file, for example one produced on another computer. Declas confirms <em>File imported ✅</em>; you can then click <img class="ui-icon" src="assets/img/icons/table.png" alt=""> <span class="ui">Build table</span> to create the CSV next to that file.</p>
+</section>
+
+<section>
+<h2 id="settings">20. Settings</h2>
+<figure class="shot narrow" style="max-width:420px"><img src="assets/img/screens/general-settings.webp" width="444" height="383" loading="lazy" alt="General settings dialog with notification sound, language and theme"><figcaption><b>Setting › General</b></figcaption></figure>
+<ul>
+  <li><strong>Notification</strong>: tick <span class="ui">Enable notification sound on completion</span> and pick a sound to be alerted when a long run finishes. Selecting a sound plays a preview.</li>
+  <li><strong>Language</strong>: English or Français. The new language is applied the next time you start Declas.</li>
+  <li><strong>Theme</strong>: Light, Dark or System (follows your operating system). Also available in <span class="ui">Setting › Appearance</span>.</li>
+</ul>
+<figure class="shot"><img src="assets/img/screens/dark-mode.webp" width="1560" height="920" loading="lazy" alt="Declas in dark mode"><figcaption><b>Dark theme</b></figcaption></figure>
+</section>
+
+<section>
+<h2 id="publish">21. Publish your own model</h2>
+<p>Anyone can add a detection or classification model to Declas. <span class="ui">Models › Publish</span> shows these guidelines inside the app.</p>
+<h3 id="publish-layout">1. Create the extension folder</h3>
+<pre class="tree">model_extensions/
+└── my_model_v1/
+    ├── manifest.json   <span class="c">← metadata (required)</span>
+    ├── adapter.py      <span class="c">← inference code (required)</span>
+    └── README.md       <span class="c">← optional but appreciated</span></pre>
+<h3 id="publish-manifest">2. Describe it in manifest.json</h3>
+<pre data-file="manifest.json"><code class="language-json">{
+  "name": "my_model_v1",
+  "display_name": "My Model v1",
+  "version": "1.0",
+  "author": "Your name or organisation",
+  "description": "One sentence describing what the model does.",
+  "license": "CC-BY-4.0",
+  "license_url": "https://…",
+  "citation_url": "https://doi.org/…",
+  "info_url": "https://github.com/…",
+  "region": "West Africa",
+  "task": "classification",
+  "framework": "ultralytics",
+  "model_arch": "yolov8",
+  "environment": "PyTorch",
+  "input_type": "detect",
+  "model_file": "my_model.pt",
+  "download_url": "https://zenodo.org/records/…/files/my_model.pt?download=1",
+  "size_mb": 50,
+  "zip_url": "",
+  "adapter": "adapter.py",
+  "classes": ["species_a", "species_b"]
+}</code></pre>
+<h3 id="publish-adapter">3. Write adapter.py</h3>
+<pre data-file="adapter.py"><code class="language-python">from model_extensions.base import ModelAdapter
+
+class MyModelAdapter(ModelAdapter):
+
+    def load(self, model_path: str, device: str) -&gt; None:
+        # Called once. model_path is the downloaded weights file.
+        ...
+
+    def predict_single(self, image_path: str, conf_thres: float) -&gt; list:
+        # One dict per detection:
+        #   species (str), confidence (0–1), bbox [x1, y1, x2, y2] in pixels, or []
+        return [{"species": "lion", "confidence": 0.92, "bbox": [10, 20, 300, 400]}]</code></pre>
+<h3 id="publish-submit">4. Host the weights and submit</h3>
+<ul>
+  <li>Host the weights on <strong>Zenodo</strong> (free, with a DOI), the <strong>Hugging Face Hub</strong>, or <strong>GitHub Releases</strong> (files under 2 GB). <code>download_url</code> must be a direct download link.</li>
+  <li>Fork the <a href="https://github.com/stangandaho/declas" target="_blank" rel="noopener">Declas repository</a>, add your folder under <code>model_extensions/</code> and an entry in <code>model_extensions/registry.json</code>.</li>
+  <li>Open a pull request with a short description. The maintainers review the code, test the download and merge it, and your model then appears in every user's <span class="ui">Available</span> tab.</li>
+</ul>
+</section>
+
+<section>
+<h2 id="faq">22. Troubleshooting and FAQ</h2>
+<div class="faq">
+  <details><summary>Declas says "No model installed. Add one!"</summary><div><p>Install a model in <span class="ui">Models › Extensions › Available</span>, then select it in <span class="ui">Setting › Inference parameters</span> and click Save.</p></div></details>
+  <details><summary>"Extension '…' weights not downloaded."</summary><div><p>The model is listed but its weights file is missing, usually because a download was interrupted. Delete it in the Installed tab and download it again.</p></div></details>
+  <details><summary>"No valid subdirectories found" when running a folder</summary><div><p>You are in project mode (Run on main directory unticked) but selected a folder that contains images. Tick <span class="ui">Run on main directory</span>, or select the parent folder that holds the station folders. See <a href="#organise">Organise your data</a>.</p></div></details>
+  <details><summary>Videos are ignored</summary><div><p>Tick <span class="ui">Process video</span> in Inference parameters. The status bar says "Video processing is disabled" when it is off.</p></div></details>
+  <details><summary>Too many missed animals, or too many false detections</summary><div><p>Adjust the <span class="ui">Confidence threshold</span>: lower it to catch more animals, raise it to reduce false positives. You can also fix individual images with the <a href="#boxes">box tools</a>.</p></div></details>
+  <details><summary>Processing is slow</summary><div><p>Use a CUDA graphics card if you have one (<span class="ui">Device: cuda</span>), increase the <span class="ui">Frame stride</span> for videos, untick <span class="ui">Process video</span> if you do not need it, or pick a smaller model (MegaDetector 6b is 50 MB versus 281 MB for 5a).</p></div></details>
+  <details><summary>The "View" button shows nothing</summary><div><p>Run detection or classification on that image first. View shows the annotated copy from the <code>detections</code> folder.</p></div></details>
+  <details><summary>"No GPS info found" when using Show on map</summary><div><p>The image does not contain GPS coordinates. Many camera traps do not record them; you can join station coordinates to the CSV later in your analysis.</p></div></details>
+  <details><summary>Does Declas need internet?</summary><div><p>Only to download models (and the depth model the first time distance estimation is used). Processing itself is fully offline.</p></div></details>
+  <details><summary>Where can I get more help?</summary><div><p>Search or open an issue on <a href="https://github.com/stangandaho/declas/issues" target="_blank" rel="noopener">GitHub</a>, or use the <a href="contact.html">contact form</a>. Including your Declas version, operating system and the log file helps a lot. On Windows the log is at <code>%TEMP%\declas_running_verbose.log</code>; on macOS and Linux it is <code>declas_running_verbose.log</code> in your temporary folder.</p></div></details>
+</div>
+</section>
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+    <button class="icon-btn back-to-top" type="button" aria-label="Back to top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+  </main>
+
+  <div id="site-footer"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/site.js"></script>
+</body>
+</html>
