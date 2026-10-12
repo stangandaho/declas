@@ -179,7 +179,7 @@ kbd {
 .brand img { width: 30px; height: 30px; border-radius: 8px; }
 .nav { display: flex; align-items: center; gap: 4px; margin-left: auto; }
 .nav a, .nav button.nav-link {
-  font: inherit; font-size: .92rem; font-weight: 500;
+  font: inherit; font-size: .92rem; font-weight: 700;
   color: var(--muted); text-decoration: none;
   background: none; border: 0; cursor: pointer;
   padding: 8px 12px; border-radius: 999px;
@@ -189,7 +189,23 @@ kbd {
 @media (hover: hover) and (pointer: fine) {
   .nav a:hover, .nav button.nav-link:hover { color: var(--text); }
 }
-.nav .btn { margin-left: 8px; }
+
+/* Call-to-action buttons at the end of the nav */
+.nav .nav-cta {
+  font-size: .88rem; font-weight: 700;
+  padding: .62em 1.15em;
+  border-radius: 999px;
+  transition: transform 160ms var(--ease-out), background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+.nav .nav-cta:active { transform: scale(0.97); }
+.nav .nav-cta.btn-primary { margin-left: 10px; background: var(--primary-bg); color: var(--primary-text); border: 1.5px solid var(--primary-bg); }
+.nav .nav-cta.nav-donate { margin-left: 6px; background: transparent; color: var(--text); border: 1.5px solid var(--primary-bg); }
+.nav .nav-cta.nav-donate[aria-current="page"] { background: var(--accent-soft); }
+@media (hover: hover) and (pointer: fine) {
+  .nav .nav-cta.btn-primary:hover { background: color-mix(in srgb, var(--primary-bg) 86%, var(--text)); color: var(--primary-text); }
+  .nav .nav-cta.nav-donate:hover { background: var(--accent-soft); color: var(--text); }
+}
+@media (prefers-reduced-motion: reduce) { .nav .nav-cta:active { transform: none; } }
 .header-tools { display: flex; align-items: center; gap: 4px; }
 .icon-btn {
   display: inline-grid; place-items: center;
@@ -239,6 +255,7 @@ kbd {
   .nav.open { opacity: 1; transform: none; pointer-events: auto; visibility: visible; transition-delay: 0s; }
   .nav a, .nav button.nav-link { padding: 12px 14px; font-size: 1rem; text-align: left; border-radius: var(--radius-sm); }
   .nav .btn { margin: 6px 0 0; }
+  .nav .nav-cta.btn-primary, .nav .nav-cta.nav-donate { margin: 6px 0 0; padding: 12px 14px; font-size: 1rem; justify-content: center; }
   .header-tools { margin-left: auto; }
 }
 
