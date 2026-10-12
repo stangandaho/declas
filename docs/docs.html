@@ -578,7 +578,8 @@ class MyModelAdapter(ModelAdapter):
 <ul>
   <li>Host the weights on <strong>Zenodo</strong> (free, with a DOI), the <strong>Hugging Face Hub</strong>, or <strong>GitHub Releases</strong> (files under 2 GB). <code>download_url</code> must be a direct download link.</li>
   <li>Fork the <a href="https://github.com/stangandaho/declas" target="_blank" rel="noopener">Declas repository</a>, add your folder under <code>model_extensions/</code> and an entry in <code>model_extensions/registry.json</code>.</li>
-  <li>Open a pull request with a short description. The maintainers review the code, test the download and merge it, and your model then appears in every user's <span class="ui">Available</span> tab.</li>
+  <li>Open a pull request with a short description. The maintainers review the code, test the download and merge it, and your model then appears in every user's <span class="ui">Available</span> tab. No new Declas release is needed: when someone installs it, Declas (1.4.1 or later) downloads your <code>adapter.py</code> together with the weights.</li>
+  <li>Your adapter can only import packages already included in Declas (PyTorch, torchvision, Ultralytics, PytorchWildlife, timm, Transformers, ONNX Runtime, OpenCV, Pillow, NumPy). If it needs another package, mention it in the pull request.</li>
 </ul>
 </section>
 

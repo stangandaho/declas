@@ -471,7 +471,12 @@ class MyModelAdapter(ModelAdapter):
   <li>Open a Pull Request with a short description of the model</li>
 </ol>
 <p>The maintainers will review the adapter code, test the weights URL,
-and merge when ready.  Thank you for contributing!</p>
+and merge when ready.  No new Declas release is needed: when someone installs
+your model, Declas downloads your <code>adapter.py</code> together with the weights.</p>
+<p>Your adapter can only import packages already included in Declas (PyTorch,
+torchvision, Ultralytics, PytorchWildlife, timm, Transformers, ONNX Runtime,
+OpenCV, Pillow, NumPy). If it needs another package, mention it in the Pull Request.</p>
+<p>Thank you for contributing!</p>
 
 </body></html>
 """

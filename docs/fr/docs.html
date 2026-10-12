@@ -578,7 +578,8 @@ class MyModelAdapter(ModelAdapter):
 <ul>
   <li>Hébergez les poids sur <strong>Zenodo</strong> (gratuit, avec un DOI), le <strong>Hugging Face Hub</strong> ou les <strong>GitHub Releases</strong> (fichiers de moins de 2 Go). <code>download_url</code> doit être un lien de téléchargement direct.</li>
   <li>Faites un fork du <a href="https://github.com/stangandaho/declas" target="_blank" rel="noopener">dépôt Declas</a>, ajoutez votre dossier dans <code>model_extensions/</code> et une entrée dans <code>model_extensions/registry.json</code>.</li>
-  <li>Ouvrez une pull request avec une courte description. Les mainteneurs relisent le code, testent le téléchargement puis l’intègrent : votre modèle apparaît alors dans l’onglet <span class="ui">Disponibles</span> de chaque utilisateur.</li>
+  <li>Ouvrez une pull request avec une courte description. Les mainteneurs relisent le code, testent le téléchargement puis l’intègrent : votre modèle apparaît alors dans l’onglet <span class="ui">Disponibles</span> de chaque utilisateur. Aucune nouvelle version de Declas n’est nécessaire : lors de l’installation, Declas (1.4.1 ou plus récent) télécharge votre <code>adapter.py</code> avec les poids.</li>
+  <li>Votre adaptateur ne peut importer que des paquets déjà inclus dans Declas (PyTorch, torchvision, Ultralytics, PytorchWildlife, timm, Transformers, ONNX Runtime, OpenCV, Pillow, NumPy). S’il en nécessite un autre, signalez-le dans la pull request.</li>
 </ul>
 </section>
 
