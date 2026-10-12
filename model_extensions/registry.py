@@ -1,5 +1,6 @@
 """Fetch the online model registry and install / remove extensions."""
 
+import hashlib
 import json
 import shutil
 import ssl
@@ -14,6 +15,7 @@ REGISTRY_URL = (
     "https://raw.githubusercontent.com/stangandaho/declas/main"
     "/model_extensions/registry.json"
 )
+ADAPTER_BASE_URL = "https://raw.githubusercontent.com/stangandaho/declas/main/model_extensions"
 TIMEOUT_SEC = 10
 CHUNK_SIZE  = 256 * 1024   # 256 KB per read
 
@@ -107,6 +109,20 @@ def download_extension(manifest: dict,
             progress_callback(msg)
 
     try:
+        # Extensions published after this build ship without a bundled adapter;
+        # fetch it from GitHub so new models need no app release.
+        adapter_name = manifest.get("adapter", "adapter.py")
+        adapter_dest = ext_dir / adapter_name
+        if not adapter_dest.exists():
+            adapter_url = manifest.get("adapter_url") or f"{ADAPTER_BASE_URL}/{name}/{adapter_name}"
+            report(f"Downloading adapter {adapter_name}")
+            with urllib.request.urlopen(adapter_url, timeout=TIMEOUT_SEC, context=ssl_context()) as resp:
+                code = resp.read()
+            expected = manifest.get("sha256_adapter", "")
+            if expected and hashlib.sha256(code).hexdigest() != expected.lower():
+                raise RuntimeError(f"{adapter_name} checksum mismatch")
+            adapter_dest.write_bytes(code)
+
         weights_url = manifest.get("download_url", "")
         zip_url     = manifest.get("zip_url", "")
         model_file  = manifest.get("model_file", "")
