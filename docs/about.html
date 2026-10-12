@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>About Declas · Compared with AddaxAI, Wildlife Insights and Timelapse</title>
-  <meta name="description" content="What Declas is, why it exists, and how it compares with AddaxAI, Wildlife Insights, Timelapse and TrapTagger for camera trap image analysis.">
+  <meta name="description" content="What Declas is, why it exists, and how it compares with AddaxAI, Wildlife Insights, Timelapse, TrapTagger, Agouti and Camelot for camera trap image analysis.">
   <link rel="canonical" href="https://stangandaho.github.io/declas/about.html">
   <link rel="alternate" hreflang="en" href="https://stangandaho.github.io/declas/about.html">
   <link rel="alternate" hreflang="fr" href="https://stangandaho.github.io/declas/fr/about.html">
@@ -16,13 +16,13 @@
   <meta property="og:locale:alternate" content="fr_FR">
   <meta property="og:url" content="https://stangandaho.github.io/declas/about.html">
   <meta property="og:title" content="About Declas · Compared with AddaxAI, Wildlife Insights and Timelapse">
-  <meta property="og:description" content="What Declas is, why it exists, and how it compares with AddaxAI, Wildlife Insights, Timelapse and TrapTagger for camera trap image analysis.">
+  <meta property="og:description" content="What Declas is, why it exists, and how it compares with AddaxAI, Wildlife Insights, Timelapse, TrapTagger, Agouti and Camelot for camera trap image analysis.">
   <meta property="og:image" content="https://stangandaho.github.io/declas/assets/img/og-image.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="About Declas · Compared with AddaxAI, Wildlife Insights and Timelapse">
-  <meta name="twitter:description" content="What Declas is, why it exists, and how it compares with AddaxAI, Wildlife Insights, Timelapse and TrapTagger for camera trap image analysis.">
+  <meta name="twitter:description" content="What Declas is, why it exists, and how it compares with AddaxAI, Wildlife Insights, Timelapse, TrapTagger, Agouti and Camelot for camera trap image analysis.">
   <meta name="twitter:image" content="https://stangandaho.github.io/declas/assets/img/og-image.jpg">
   <link rel="icon" type="image/png" href="assets/img/logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -91,9 +91,10 @@
     <section class="section" id="compare">
       <div class="container">
         <div class="section-head">
-          <span class="eyebrow">Comparison</span>
-          <p>There are excellent tools for camera trap AI, and the right one depends on your project. Here is an honest comparison with four widely used ones.</p>
+          <h2>How Declas compares</h2>
+          <p>There are excellent tools for camera trap AI, and the right one depends on your project. Here is an honest comparison with six widely used ones.</p>
         </div>
+        <p class="legend" aria-label="Legend"><span class="yes">Supported or favourable</span><span class="part">Partial, limited or not documented</span><span class="no">Not supported or a limitation</span></p>
         <div class="table-wrap">
           <table class="compare">
             <thead>
@@ -104,31 +105,34 @@
                 <th>Wildlife Insights</th>
                 <th>Timelapse</th>
                 <th>TrapTagger</th>
+                <th>Agouti</th>
+                <th>Camelot</th>
               </tr>
             </thead>
             <tbody>
-              <tr><td>Type</td><td class="is-declas">Desktop app</td><td>Desktop app</td><td>Web platform</td><td>Desktop app</td><td>Web platform</td></tr>
-              <tr><td>Works offline</td><td class="is-declas"><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td><td><span class="no">No, upload required</span></td><td><span class="yes">Yes</span></td><td><span class="no">No, upload required</span></td></tr>
-              <tr><td>Operating systems</td><td class="is-declas">Windows, macOS, Linux</td><td>Windows, macOS, Linux</td><td>Any browser</td><td>Windows</td><td>Any browser</td></tr>
-              <tr><td>Cost</td><td class="is-declas">Free (MIT)</td><td>Free (MIT)</td><td>Free for most users; paid tiers for some organisations</td><td>Free</td><td>Free, open source</td></tr>
-              <tr><td>Account needed</td><td class="is-declas"><span class="yes">No</span></td><td><span class="yes">No</span></td><td><span class="no">Yes, with approval to upload</span></td><td><span class="yes">No</span></td><td><span class="no">Yes</span></td></tr>
-              <tr><td>Built-in AI detection</td><td class="is-declas"><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td><td><span class="part">Imports results from AddaxAI / MegaDetector</span></td><td><span class="yes">Yes</span></td></tr>
-              <tr><td>Species classification</td><td class="is-declas"><span class="yes">Regional models, plug-in</span></td><td><span class="yes">Regional models</span></td><td><span class="yes">Global model</span></td><td><span class="part">Via imported results</span></td><td><span class="yes">Mainly southern Africa</span></td></tr>
-              <tr><td>Video support</td><td class="is-declas"><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td><td><span class="part">Check current support</span></td><td><span class="yes">Yes</span></td><td><span class="part">Check current support</span></td></tr>
-              <tr><td>Edit species, counts and boxes</td><td class="is-declas"><span class="yes">Yes, in-app</span></td><td><span class="yes">Yes, human verification</span></td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td></tr>
-              <tr><td>Custom data fields</td><td class="is-declas"><span class="yes">Yes, typed tags</span></td><td><span class="no">Limited</span></td><td><span class="part">Fixed schema</span></td><td><span class="yes">Yes, very flexible</span></td><td><span class="part">Some</span></td></tr>
-              <tr><td>Automatic distance to animal</td><td class="is-declas"><span class="yes">Yes, depth model + FOV</span></td><td><span class="no">No</span></td><td><span class="no">No</span></td><td><span class="no">No</span></td><td><span class="no">No</span></td></tr>
-              <tr><td>Individual identification</td><td class="is-declas"><span class="no">No</span></td><td><span class="no">No</span></td><td><span class="no">No</span></td><td><span class="no">No</span></td><td><span class="yes">Yes</span></td></tr>
-              <tr><td>Data sharing / collaboration</td><td class="is-declas"><span class="part">Share files</span></td><td><span class="part">Share files</span></td><td><span class="yes">Yes, built in</span></td><td><span class="part">Share files</span></td><td><span class="yes">Yes, built in</span></td></tr>
-              <tr><td>Analysis-ready CSV</td><td class="is-declas"><span class="yes">Yes, with time in radians</span></td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td></tr>
+              <tr><td>Type</td><td class="is-declas">Desktop app</td><td>Desktop app</td><td>Web platform</td><td>Desktop app</td><td>Web platform</td><td>Web platform</td><td>Desktop app (local or server)</td></tr>
+              <tr><td>Works offline</td><td class="is-declas"><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td><td><span class="no">No, upload required</span></td><td><span class="yes">Yes</span></td><td><span class="no">No, upload required</span></td><td><span class="no">No, upload required</span></td><td><span class="yes">Yes</span></td></tr>
+              <tr><td>Operating systems</td><td class="is-declas">Windows, macOS, Linux</td><td>Windows, macOS, Linux</td><td>Any browser</td><td>Windows</td><td>Any browser</td><td>Any browser</td><td>Windows, macOS, Linux</td></tr>
+              <tr><td>Cost</td><td class="is-declas">Free (MIT)</td><td>Free (MIT)</td><td>Free for most users; paid tiers for some organisations</td><td>Free</td><td>Free, open source</td><td>Free (not open source)</td><td>Free (AGPL-3.0)</td></tr>
+              <tr><td>Account needed</td><td class="is-declas"><span class="yes">No</span></td><td><span class="yes">No</span></td><td><span class="no">Yes, with approval to upload</span></td><td><span class="yes">No</span></td><td><span class="no">Yes</span></td><td><span class="no">Yes</span></td><td><span class="yes">No</span></td></tr>
+              <tr><td>Built-in AI detection</td><td class="is-declas"><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td><td><span class="part">Imports results from AddaxAI / MegaDetector</span></td><td><span class="yes">Yes</span></td><td><span class="yes">Yes, MegaDetector</span></td><td><span class="no">No</span></td></tr>
+              <tr><td>Species classification</td><td class="is-declas"><span class="yes">Regional models, plug-in</span></td><td><span class="yes">Regional models</span></td><td><span class="yes">Global model</span></td><td><span class="part">Via imported results</span></td><td><span class="yes">Mainly southern Africa</span></td><td><span class="yes">Regional models</span></td><td><span class="no">Manual</span></td></tr>
+              <tr><td>Video support</td><td class="is-declas"><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td><td><span class="part">Check current support</span></td><td><span class="yes">Yes</span></td><td><span class="part">Check current support</span></td><td><span class="yes">Yes</span></td><td><span class="part">Not documented</span></td></tr>
+              <tr><td>Edit species, counts and boxes</td><td class="is-declas"><span class="yes">Yes, in-app</span></td><td><span class="yes">Yes, human verification</span></td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td><td><span class="yes">Yes, manual tagging</span></td></tr>
+              <tr><td>Custom data fields</td><td class="is-declas"><span class="yes">Yes, typed tags</span></td><td><span class="no">Limited</span></td><td><span class="part">Fixed schema</span></td><td><span class="yes">Yes, very flexible</span></td><td><span class="part">Some</span></td><td><span class="part">Fixed schema</span></td><td><span class="yes">Yes</span></td></tr>
+              <tr><td>Automatic distance to animal</td><td class="is-declas"><span class="yes">Yes, depth model + FOV</span></td><td><span class="no">No</span></td><td><span class="no">No</span></td><td><span class="no">No</span></td><td><span class="no">No</span></td><td><span class="part">Measurement tools for density studies</span></td><td><span class="no">No</span></td></tr>
+              <tr><td>Individual identification</td><td class="is-declas"><span class="no">No</span></td><td><span class="no">No</span></td><td><span class="no">No</span></td><td><span class="no">No</span></td><td><span class="yes">Yes</span></td><td><span class="no">No</span></td><td><span class="no">No</span></td></tr>
+              <tr><td>Data sharing / collaboration</td><td class="is-declas"><span class="part">Share files</span></td><td><span class="part">Share files</span></td><td><span class="yes">Yes, built in</span></td><td><span class="part">Share files</span></td><td><span class="yes">Yes, built in</span></td><td><span class="yes">Yes, built in</span></td><td><span class="yes">Multi-user server mode</span></td></tr>
+              <tr><td>Analysis-ready CSV</td><td class="is-declas"><span class="yes">Yes, with time in radians</span></td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td></tr>
+              <tr><td>Camera Trap Data Package (Camtrap DP) export</td><td class="is-declas"><span class="no">No, CSV and JSON</span></td><td><span class="yes">Yes</span></td><td><span class="part">Custom format; Camtrap DP announced</span></td><td><span class="no">Not built in (via AddaxAI)</span></td><td><span class="part">Not documented</span></td><td><span class="yes">Yes</span></td><td><span class="no">No, custom CSV</span></td></tr>
             </tbody>
           </table>
         </div>
-        <p class="muted" style="font-size:.86rem">Compared versions: Declas 1.4.0, AddaxAI 7.13.0 (October 2026) and Timelapse 2.5.0.6 (April 2026). All information comes from each project's public documentation and may change with later releases. Spotted an error? <a href="contact.html">Let us know</a>.</p>
+        <p class="muted" style="font-size:.86rem">Compared versions: Declas 1.4.0, AddaxAI 7.13.0 (October 2026), Timelapse 2.5.0.6 (April 2026) and Camelot 1.6.8. All information comes from each project's public documentation and may change with later releases. <a href="https://youtu.be/tP1zoao2QdE" target="_blank" rel="noopener">Watch this video comparison</a> (recorded before Declas existed). Spotted an error? <a href="contact.html">Let us know</a>.</p>
 
         <div class="grid grid-2" style="margin-top:40px">
           <article class="card"><h3>Choose Declas if…</h3><p>you work offline or with limited bandwidth, need to keep locations private, want per-animal distances for distance sampling, or need typed custom fields alongside AI results on Windows, macOS or Linux.</p></article>
-          <article class="card"><h3>Consider the others if…</h3><p>you need a shared online database for a large multi-partner programme (Wildlife Insights, TrapTagger), individual identification (TrapTagger), or a mature manual-annotation workflow on Windows (Timelapse, which pairs well with AddaxAI).</p></article>
+          <article class="card"><h3>Consider the others if…</h3><p>you need a shared online database for a large multi-partner programme (Wildlife Insights, TrapTagger), individual identification (TrapTagger), a mature manual-annotation workflow on Windows (Timelapse, which pairs well with AddaxAI), direct Camtrap DP export for publishing on GBIF (Agouti, AddaxAI), or a local multi-user database for manual tagging (Camelot).</p></article>
         </div>
       </div>
     </section>

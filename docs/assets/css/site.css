@@ -562,6 +562,9 @@ td code { white-space: nowrap; }
 @media (hover: hover) and (pointer: fine) { .pager-btn:not([disabled]):not([aria-current]):hover { color: var(--text); border-color: var(--border-strong); } }
 @media (prefers-reduced-motion: reduce) { .pager-btn:active { transform: none; } }
 
+/* Colour legend for the comparison table */
+.legend { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 0 0 12px; font-size: .84rem; color: var(--muted); }
+
 /* Forms */
 
 .form { display: grid; gap: 16px; }
