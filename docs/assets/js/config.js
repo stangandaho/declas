@@ -8,7 +8,7 @@
  * in demo mode: downloads still work, but counts and sign-ups stay in this browser.
  */
 window.DECLAS_CONFIG = {
-  supabaseUrl: 'https://jozyrwbaixfiuigzabiz.supabase.co/rest/v1/',
+  supabaseUrl: 'https://jozyrwbaixfiuigzabiz.supabase.co',
   supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impvenlyd2JhaXhmaXVpZ3phYml6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3NTMyNTMsImV4cCI6MjEwNzMyOTI1M30.RGeai0azRCVtqairDfLc0NmV2AXoMsYb5_t0X6js-9s',
 
   repo: 'stangandaho/declas',

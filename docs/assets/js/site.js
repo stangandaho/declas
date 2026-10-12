@@ -227,7 +227,9 @@
   var hasBackend = !!(CFG.supabaseUrl && CFG.supabaseAnonKey);
 
   function rpc(fn, args) {
-    return fetch(CFG.supabaseUrl.replace(/\/$/, '') + '/rest/v1/rpc/' + fn, {
+    // Accept the project URL with or without a trailing "/rest/v1/"
+    var base = CFG.supabaseUrl.replace(/\/+$/, '').replace(/\/rest\/v1$/, '');
+    return fetch(base + '/rest/v1/rpc/' + fn, {
       method: 'POST',
       headers: {
         apikey: CFG.supabaseAnonKey,
@@ -238,7 +240,11 @@
     }).then(function (res) {
       return res.text().then(function (txt) {
         var data = txt ? JSON.parse(txt) : null;
-        if (!res.ok) throw new Error((data && data.message) || ('Request failed (' + res.status + ')'));
+        if (!res.ok) {
+          var err = new Error((data && data.message) || ('Request failed (' + res.status + ')'));
+          console.warn('Declas database call "' + fn + '" failed:', err.message);
+          throw err;
+        }
         return data;
       });
     });
