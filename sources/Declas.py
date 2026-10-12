@@ -242,7 +242,7 @@ class Declas(QMainWindow):
         self.icon_file = os.path.normpath( os.path.join(os.path.dirname(__file__), 'icons', 'logo.png') )
         icon_file = self.icon_file.replace("sources", "")
         self.setWindowIcon(QIcon(icon_file))
-        self.setWindowTitle("Declas 1.4.0")
+        self.setWindowTitle("Declas 1.4.1")
 
         # Load a custom font
         font_path = str(Path(DECLAS_ROOT, "sources/styles/Montserrat-Regular.ttf"))
