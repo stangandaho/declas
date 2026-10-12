@@ -1,12 +1,4 @@
 -- Email notification for each new contact message (Supabase + Resend)
---
--- Setup:
---   1. I Created an account at https://resend.com, then create an API key
---      (API Keys > Create API Key, permission "Sending access").
---   2. In Supabase: Database > Extensions, enable "pg_net" (if it is not already on).
---   3. I Replace re_YOUR_API_KEY and the email address below, then run this whole file
---      in the Supabase SQL Editor.
---
 
 create extension if not exists pg_net;
 
@@ -21,7 +13,7 @@ begin
   if exists (select 1 from vault.secrets where name = 'contact_notify_to') then
     perform vault.update_secret((select id from vault.secrets where name = 'contact_notify_to'), 'gandahostanmah@gmail.com');
   else
-    perform vault.create_secret('stangandaho@gmail.com', 'contact_notify_to');
+    perform vault.create_secret('gandahostanmah@gmail.com', 'contact_notify_to');
   end if;
 end $$;
 

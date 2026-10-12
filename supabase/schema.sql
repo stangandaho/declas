@@ -1,17 +1,5 @@
 -- Declas website backend (Supabase / PostgreSQL)
 --
--- Setup:
---   1. Create a free project at https://supabase.com
---   2. Open SQL Editor, paste this whole file and click Run
---   3. Project Settings > API: copy the Project URL and the "anon public" key into
---      docs/assets/js/config.js (supabaseUrl, supabaseAnonKey)
---
--- Read your data in Table Editor (subscribers, downloads, contact_messages), or export
--- the subscriber list for update emails with:
---   select email, first_name, last_name, country, created_at from subscribers order by created_at;
---
--- The browser can only call the functions below; the tables themselves are not
--- reachable with the anon key. IP addresses are never stored, only a salted hash.
 
 create extension if not exists pgcrypto with schema extensions;
 
@@ -219,7 +207,12 @@ revoke all on function public.download_stats(), public.visitor_known(uuid),
   public.register_subscriber(text, text, text, text, uuid, boolean),
   public.record_download(text, text, text, uuid),
   public.submit_contact(text, text, text, text, text) from public;
+-- Only the website's public role may call them; the site has no signed-in users
+revoke all on function public.download_stats(), public.visitor_known(uuid),
+  public.register_subscriber(text, text, text, text, uuid, boolean),
+  public.record_download(text, text, text, uuid),
+  public.submit_contact(text, text, text, text, text) from authenticated;
 grant execute on function public.download_stats(), public.visitor_known(uuid),
   public.register_subscriber(text, text, text, text, uuid, boolean),
   public.record_download(text, text, text, uuid),
-  public.submit_contact(text, text, text, text, text) to anon, authenticated;
+  public.submit_contact(text, text, text, text, text) to anon;
