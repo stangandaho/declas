@@ -476,7 +476,7 @@
       field('email', t('email'), 'email', 'email') +
       '<div class="field"><label for="f-country">' + t('country') + '</label><select class="select" id="f-country" name="country" required autocomplete="country-name">' + countryOptions() + '</select><span class="field-error" aria-live="polite"></span></div>' +
       '<div class="privacy-note">' + ICON.lock + '<span>' + t('privacyNote') + '</span></div>' +
-      '<button class="btn btn-primary btn-block" type="submit">' + ICON.download + '<span data-submit-label>' + t('continueDl') + '</span></button>' +
+      '<button class="btn btn-primary form-submit" type="submit">' + ICON.download + '<span data-submit-label>' + t('continueDl') + '</span></button>' +
       '<p class="form-status" role="status"></p>' +
       '</form></div>' +
       '</section>' +

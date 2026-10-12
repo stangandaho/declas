@@ -192,7 +192,7 @@ kbd {
 
 /* Call-to-action buttons at the end of the nav */
 .nav .nav-cta {
-  font-size: .88rem; font-weight: 700;
+  font-size: .88rem; font-weight: 700; line-height: 1;
   padding: .62em 1.15em;
   border-radius: 999px;
   transition: transform 160ms var(--ease-out), background-color 160ms ease, border-color 160ms ease, color 160ms ease;
@@ -242,7 +242,7 @@ kbd {
   .menu-toggle { display: inline-grid; }
   .nav {
     position: fixed; left: 12px; right: 12px; top: calc(var(--header-h) + 8px);
-    flex-direction: column; align-items: stretch; gap: 2px;
+    flex-direction: row; flex-wrap: wrap; align-items: center; gap: 2px;
     padding: 10px;
     background: var(--surface);
     border: 1px solid var(--border);
@@ -253,9 +253,10 @@ kbd {
     transition: opacity 180ms var(--ease-out), transform 180ms var(--ease-out), visibility 0s linear 180ms;
   }
   .nav.open { opacity: 1; transform: none; pointer-events: auto; visibility: visible; transition-delay: 0s; }
-  .nav a, .nav button.nav-link { padding: 12px 14px; font-size: 1rem; text-align: left; border-radius: var(--radius-sm); }
-  .nav .btn { margin: 6px 0 0; }
-  .nav .nav-cta.btn-primary, .nav .nav-cta.nav-donate { margin: 6px 0 0; padding: 12px 14px; font-size: 1rem; justify-content: center; }
+  .nav a, .nav button.nav-link { flex: 1 0 100%; padding: 12px 14px; font-size: 1rem; text-align: left; border-radius: var(--radius-sm); }
+  /* The two buttons share one row under the links, at their natural size, left-aligned with the link text */
+  .nav .nav-cta.btn-primary, .nav .nav-cta.nav-donate { flex: 0 0 auto; margin: 10px 0 4px; padding: .7em 1.2em; font-size: .95rem; }
+  .nav .nav-cta.btn-primary { margin-left: 14px; margin-right: 6px; }
   .header-tools { margin-left: auto; }
 }
 
@@ -693,6 +694,7 @@ td code { white-space: nowrap; }
   font: inherit; font-size: .88rem; font-weight: 600; color: var(--muted); cursor: pointer;
 }
 .back-link svg { width: 16px; height: 16px; }
+.form-submit { justify-self: start; }
 .privacy-note {
   display: flex; gap: 12px;
   padding: 14px 16px;
