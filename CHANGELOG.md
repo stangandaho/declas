@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.4.1
+
+### New Features
+- new model extension: DeepForestVision v2 (MegaDetector v5 + DINOv3 classifier, 61 African tropical-forest taxa)
+- new models published in the Extensions window can be installed without updating Declas: the adapter is downloaded together with the weights
+
+### Improvements
+- publishing guide (in the app and on the website) updated for the new install process
+
 ## v1.4.0
 
 ### New Features
