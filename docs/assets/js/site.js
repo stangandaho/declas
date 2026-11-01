@@ -44,7 +44,7 @@
       selectCountry: 'Select your country',
       privacyNote: 'Used only to email you about Declas updates. We never sell or share it, and you can ask us to delete it at any time. See our <a href="privacy.html">privacy notice</a>.',
       continueDl: 'Continue', sendingCode: 'Sending your code…', shortName: 'Enter your full name',
-      otpTitle: 'Check your email', otpIntro: 'Enter the 6-digit code we sent to', otpEdit: 'Change email', otpLabel: 'Verification code',
+      otpTitle: 'Check your email', otpIntro: 'Enter the 6-digit code we sent to', otpEdit: 'Change email', otpLabel: 'Verification code', otpHint: 'Not there? Check your Spam and Updates folders.',
       otpResend: 'Send a new code', otpResendIn: 'Send a new code in {n}s', otpResent: 'A new code is on its way. Check your spam folder too.',
       otpFormat: 'Enter the 6 digits from the email', otpInvalid: 'That code is not correct', otpExpired: 'This code has expired. Send a new one.',
       otpTooMany: 'Too many attempts. Send a new code.', otpRate: 'Too many requests. Please try again later.', otpFail: 'We could not send the code. Please try again.',
@@ -82,7 +82,7 @@
       selectCountry: 'Choisissez votre pays',
       privacyNote: 'Utilisées uniquement pour vous informer des mises à jour de Declas. Elles ne sont jamais vendues ni partagées, et vous pouvez demander leur suppression à tout moment. Voir notre <a href="privacy.html">politique de confidentialité</a>.',
       continueDl: 'Continuer', sendingCode: 'Envoi de votre code…', shortName: 'Saisissez votre nom complet',
-      otpTitle: 'Vérifiez vos e-mails', otpIntro: 'Saisissez le code à 6 chiffres envoyé à', otpEdit: 'Modifier l’e-mail', otpLabel: 'Code de vérification',
+      otpTitle: 'Vérifiez vos e-mails', otpIntro: 'Saisissez le code à 6 chiffres envoyé à', otpEdit: 'Modifier l’e-mail', otpLabel: 'Code de vérification', otpHint: 'Pas reçu ? Vérifiez vos dossiers Spam et Notifications.',
       otpResend: 'Envoyer un nouveau code', otpResendIn: 'Nouveau code dans {n} s', otpResent: 'Un nouveau code arrive. Vérifiez aussi vos spams.',
       otpFormat: 'Saisissez les 6 chiffres reçus par e-mail', otpInvalid: 'Ce code n’est pas correct', otpExpired: 'Ce code a expiré. Demandez-en un nouveau.',
       otpTooMany: 'Trop de tentatives. Demandez un nouveau code.', otpRate: 'Trop de demandes. Réessayez plus tard.', otpFail: 'Impossible d’envoyer le code. Veuillez réessayer.',
@@ -477,7 +477,8 @@
       '<form class="form" id="otp-form" novalidate>' +
       '<div class="field"><label for="f-otp">' + t('otpLabel') + '</label>' +
       '<input class="input otp-input" id="f-otp" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required>' +
-      '<span class="field-error" aria-live="polite"></span></div>' +
+      '<span class="field-error" aria-live="polite"></span>' +
+      '<span class="field-hint">' + t('otpHint') + '</span></div>' +
       '<div class="otp-actions"><button class="btn btn-primary" type="submit">' + ICON.download + '<span>' + t('download') + '</span></button>' +
       '<button class="link-btn" type="button" data-resend disabled></button></div>' +
       '<p class="form-status" role="status"></p>' +
