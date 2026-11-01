@@ -12,17 +12,13 @@ window.DECLAS_CONFIG = {
   supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impvenlyd2JhaXhmaXVpZ3phYml6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3NTMyNTMsImV4cCI6MjEwNzMyOTI1M30.RGeai0azRCVtqairDfLc0NmV2AXoMsYb5_t0X6js-9s',
 
   repo: 'stangandaho/declas',
-  version: '1.4.0',
+  version: '1.4.1',
   contactEmail: 'stangandaho@gmail.com',
   videoUrl: 'https://youtu.be/6sAMYketcKs',
   zenodoDoi: 'https://doi.org/10.5281/zenodo.20951592',
 
-  // Downloads made before this site existed. Added to the live count.
-  downloadBaseline: [
-    { label: 'v1.4.0 (GitHub)', count: 31 },
-    { label: 'v1.3.0 (GitHub)', count: 31 },
-    { label: 'v1.1.0 (Zenodo)', count: 270 },
-  ],
+  // Added to GitHub's live download counts, which cannot see Zenodo downloads.
+  zenodoDownloads: 270,
 
   // Used when the GitHub API cannot be reached.
   fallbackAssets: {

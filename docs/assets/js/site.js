@@ -28,24 +28,29 @@
     en: {
       tagline: 'Free, open-source desktop software that turns camera trap images and videos into analysis-ready data. Runs on your computer, no internet needed.',
       product: 'Product', download: 'Download', documentation: 'Documentation', installGuide: 'Installation guide',
-      changelog: 'Changelog', releases: 'All releases', resources: 'Resources', video: '',
+      changelog: 'Changelog', resources: 'Resources', video: '',
       modelExt: 'Model extensions', publish: 'Publish a model', faq: 'FAQ &amp; troubleshooting', cite: 'Cite Declas (Zenodo)',
       community: 'Community', bug: 'Report a bug', feature: 'Request a feature', contact: 'Contact', support: 'Support the project',
       related: 'Related', compare: 'Compare tools', privacy: 'Privacy', releasedUnder: 'Released under the', mit: 'MIT License',
       madeFor: 'Made for wildlife researchers and conservation teams',
       close: 'Close', dlTitle: 'Download Declas',
       dlIntro: 'Pick your operating system. Declas is free, open source, and works offline once installed.',
-      soFar: 'downloads so far', winReq: '64-bit installer', macReq: 'Separate builds for Apple Silicon and Intel',
-      linReq: '64-bit (x86-64) archive', dlWin: 'Download for Windows', dlLinux: 'Download for Linux', yourSystem: 'Your system',
-      dlNote: 'Need help installing? Read the <a href="docs.html#install">installation guide</a>. Source code and older versions are on <a href="{gh}" target="_blank" rel="noopener">GitHub</a>.',
+      winReq: '64-bit installer', macReq: 'Separate builds for Apple Silicon and Intel',
+      linReq: '64-bit (x86-64) archive', yourSystem: 'Your system',
+      dlNote: 'Need help installing? Read the <a href="docs.html#install">installation guide</a>.',
       formTitle: 'One quick step',
       formIntro: 'Tell us who you are so we can let you know when a new version of Declas is out. You will only be asked once on this computer.',
       back: 'Back to downloads', firstName: 'First name', lastName: 'Last name', email: 'Email address', country: 'Country',
       selectCountry: 'Select your country',
       privacyNote: 'Used only to email you about Declas updates. We never sell or share it, and you can ask us to delete it at any time. See our <a href="privacy.html">privacy notice</a>.',
-      continueDl: 'Continue to download', starting: 'Starting your download…', started: 'Your download has started',
+      continueDl: 'Continue', sendingCode: 'Sending your code…', shortName: 'Enter your full name',
+      otpTitle: 'Check your email', otpIntro: 'Enter the 6-digit code we sent to', otpEdit: 'Change email', otpLabel: 'Verification code',
+      otpResend: 'Send a new code', otpResendIn: 'Send a new code in {n}s', otpResent: 'A new code is on its way. Check your spam folder too.',
+      otpFormat: 'Enter the 6 digits from the email', otpInvalid: 'That code is not correct', otpExpired: 'This code has expired. Send a new one.',
+      otpTooMany: 'Too many attempts. Send a new code.', otpRate: 'Too many requests. Please try again later.', otpFail: 'We could not send the code. Please try again.',
+      otpCheckFail: 'We could not check the code. Please try again.', started: 'Your download has started',
       notStarting: 'Not starting? <a href="#" data-direct-link>Use the direct link</a>.',
-      installSteps: 'Installation steps', quickStart: 'Quick start guide', oneDl: '1 download', nDl: '{n} downloads',
+      installSteps: 'Installation steps', quickStart: 'Quick start guide',
       required: 'Required', badEmail: 'Enter a valid email address', moreText: 'Please write a little more',
       notAvailable: 'That file is not available yet.',
       sending: 'Sending…', sent: 'Thanks, your message was sent. We usually reply within a few days.',
@@ -61,24 +66,29 @@
     fr: {
       tagline: 'Logiciel de bureau libre et gratuit qui transforme les images et vidéos de pièges photographiques en données prêtes à analyser. Il fonctionne sur votre ordinateur, sans internet.',
       product: 'Produit', download: 'Télécharger', documentation: 'Documentation', installGuide: 'Guide d’installation',
-      changelog: 'Journal des versions', releases: 'Toutes les versions', resources: 'Ressources', video: 'Tutoriel vidéo',
+      changelog: 'Journal des versions', resources: 'Ressources', video: 'Tutoriel vidéo',
       modelExt: 'Extensions de modèles', publish: 'Publier un modèle', faq: 'FAQ et dépannage', cite: 'Citer Declas (Zenodo)',
       community: 'Communauté', bug: 'Signaler un bug', feature: 'Proposer une fonctionnalité', contact: 'Contact', support: 'Soutenir le projet',
       related: 'Liens utiles', compare: 'Comparer les outils', privacy: 'Confidentialité', releasedUnder: 'Publié sous', mit: 'licence MIT',
       madeFor: 'Conçu pour les chercheurs et les équipes de conservation de la faune',
       close: 'Fermer', dlTitle: 'Télécharger Declas',
       dlIntro: 'Choisissez votre système. Declas est gratuit, libre, et fonctionne hors ligne une fois installé.',
-      soFar: 'téléchargements à ce jour', winReq: 'Installateur 64 bits', macReq: 'Versions distinctes pour Apple Silicon et Intel',
-      linReq: 'Archive 64 bits (x86-64)', dlWin: 'Télécharger pour Windows', dlLinux: 'Télécharger pour Linux', yourSystem: 'Votre système',
-      dlNote: 'Besoin d’aide pour l’installation ? Consultez le <a href="docs.html#install">guide d’installation</a>. Le code source et les anciennes versions sont sur <a href="{gh}" target="_blank" rel="noopener">GitHub</a>.',
+      winReq: 'Installateur 64 bits', macReq: 'Versions distinctes pour Apple Silicon et Intel',
+      linReq: 'Archive 64 bits (x86-64)', yourSystem: 'Votre système',
+      dlNote: 'Besoin d’aide pour l’installation ? Consultez le <a href="docs.html#install">guide d’installation</a>.',
       formTitle: 'Une petite étape',
       formIntro: 'Dites-nous qui vous êtes pour être prévenu de la sortie des nouvelles versions de Declas. Cette question ne vous sera posée qu’une fois sur cet ordinateur.',
       back: 'Retour aux téléchargements', firstName: 'Prénom', lastName: 'Nom', email: 'Adresse e-mail', country: 'Pays',
       selectCountry: 'Choisissez votre pays',
       privacyNote: 'Utilisées uniquement pour vous informer des mises à jour de Declas. Elles ne sont jamais vendues ni partagées, et vous pouvez demander leur suppression à tout moment. Voir notre <a href="privacy.html">politique de confidentialité</a>.',
-      continueDl: 'Continuer vers le téléchargement', starting: 'Lancement du téléchargement…', started: 'Votre téléchargement a commencé',
+      continueDl: 'Continuer', sendingCode: 'Envoi de votre code…', shortName: 'Saisissez votre nom complet',
+      otpTitle: 'Vérifiez vos e-mails', otpIntro: 'Saisissez le code à 6 chiffres envoyé à', otpEdit: 'Modifier l’e-mail', otpLabel: 'Code de vérification',
+      otpResend: 'Envoyer un nouveau code', otpResendIn: 'Nouveau code dans {n} s', otpResent: 'Un nouveau code arrive. Vérifiez aussi vos spams.',
+      otpFormat: 'Saisissez les 6 chiffres reçus par e-mail', otpInvalid: 'Ce code n’est pas correct', otpExpired: 'Ce code a expiré. Demandez-en un nouveau.',
+      otpTooMany: 'Trop de tentatives. Demandez un nouveau code.', otpRate: 'Trop de demandes. Réessayez plus tard.', otpFail: 'Impossible d’envoyer le code. Veuillez réessayer.',
+      otpCheckFail: 'Impossible de vérifier le code. Veuillez réessayer.', started: 'Votre téléchargement a commencé',
       notStarting: 'Rien ne se passe ? <a href="#" data-direct-link>Utilisez le lien direct</a>.',
-      installSteps: 'Étapes d’installation', quickStart: 'Guide de démarrage rapide', oneDl: '1 téléchargement', nDl: '{n} téléchargements',
+      installSteps: 'Étapes d’installation', quickStart: 'Guide de démarrage rapide',
       required: 'Obligatoire', badEmail: 'Saisissez une adresse e-mail valide', moreText: 'Merci d’en écrire un peu plus',
       notAvailable: 'Ce fichier n’est pas encore disponible.',
       sending: 'Envoi…', sent: 'Merci, votre message a bien été envoyé. Nous répondons généralement sous quelques jours.',
@@ -193,7 +203,6 @@
       '<li><a href="docs.html">' + t('documentation') + '</a></li>' +
       '<li><a href="docs.html#install">' + t('installGuide') + '</a></li>' +
       '<li><a href="' + gh + '/blob/main/CHANGELOG.md" target="_blank" rel="noopener">' + t('changelog') + '</a></li>' +
-      '<li><a href="' + gh + '/releases" target="_blank" rel="noopener">' + t('releases') + '</a></li>' +
       '</ul></div>' +
       '<div class="footer-col"><h4>' + t('resources') + '</h4><ul>' +
       (t('video') ? '<li><a href="' + esc(CFG.videoUrl) + '" target="_blank" rel="noopener">' + t('video') + '</a></li>' : '') +
@@ -263,19 +272,26 @@
     return id;
   }
 
-  var baseline = (CFG.downloadBaseline || []).reduce(function (s, b) { return s + (b.count || 0); }, 0);
-
-  function demoStats() {
-    var local = {};
-    try { local = JSON.parse(store('declas-demo-downloads') || '{}'); } catch (e) { local = {}; }
-    var by = { windows: local.windows || 0, macos: local.macos || 0, linux: local.linux || 0 };
-    return { total: baseline + by.windows + by.macos + by.linux, windows: by.windows, macos: by.macos, linux: by.linux };
-  }
+  function saveTotal(total) { store('declas-downloads', JSON.stringify({ total: total, at: Date.now() })); }
 
   var api = {
+    // Total = every release's download count on GitHub + Zenodo. Kept for 10 minutes
+    // because GitHub allows 60 anonymous requests per hour.
     stats: function () {
-      if (!hasBackend) return Promise.resolve(demoStats());
-      return rpc('download_stats').catch(function () { return demoStats(); });
+      var saved = null;
+      try { saved = JSON.parse(store('declas-downloads') || 'null'); } catch (e) { saved = null; }
+      if (saved && Date.now() - saved.at < 600000) return Promise.resolve(saved);
+      return fetch('https://api.github.com/repos/' + CFG.repo + '/releases?per_page=100')
+        .then(function (r) { if (!r.ok) throw new Error(); return r.json(); })
+        .then(function (releases) {
+          var total = CFG.zenodoDownloads || 0;
+          releases.forEach(function (rel) {
+            (rel.assets || []).forEach(function (a) { total += a.download_count; });
+          });
+          saveTotal(total);
+          return { total: total };
+        })
+        .catch(function () { return saved; });
     },
     isKnown: function () {
       if (store('declas-registered') === '1') return Promise.resolve(true);
@@ -285,30 +301,17 @@
         return !!known;
       }).catch(function () { return false; });
     },
-    register: function (data) {
-      store('declas-registered', '1');
-      if (!hasBackend) {
-        store('declas-demo-subscriber', JSON.stringify(data));
-        return Promise.resolve();
-      }
-      var payload = {
+    requestCode: function (data) {
+      return rpc('request_email_code', {
         p_email: data.email, p_first_name: data.firstName, p_last_name: data.lastName,
-        p_country: data.country, p_device: deviceId(), p_consent: true,
-      };
-      return rpc('register_subscriber', payload).catch(function (err) {
-        // Keep the download flowing; send the sign-up again on the next visit.
-        store('declas-pending-signup', JSON.stringify(payload));
-        throw err;
+        p_country: data.country, p_device: deviceId(), p_lang: LANG,
       });
     },
+    verifyCode: function (email, code) {
+      return rpc('verify_email_code', { p_email: email, p_code: code, p_device: deviceId() });
+    },
     recordDownload: function (os, variant, version) {
-      if (!hasBackend) {
-        var local = {};
-        try { local = JSON.parse(store('declas-demo-downloads') || '{}'); } catch (e) { local = {}; }
-        local[os] = (local[os] || 0) + 1;
-        store('declas-demo-downloads', JSON.stringify(local));
-        return Promise.resolve(demoStats());
-      }
+      if (!hasBackend) return Promise.resolve();
       return rpc('record_download', { p_os: os, p_variant: variant, p_version: version, p_device: deviceId() })
         .catch(function () { return null; });
     },
@@ -321,16 +324,7 @@
     },
   };
 
-  if (hasBackend) {
-    var pendingSignup = store('declas-pending-signup');
-    if (pendingSignup) {
-      try {
-        rpc('register_subscriber', JSON.parse(pendingSignup))
-          .then(function () { store('declas-pending-signup', null); })
-          .catch(function () {});
-      } catch (e) { store('declas-pending-signup', null); }
-    }
-  }
+  store('declas-pending-signup', null);
 
   /* Counters */
 
@@ -351,10 +345,6 @@
         el.classList.add('bump');
       }
     });
-    $all('[data-count-label]').forEach(function (el) {
-      var n = stats[el.getAttribute('data-count-label')] || 0;
-      el.textContent = n === 0 ? '' : n === 1 ? t('oneDl') : t('nDl', { n: fmt(n) });
-    });
   }
   if ($('[data-count]') || $('[data-open-download]')) {
     api.stats().then(function (s) { paintStats(s, false); });
@@ -372,7 +362,7 @@
     return fetch('https://api.github.com/repos/' + CFG.repo + '/releases/latest')
       .then(function (r) { if (!r.ok) throw new Error(); return r.json(); })
       .then(function (data) {
-        var out = { version: String(data.tag_name || CFG.version).replace(/^v/, ''), url: data.html_url, assets: {} };
+        var out = { version: String(data.tag_name || CFG.version).replace(/^v/, ''), assets: {} };
         (data.assets || []).forEach(function (a) {
           var n = a.name;
           var key = /\.exe$/i.test(n) ? 'windows' :
@@ -397,11 +387,10 @@
     });
     return out;
   }
-  if ($('[data-latest-tag], [data-latest-version], [data-latest-link]')) {
+  if ($('[data-latest-tag], [data-latest-version]')) {
     loadRelease().then(function (rel) {
       $all('[data-latest-tag]').forEach(function (el) { el.textContent = 'v' + rel.version; });
       $all('[data-latest-version]').forEach(function (el) { el.textContent = rel.version; });
-      if (rel.url) $all('[data-latest-link]').forEach(function (el) { el.href = rel.url; });
     });
   }
   function size(bytes) { return bytes ? Math.round(bytes / 1048576) + ' ' + t('mb') : ''; }
@@ -453,15 +442,15 @@
       '<section class="view active" data-view="choose">' +
       '<div class="modal-head"><h2 id="dl-title">' + t('dlTitle') + ' <span class="muted" data-release-version style="font-weight:600"></span></h2>' +
       '<p>' + t('dlIntro') + '</p>' +
-      '<div class="dl-total"><strong class="count" data-count="total">' + fmt(lastStats ? lastStats.total : baseline) + '</strong> ' + t('soFar') + '</div></div>' +
+      '</div>' +
       '<div class="modal-body"><div class="os-grid">' +
-      osCard('windows', 'Windows', t('winReq'), [{ key: 'windows', label: t('dlWin') }]) +
+      osCard('windows', 'Windows', t('winReq'), [{ key: 'windows', label: t('download') }]) +
       osCard('macos', 'macOS', t('macReq'), [
         { key: 'macos-arm', label: 'Apple Silicon (M1+)' },
         { key: 'macos-intel', label: 'Intel', secondary: true },
       ]) +
-      osCard('linux', 'Linux', t('linReq'), [{ key: 'linux', label: t('dlLinux') }]) +
-      '</div><p class="dl-note">' + t('dlNote', { gh: 'https://github.com/' + esc(CFG.repo) + '/releases' }) + '</p></div>' +
+      osCard('linux', 'Linux', t('linReq'), [{ key: 'linux', label: t('download') }]) +
+      '</div><p class="dl-note">' + t('dlNote') + '</p></div>' +
       '</section>' +
 
       '<section class="view" data-view="form">' +
@@ -477,6 +466,20 @@
       '<div class="field"><label for="f-country">' + t('country') + '</label><select class="select" id="f-country" name="country" required autocomplete="country-name">' + countryOptions() + '</select><span class="field-error" aria-live="polite"></span></div>' +
       '<div class="privacy-note">' + ICON.lock + '<span>' + t('privacyNote') + '</span></div>' +
       '<button class="btn btn-primary form-submit" type="submit">' + ICON.download + '<span data-submit-label>' + t('continueDl') + '</span></button>' +
+      '<p class="form-status" role="status"></p>' +
+      '</form></div>' +
+      '</section>' +
+
+      '<section class="view" data-view="verify">' +
+      '<div class="modal-head"><h2>' + t('otpTitle') + '</h2><p>' + t('otpIntro') + ' <strong data-otp-email></strong></p></div>' +
+      '<div class="modal-body">' +
+      '<button class="back-link" type="button" data-edit-email>' + ICON.back + t('otpEdit') + '</button>' +
+      '<form class="form" id="otp-form" novalidate>' +
+      '<div class="field"><label for="f-otp">' + t('otpLabel') + '</label>' +
+      '<input class="input otp-input" id="f-otp" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required>' +
+      '<span class="field-error" aria-live="polite"></span></div>' +
+      '<div class="otp-actions"><button class="btn btn-primary" type="submit">' + ICON.download + '<span>' + t('download') + '</span></button>' +
+      '<button class="link-btn" type="button" data-resend disabled></button></div>' +
       '<p class="form-status" role="status"></p>' +
       '</form></div>' +
       '</section>' +
@@ -498,6 +501,11 @@
     modal.addEventListener('click', function (e) {
       if (e.target.closest('[data-close]')) closeModal();
       if (e.target.closest('[data-back]')) showView('choose');
+      if (e.target.closest('[data-edit-email]')) {
+        showView('form');
+        setTimeout(function () { $('#f-email', modal).focus(); }, 60);
+      }
+      if (e.target.closest('[data-resend]')) resendCode();
       var btn = e.target.closest('[data-asset]');
       if (btn) choose(btn.getAttribute('data-asset'));
     });
@@ -506,6 +514,7 @@
       if (e.key === 'Tab') trapFocus(e);
     });
     $('#signup-form', modal).addEventListener('submit', submitSignup);
+    $('#otp-form', modal).addEventListener('submit', submitCode);
     paintStats(lastStats, false);
   }
 
@@ -516,7 +525,6 @@
       '<div class="os-logo">' + ICON[os] + '</div>' +
       '<h3>' + name + '</h3>' +
       '<p class="os-file" data-file="' + buttons[0].key + '">&nbsp;</p>' +
-      '<p class="os-count"><span data-count-label="' + os + '">' + (lastStats && lastStats[os] ? t('nDl', { n: fmt(lastStats[os]) }) : '') + '</span></p>' +
       '<div class="os-actions">' + buttons.map(function (b) {
         return '<button type="button" class="btn ' + (b.secondary ? 'btn-secondary' : 'btn-primary') + ' btn-block" data-asset="' + b.key + '">' +
           ICON.download + '<span>' + b.label + '</span></button>';
@@ -546,7 +554,7 @@
     $all('.view', modal).forEach(function (v) { v.classList.toggle('active', v.getAttribute('data-view') === name); });
     var panel = $('.modal-panel', modal);
     panel.scrollTop = 0;
-    var focusTarget = name === 'form' ? $('#f-firstName', modal) : $('.view.active button, .view.active a', modal);
+    var focusTarget = name === 'form' ? $('#f-firstName', modal) : name === 'verify' ? $('#f-otp', modal) : $('.view.active button, .view.active a', modal);
     if (focusTarget) setTimeout(function () { focusTarget.focus({ preventScroll: true }); }, 30);
   }
 
@@ -604,6 +612,7 @@
       var val = (input.value || '').trim();
       if (!val) msg = t('required');
       else if (input.type === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(val)) msg = t('badEmail');
+      else if (input.type === 'text' && val.length < 2) msg = t('shortName');
       f.classList.toggle('invalid', !!msg);
       if (err) err.textContent = msg;
       if (msg && ok) { ok = false; input.focus(); }
@@ -611,27 +620,112 @@
     return ok;
   }
 
+  var signup = null;
+  var resendTimer = null;
+
+  function showCodeStep() {
+    var form = $('#otp-form', modal);
+    form.reset();
+    $('.field', form).classList.remove('invalid');
+    $('.field-error', form).textContent = '';
+    setStatus(form, '', '');
+    $('[data-otp-email]', modal).textContent = signup.email;
+    startResendCountdown();
+    showView('verify');
+  }
+
+  function setStatus(form, text, kind) {
+    var status = $('.form-status', form);
+    status.className = 'form-status' + (kind ? ' ' + kind : '');
+    status.textContent = text;
+  }
+
+  function startResendCountdown() {
+    var btn = $('[data-resend]', modal);
+    var left = 60;
+    var paint = function () {
+      btn.disabled = left > 0;
+      btn.textContent = left > 0 ? t('otpResendIn', { n: left }) : t('otpResend');
+    };
+    clearInterval(resendTimer);
+    paint();
+    resendTimer = setInterval(function () {
+      left -= 1;
+      paint();
+      if (left <= 0) clearInterval(resendTimer);
+    }, 1000);
+  }
+
   function submitSignup(e) {
     e.preventDefault();
     var form = e.target;
     if (!validate(form)) return;
-    var btn = $('button[type="submit"]', form);
-    var status = $('.form-status', form);
-    btn.disabled = true;
-    $('[data-submit-label]', form).textContent = t('starting');
-    var data = {
+    signup = {
       firstName: form.firstName.value.trim(),
       lastName: form.lastName.value.trim(),
-      email: form.email.value.trim(),
+      email: form.email.value.trim().toLowerCase(),
       country: form.country.value,
     };
-    api.register(data).catch(function () {}).then(function () {
+    if (!hasBackend) {
       knownVisitor = true;
+      startDownload(pendingChoice);
+      return;
+    }
+    var btn = $('button[type="submit"]', form);
+    btn.disabled = true;
+    $('[data-submit-label]', form).textContent = t('sendingCode');
+    setStatus(form, '', '');
+    api.requestCode(signup).then(showCodeStep).catch(function (err) {
+      // A code was already sent to this address a moment ago: it is still valid
+      if (err.message === 'please_wait') showCodeStep();
+      else setStatus(form, err.message === 'too_many_requests' ? t('otpRate') : t('otpFail'), 'err');
+    }).then(function () {
       btn.disabled = false;
       $('[data-submit-label]', form).textContent = t('continueDl');
-      status.textContent = '';
-      startDownload(pendingChoice);
     });
+  }
+
+  function resendCode() {
+    var form = $('#otp-form', modal);
+    $('[data-resend]', modal).disabled = true;
+    api.requestCode(signup).then(function () {
+      setStatus(form, t('otpResent'), 'ok');
+      startResendCountdown();
+    }).catch(function (err) {
+      if (err.message === 'please_wait') { startResendCountdown(); return; }
+      setStatus(form, err.message === 'too_many_requests' ? t('otpRate') : t('otpFail'), 'err');
+      $('[data-resend]', modal).disabled = false;
+    });
+  }
+
+  function submitCode(e) {
+    e.preventDefault();
+    var form = e.target;
+    var field = $('.field', form);
+    var code = form.code.value.replace(/\s/g, '');
+    var fail = function (msg) {
+      field.classList.add('invalid');
+      $('.field-error', form).textContent = msg;
+      form.code.focus();
+    };
+    field.classList.remove('invalid');
+    $('.field-error', form).textContent = '';
+    setStatus(form, '', '');
+    if (!/^\d{6}$/.test(code)) { fail(t('otpFormat')); return; }
+    var btn = $('button[type="submit"]', form);
+    btn.disabled = true;
+    api.verifyCode(signup.email, code).then(function (result) {
+      if (result === 'ok') {
+        store('declas-registered', '1');
+        knownVisitor = true;
+        clearInterval(resendTimer);
+        startDownload(pendingChoice);
+      } else {
+        fail(result === 'expired' ? t('otpExpired') : result === 'too_many' ? t('otpTooMany') : t('otpInvalid'));
+      }
+    }).catch(function () {
+      setStatus(form, t('otpCheckFail'), 'err');
+    }).then(function () { btn.disabled = false; });
   }
 
   function startDownload(assetKey) {
@@ -653,14 +747,11 @@
       $('[data-install-link]', modal).setAttribute('href', 'docs.html#install-' + os);
       showView('done');
 
-      api.recordDownload(os, variant, rel.version).then(function (stats) {
-        if (stats) paintStats(stats, true);
-        else if (lastStats) {
-          var next = Object.assign({}, lastStats);
-          next.total += 1; next[os] = (next[os] || 0) + 1;
-          paintStats(next, true);
-        }
-      });
+      api.recordDownload(os, variant, rel.version);
+      if (lastStats) {
+        saveTotal(lastStats.total + 1);
+        paintStats({ total: lastStats.total + 1 }, true);
+      }
     });
   }
 
